@@ -18,6 +18,8 @@ import {
   X,
 } from "lucide-react";
 
+import ParkflowLogo from "./ParkflowLogo";
+
 export default function Navbar({
   parkings,
   activeParking,
@@ -49,21 +51,19 @@ export default function Navbar({
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
         {/* Logo & Titre */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-400 to-emerald-400 p-[2px] shadow-lg shadow-cyan-500/20">
-            <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center overflow-hidden">
-              <img src="/logo.jpg" alt="Parkflow Logo" className="w-full h-full object-cover mix-blend-multiply" />
-            </div>
+          <div className="hover:scale-105 transition-transform duration-300 drop-shadow-[0_0_12px_rgba(6,182,212,0.4)]">
+            <ParkflowLogo size={42} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-black text-white tracking-wide">
-                PARK<span className="text-cyan-400">FLOW</span>
+              <h1 className="text-base font-black text-white tracking-wide flex items-center">
+                PARK<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">FLOW</span>
               </h1>
-              <span className="text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="text-[10px] font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider shadow-[0_0_10px_rgba(16,185,129,0.15)]">
                 PRO V2
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">
+            <p className="text-[10px] text-cyan-200/60 font-semibold tracking-wider uppercase">
               Optimisation Intelligente
             </p>
           </div>

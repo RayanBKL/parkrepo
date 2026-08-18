@@ -97,10 +97,8 @@ export default function AuthPage({ onAuthenticated }) {
       <div className="w-full max-w-sm relative z-10">
         {/* Logo et Titre */}
         <div className="text-center mb-8">
-          <div className="w-24 h-24 rounded-[32px] bg-gradient-to-tr from-cyan-400 to-emerald-400 p-[2px] shadow-2xl shadow-cyan-500/20 mx-auto mb-8 animate-in fade-in slide-up">
-            <div className="w-full h-full bg-white rounded-[30px] flex items-center justify-center overflow-hidden">
-              <img src="/logo.jpg" alt="Parkflow Logo" className="w-full h-full object-cover mix-blend-multiply" />
-            </div>
+          <div className="inline-flex items-center justify-center mb-6 animate-in fade-in slide-up">
+            <ParkflowLogo size={80} />
           </div>
 
           <h1 className="text-4xl font-black text-white text-center mb-2 tracking-tight">

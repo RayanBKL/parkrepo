@@ -133,8 +133,8 @@ export default function ParkingsModal({
                       {/* Code de partage */}
                       <button
                         type="button"
-                        onClick={() => handleCopyCode(p.code || p.id, p.id)}
-                        className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
+                        onClick={() => handleCopyCode(p.accessCode || p.code || p.id, p.id)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700 text-amber-300 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-inner"
                         title="Copier le code d'accès"
                       >
                         {copiedId === p.id ? (
@@ -144,22 +144,21 @@ export default function ParkingsModal({
                           </>
                         ) : (
                           <>
-                            <Copy size={13} />
-                            <span>{p.code || "PARK-01"}</span>
+                            <Copy size={13} className="text-slate-400" />
+                            <span>{p.accessCode || p.code || "PARK-01"}</span>
                           </>
                         )}
                       </button>
 
-                      {parkings.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => onDeleteParking(p.id)}
-                          className="p-2 rounded-xl bg-rose-600/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 transition-colors cursor-pointer"
-                          title="Supprimer ce parking"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      )}
+                      {/* Bouton de suppression disponible pour tout parking */}
+                      <button
+                        type="button"
+                        onClick={() => onDeleteParking(p.id)}
+                        className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/30 transition-all cursor-pointer hover:shadow-lg hover:shadow-rose-900/50"
+                        title="Supprimer définitivement ce parking"
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </div>
                   </div>
                 );

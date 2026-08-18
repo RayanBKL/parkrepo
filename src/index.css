@@ -10,7 +10,12 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #070b14;
+  background-color: #060b13;
+  background-image: 
+    radial-gradient(at 10% 10%, rgba(6, 182, 212, 0.07) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(14, 165, 233, 0.04) 0px, transparent 50%);
+  background-attachment: fixed;
   color: #f1f5f9;
   min-height: 100vh;
 }
@@ -22,17 +27,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(6, 11, 19, 0.8);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(6, 182, 212, 0.3); /* cyan-500/30 */
+  background: rgba(6, 182, 212, 0.35); /* cyan-500/35 */
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(6, 182, 212, 0.6); /* cyan-500/60 */
+  background: rgba(6, 182, 212, 0.7); /* cyan-500/70 */
 }
 
 /* Effet Plaque d'immatriculation française / européenne */
@@ -40,8 +45,8 @@ body {
   display: inline-flex;
   align-items: center;
   border-radius: 6px;
-  background: #0f172a;
-  border: 1.5px solid #334155;
+  background: #09131f;
+  border: 1.5px solid #1e293b;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.1em;
 }
@@ -54,16 +59,18 @@ body {
 
 .vehicle-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px -4px rgba(6, 182, 212, 0.2);
 }
 
 /* Colonnes de voie */
 .lane-column {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(12px);
 }
 
 .lane-column:hover {
-  border-color: rgba(59, 130, 246, 0.35);
+  border-color: rgba(6, 182, 212, 0.45);
+  box-shadow: 0 4px 20px -2px rgba(6, 182, 212, 0.1);
 }
 
 /* Animations douces d'apparition de modale */

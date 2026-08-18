@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { X, Settings, Download, Upload, ShieldCheck, AlertTriangle, RefreshCw, CheckCircle2, Lock } from "lucide-react";
+import { X, Settings, Download, Upload, ShieldCheck, AlertTriangle, RefreshCw, CheckCircle2, Lock, Trash2 } from "lucide-react";
 import { exportDatabaseBackup, importDatabaseBackup } from "../services/db";
 
 export default function SettingsModal({
@@ -10,6 +10,7 @@ export default function SettingsModal({
   onUpdateParkingSettings,
   onRestoreDatabase,
   onResetParking,
+  onDeleteParking,
 }) {
   if (!isOpen) return null;
 
@@ -256,6 +257,26 @@ export default function SettingsModal({
                     Confirmer la vidange
                   </button>
                 </div>
+              </div>
+            {/* Suppression définitive du parking */}
+            {onDeleteParking && (
+              <div className="flex items-center justify-between p-3 bg-rose-950/30 border border-rose-600/40 rounded-2xl">
+                <div>
+                  <div className="text-xs font-bold text-rose-300">Supprimer définitivement ce parking</div>
+                  <div className="text-[10px] text-slate-400">
+                    Efface complètement "{parking?.name}" et toutes ses données associées
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onDeleteParking(parking?.id);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg shadow-rose-950/50 cursor-pointer"
+                >
+                  <Trash2 size={14} /> Supprimer
+                </button>
               </div>
             )}
           </div>

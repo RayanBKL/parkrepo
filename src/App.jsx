@@ -31,6 +31,7 @@ import WaitingQueueModal from "./components/WaitingQueueModal";
 import TicketModal from "./components/TicketModal";
 import { JoinParkingModal, AccessCodeModal } from "./components/AccessCodeModals";
 import ParkingsModal from "./components/ParkingsModal";
+import ParkflowLogo from "./components/ParkflowLogo";
 
 // Loader plein écran
 function FullScreenLoader({ message }) {
@@ -335,12 +336,28 @@ export default function App() {
   };
 
   const handleDeleteParking = async (pkgId) => {
-    if (!currentUser || parkings.length <= 1) return alert("Impossible de supprimer le dernier parking.");
+    if (!currentUser) return;
+    const targetParking = parkings.find((p) => p.id === pkgId);
+    const pName = targetParking?.name || "ce parking";
+
+    if (!window.confirm(`Êtes-vous absolument sûr de vouloir supprimer définitivement le parking "${pName}" ? Cette action effacera toutes les données associées.`)) {
+      return;
+    }
+
     try {
       await deleteParking(pkgId, currentUser.uid);
-      showToast("Parking supprimé.");
+      showToast(`Parking "${pName}" supprimé avec succès.`);
+
+      // Mettre à jour le parking actif
+      const remaining = parkings.filter((p) => p.id !== pkgId);
+      if (remaining.length > 0) {
+        setActiveParkingId(remaining[0].id);
+      } else {
+        setActiveParkingId(null);
+        setIsParkingsModalOpen(false);
+      }
     } catch (err) {
-      showToast(err.message, "error");
+      showToast(err.message || "Erreur lors de la suppression du parking.", "error");
     }
   };
 
@@ -444,16 +461,20 @@ export default function App() {
 
   if (parkings.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900/80 border border-slate-700/80 rounded-[32px] p-8 shadow-2xl text-center backdrop-blur-xl animate-in fade-in slide-up">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-cyan-400 to-emerald-400 p-[2px] shadow-lg shadow-cyan-500/20 mx-auto mb-6">
-            <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center overflow-hidden">
-              <img src="/logo.jpg" alt="Parkflow Logo" className="w-full h-full object-cover mix-blend-multiply" />
-            </div>
+      <div className="min-h-screen bg-[#070e17] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        {/* Glow de fond Cyan & Emeraude */}
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-cyan-500/15 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-emerald-500/15 blur-3xl animate-pulse"></div>
+
+        <div className="max-w-md w-full bg-slate-900/90 border border-slate-700/80 rounded-[32px] p-8 shadow-2xl text-center backdrop-blur-2xl animate-in fade-in slide-up relative z-10">
+          <div className="inline-flex items-center justify-center mb-6 hover:scale-105 transition-transform duration-300 drop-shadow-[0_0_20px_rgba(6,182,212,0.4)]">
+            <ParkflowLogo size={72} />
           </div>
-          <h2 className="text-2xl font-black text-white mb-3">Bienvenue sur Parkflow</h2>
-          <p className="text-sm text-slate-400 font-medium mb-8">
-            Vous n'avez accès à aucun parking pour le moment. Créez-en un nouveau ou rejoignez un parc existant avec un code partagé.
+          <h2 className="text-2xl font-black text-white mb-2 tracking-wide flex items-center justify-center gap-1">
+            Bienvenue sur PARK<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">FLOW</span>
+          </h2>
+          <p className="text-xs text-slate-400 font-medium mb-8 leading-relaxed">
+            Vous n'avez accès à aucun parking pour le moment. Créez votre premier parc automobile ou rejoignez-en un via un code secret.
           </p>
           
           <div className="flex flex-col gap-3">
@@ -579,7 +600,7 @@ export default function App() {
       <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImportVehicles={handleImportVehicles} />
       <MoveModal isOpen={isMoveModalOpen} onClose={() => { setIsMoveModalOpen(false); setMovingVehicle(null); }} vehicle={movingVehicle} lanes={parking.lanes} capacity={parking.capacity} onConfirmMove={handleConfirmMove} />
       <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} history={parking.history} onClearHistory={handleClearHistory} parkingName={parking.name} />
-      <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} parking={parking} databaseState={{}} onUpdateParkingSettings={handleUpdateParkingSettings} onRestoreDatabase={() => {}} onResetParking={handleResetParking} />
+      <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} parking={parking} databaseState={{}} onUpdateParkingSettings={handleUpdateParkingSettings} onRestoreDatabase={() => {}} onResetParking={handleResetParking} onDeleteParking={handleDeleteParking} />
       <WaitingQueueModal isOpen={isWaitingModalOpen} onClose={() => setIsWaitingModalOpen(false)} waitingVehicles={parking.waiting || []} onAssignWaitingVehicle={handleAssignWaitingVehicle} onAutoAssignAllWaiting={handleAutoAssignAllWaiting} onRemoveFromWaiting={handleRemoveFromWaiting} />
       <TicketModal isOpen={isTicketModalOpen} onClose={() => { setIsTicketModalOpen(false); setTicketData(null); }} vehicle={ticketData?.vehicle} laneIndex={ticketData?.laneIndex} slotIndex={ticketData?.slotIndex} parkingName={parking.name} />
       <ParkingsModal isOpen={isParkingsModalOpen} onClose={() => setIsParkingsModalOpen(false)} parkings={parkings} activeParkingId={parking.id} onSelectParking={setActiveParkingId} onCreateParking={handleCreateParking} onDeleteParking={handleDeleteParking} />
