@@ -34,6 +34,8 @@ import WaitingQueueModal from "./components/WaitingQueueModal";
 import TicketModal from "./components/TicketModal";
 import { JoinParkingModal, AccessCodeModal } from "./components/AccessCodeModals";
 import ParkingsModal from "./components/ParkingsModal";
+import ProfileModal from "./components/ProfileModal";
+import CollaboratorsModal from "./components/CollaboratorsModal";
 import ParkflowLogo from "./components/ParkflowLogo";
 
 // Loader plein écran
@@ -88,6 +90,8 @@ export default function App() {
   const [isWaitingModalOpen, setIsWaitingModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [isAccessCodeModalOpen, setIsAccessCodeModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isCollaboratorsModalOpen, setIsCollaboratorsModalOpen] = useState(false);
   const [ticketData, setTicketData] = useState(null);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
 
@@ -615,6 +619,8 @@ export default function App() {
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onOpenJoinParking={() => setIsJoinModalOpen(true)}
         onOpenAccessCode={() => setIsAccessCodeModalOpen(true)}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
+        onOpenCollaboratorsModal={() => setIsCollaboratorsModalOpen(true)}
         onLogOut={async () => { await logOut(); }}
       />
 
@@ -721,7 +727,36 @@ export default function App() {
         onLeaveParking={handleLeaveParking}
       />
       <JoinParkingModal isOpen={isJoinModalOpen} onClose={() => setIsJoinModalOpen(false)} userId={currentUser?.uid} onParkingJoined={handleJoinedParking} />
-      <AccessCodeModal isOpen={isAccessCodeModalOpen} onClose={() => setIsAccessCodeModalOpen(false)} parking={parking} userId={currentUser?.uid} />
+      <AccessCodeModal
+        isOpen={isAccessCodeModalOpen}
+        onClose={() => setIsAccessCodeModalOpen(false)}
+        parking={parking}
+        userId={currentUser?.uid}
+        onOpenCollaborators={() => setIsCollaboratorsModalOpen(true)}
+      />
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        currentUser={currentUser}
+        onProfileUpdated={(updated) => {
+          showToast("Profil enregistré !");
+          setCurrentUser((prev) => ({ ...prev, displayName: updated.displayName }));
+        }}
+      />
+      <CollaboratorsModal
+        isOpen={isCollaboratorsModalOpen}
+        onClose={() => setIsCollaboratorsModalOpen(false)}
+        parking={parking}
+        currentUser={currentUser}
+        onMemberRemoved={(uid) => {
+          showToast("Collaborateur retiré du parking.");
+          updateActiveParking((p) => ({
+            ...p,
+            authorizedUsers: (p.authorizedUsers || []).filter((u) => u !== uid),
+          }));
+        }}
+        onOpenAccessCode={() => setIsAccessCodeModalOpen(true)}
+      />
     </div>
   );
 }

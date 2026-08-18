@@ -5,6 +5,8 @@ import ParkflowLogo from "./ParkflowLogo";
 
 export default function AuthPage({ onAuthenticated }) {
   const [mode, setMode] = useState("login"); // 'login' | 'register' | 'reset'
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -74,7 +76,7 @@ export default function AuthPage({ onAuthenticated }) {
     try {
       let user;
       if (mode === "register") {
-        user = await signUp(email, password);
+        user = await signUp(email, password, { firstName, lastName });
       } else {
         user = await signIn(email, password);
       }
@@ -118,7 +120,7 @@ export default function AuthPage({ onAuthenticated }) {
             </h2>
             <p className="text-xs text-slate-400 mt-1">
               {mode === "login" && "Vos données de parking sont chiffrées et sécurisées."}
-              {mode === "register" && "Compte sécurisé avec accès isolé à vos parkings."}
+              {mode === "register" && "Renseignez votre nom pour que vos collègues vous reconnaissent."}
               {mode === "reset" && "Saisissez votre email pour recevoir un lien de réinitialisation."}
             </p>
           </div>
@@ -138,6 +140,38 @@ export default function AuthPage({ onAuthenticated }) {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
+            {/* Prénom & Nom lors de l'inscription */}
+            {mode === "register" && (
+              <div className="grid grid-cols-2 gap-2 animate-in fade-in">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    Prénom *
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 text-xs font-semibold"
+                    placeholder="ex: Rayan"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    Nom *
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 text-xs font-semibold"
+                    placeholder="ex: Dupont"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Email */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1.5">
@@ -149,7 +183,7 @@ export default function AuthPage({ onAuthenticated }) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 text-xs font-semibold"
                   placeholder="Email professionnel"
                   required
                 />

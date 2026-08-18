@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, KeyRound, Loader2, CheckCircle2, AlertCircle, Building2, Copy, Check, RefreshCw } from "lucide-react";
+import { X, KeyRound, Loader2, CheckCircle2, AlertCircle, Building2, Copy, Check, RefreshCw, Users } from "lucide-react";
 import { joinParkingWithCode, createParking, regenerateAccessCode } from "../services/cloudDb";
 
 // ---------------------------------------------------------------------------
@@ -101,7 +101,7 @@ export function JoinParkingModal({ isOpen, onClose, userId, onParкingJoined }) 
 // Modal de Gestion du Code d'Accès (Propriétaire)
 // ---------------------------------------------------------------------------
 
-export function AccessCodeModal({ isOpen, onClose, parking, userId }) {
+export function AccessCodeModal({ isOpen, onClose, parking, userId, onOpenCollaborators }) {
   const [copied, setCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [currentCode, setCurrentCode] = useState(parking?.accessCode || null);
@@ -170,6 +170,19 @@ export function AccessCodeModal({ isOpen, onClose, parking, userId }) {
             <div>2. Il crée un compte sur ParkFlow et clique sur "Rejoindre un Parking"</div>
             <div>3. Il saisit ce code → il accède immédiatement en lecture et écriture</div>
           </div>
+
+          {onOpenCollaborators && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenCollaborators();
+              }}
+              className="w-full py-2.5 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <Users size={15} /> Voir les membres de l'équipe ({parking.authorizedUsers?.length || 1})
+            </button>
+          )}
 
           {isOwner && (
             <div>

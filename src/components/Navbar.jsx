@@ -15,6 +15,7 @@ import {
   KeyRound,
   LogOut,
   User,
+  Users,
   X,
 } from "lucide-react";
 
@@ -37,6 +38,8 @@ export default function Navbar({
   onOpenSettingsModal,
   onOpenJoinParking,
   onOpenAccessCode,
+  onOpenProfileModal,
+  onOpenCollaboratorsModal,
   onLogOut,
 }) {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -45,6 +48,8 @@ export default function Navbar({
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const displayName = currentUser?.displayName || currentUser?.email?.split("@")[0] || "Mon Compte";
 
   return (
     <header className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80 shadow-2xl">
@@ -174,6 +179,19 @@ export default function Navbar({
             <Settings size={15} />
           </button>
 
+          {/* Panel Collaborateurs / Équipe */}
+          <button
+            onClick={onOpenCollaboratorsModal}
+            title="Voir l'équipe et les personnes ayant accès à ce parking"
+            className="px-3 py-1.5 rounded-full bg-cyan-600/15 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 hover:text-white transition-all cursor-pointer text-xs font-bold flex items-center gap-1.5 hover:shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+          >
+            <Users size={14} className="text-cyan-400" />
+            <span className="hidden md:inline">Équipe</span>
+            <span className="text-[10px] bg-cyan-500/30 px-1.5 py-0.2 rounded-full font-mono">
+              {(activeParking?.authorizedUsers || []).length || 1}
+            </span>
+          </button>
+
           {/* Rejoindre un Parking */}
           <button
             onClick={onOpenJoinParking}
@@ -194,10 +212,16 @@ export default function Navbar({
 
           {/* Compte Utilisateur & Déconnexion */}
           <div className="flex items-center gap-1.5 pl-3 border-l border-slate-800/80 ml-1">
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/60 border border-slate-800 text-[11px] text-slate-300 font-bold">
-              <User size={14} className="text-cyan-400" />
-              <span className="max-w-[100px] truncate">{currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Compte'}</span>
-            </div>
+            <button
+              onClick={onOpenProfileModal}
+              title="Gérer mon profil (Nom, Prénom, Téléphone, Titre)"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 hover:bg-cyan-950/60 border border-slate-700/80 hover:border-cyan-500/50 text-[11px] text-slate-200 hover:text-white font-bold transition-all cursor-pointer shadow-inner group"
+            >
+              <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-600 to-emerald-500 flex items-center justify-center text-[10px] text-white font-black group-hover:scale-105 transition-transform">
+                {displayName.charAt(0).toUpperCase()}
+              </div>
+              <span className="max-w-[90px] sm:max-w-[120px] truncate">{displayName}</span>
+            </button>
             <button
               onClick={onLogOut}
               title="Se déconnecter"
@@ -211,3 +235,4 @@ export default function Navbar({
     </header>
   );
 }
+

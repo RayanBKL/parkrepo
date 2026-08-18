@@ -218,6 +218,20 @@ export async function leaveParking(parkingId, userId) {
 }
 
 /**
+ * Révoque l'accès d'un utilisateur au parking (action réservée au propriétaire / créateur)
+ */
+export async function removeUserFromParking(parkingId, ownerId, targetUserId) {
+  const snap = await getDoc(doc(db, "parkings", parkingId));
+  if (!snap.exists()) throw new Error("Parking introuvable.");
+  if (snap.data().ownerId !== ownerId) throw new Error("Seul le créateur peut retirer des membres.");
+  if (targetUserId === ownerId) throw new Error("Le propriétaire ne peut pas se révoquer lui-même.");
+
+  await updateDoc(doc(db, "parkings", parkingId), {
+    authorizedUsers: arrayRemove(targetUserId),
+  });
+}
+
+/**
  * Met à jour les données complètes d'un parking (lanes, waiting, history...)
  * Appelé après chaque opération métier
  */
