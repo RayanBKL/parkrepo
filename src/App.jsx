@@ -31,7 +31,6 @@ import Sidebar from "./components/app/Sidebar";
 import DashboardView from "./components/app/DashboardView";
 import VehiclesView from "./components/app/VehiclesView";
 import RetrievalOptimizerView from "./components/app/RetrievalOptimizerView";
-import PlacementOptimizerView from "./components/app/PlacementOptimizerView";
 import AuditLogView from "./components/app/AuditLogView";
 import AnalyticsView from "./components/app/AnalyticsView";
 import SettingsView from "./components/app/SettingsView";
@@ -80,7 +79,7 @@ export default function App() {
   const [parkingsLoading, setParkingsLoading] = useState(false);
 
   // --- Vue SaaS Active (si connecté) ---
-  const [activeView, setActiveView] = useState("dashboard"); // "dashboard" | "parkings" | "vehicles" | "schedule" | "retrieval" | "placement" | "history" | "analytics" | "settings"
+  const [activeView, setActiveView] = useState("dashboard"); // "dashboard" | "parkings" | "vehicles" | "schedule" | "retrieval" | "history" | "analytics" | "settings"
   const [activeTab, setActiveTab] = useState("grid"); // "grid" | "schedule" dans la vue Parkings
   const [activeStrategy, setActiveStrategy] = useState("patience");
   const [searchQuery, setSearchQuery] = useState("");
@@ -566,7 +565,6 @@ export default function App() {
     vehicles: "Gestionnaire de Flotte & Véhicules",
     schedule: "Planning des Arrivées & Départs",
     retrieval: "Assistant de Récupération Optimisée",
-    placement: "Optimisation de Rangement des Voies",
     history: "Journal d'Activité & Audit",
     analytics: "Statistiques & Performance",
     settings: "Paramètres de l'Organisation",
@@ -837,17 +835,7 @@ export default function App() {
             />
           )}
 
-          {/* VUE 6 : OPTIMISATION DES VOIES (TIGHTEST FIT) */}
-          {activeView === "placement" && activeParking && (
-            <PlacementOptimizerView
-              parking={activeParking}
-              activeStrategy={activeStrategy}
-              setActiveStrategy={setActiveStrategy}
-              onApplyRedistribution={handleApplyRedistribution}
-            />
-          )}
-
-          {/* VUE 7 : JOURNAL D'ACTIVITÉ / AUDIT */}
+          {/* VUE 6 : JOURNAL D'ACTIVITÉ / AUDIT */}
           {activeView === "history" && activeParking && (
             <AuditLogView parking={activeParking} parkings={parkings} />
           )}

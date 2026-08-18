@@ -64,7 +64,9 @@ export default function AnalyticsView({ parking, parkings = [] }) {
             Analytique de Flotte & Rotations
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Données agrégées sur vos {parkings.length} parking{parkings.length > 1 ? "s" : ""}.
+            {parkings.length <= 1
+              ? "Indicateurs et rotation de véhicules pour votre parking."
+              : `Données consolidées sur l'ensemble de vos ${parkings.length} parkings.`}
           </p>
         </div>
       </div>
@@ -109,9 +111,9 @@ export default function AnalyticsView({ parking, parkings = [] }) {
             <Zap size={24} />
           </div>
           <div>
-            <h4 className="text-sm font-black text-white">Efficacité de Rangement : 98.4%</h4>
+            <h4 className="text-sm font-black text-white">Efficacité de Rangement & Économie de Manœuvres</h4>
             <p className="text-xs text-slate-300">
-              L'algorithme Tightest Fit garantit un taux de blocage moyen inférieur à 0.1 voiture par sortie client.
+              L'algorithme de tri physique optimise le positionnement de chaque véhicule pour réduire drastiquement les blocages et les temps d'attente client.
             </p>
           </div>
         </div>

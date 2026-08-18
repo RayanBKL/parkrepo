@@ -43,7 +43,6 @@ export default function Sidebar({
     { id: "vehicles", label: "Véhicules", icon: Car, roles: ["OWNER", "MANAGER", "VOITURIER", "VIEWER"] },
     { id: "schedule", label: "Arrivées / Départs", icon: Calendar, roles: ["OWNER", "MANAGER", "VOITURIER", "VIEWER"] },
     { id: "retrieval", label: "Récupération Optimisée", icon: Zap, roles: ["OWNER", "MANAGER", "VOITURIER", "VIEWER"], badge: "Smart" },
-    { id: "placement", label: "Optimisation Voies", icon: Sliders, roles: ["OWNER", "MANAGER", "VOITURIER"] },
     { id: "history", label: "Journal d'Activité", icon: History, roles: ["OWNER", "MANAGER", "VIEWER"] },
     { id: "analytics", label: "Statistiques", icon: BarChart3, roles: ["OWNER", "MANAGER", "VIEWER"] },
     { id: "settings", label: "Paramètres", icon: Settings, roles: ["OWNER", "MANAGER"] },

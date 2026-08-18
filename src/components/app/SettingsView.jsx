@@ -413,53 +413,123 @@ export default function SettingsView({
                 {
                   id: "lifo",
                   label: "Enfilade — LIFO",
-                  subtitle: "Cul-de-sac / Dead-end",
+                  subtitle: "Cul-de-sac / 1 seule issue",
                   badge: "DÉFAUT",
                   badgeColor: "bg-cyan-600",
-                  description: "Une seule ouverture. Les véhicules entrent et sortent du même côté. La dernière voiture entrée est la première à pouvoir sortir.",
-                  diagram: [
-                    { label: "[SORTIE / ENTRÉE]", cls: "text-cyan-400 font-black" },
-                    { label: "  ↓ / ↑", cls: "text-slate-500" },
-                    { label: "  🚗 Voiture D  ← entrée en dernier (sort en 1er)", cls: "text-emerald-300" },
-                    { label: "  🚗 Voiture C", cls: "text-slate-300" },
-                    { label: "  🚗 Voiture B", cls: "text-slate-300" },
-                    { label: "  🚗 Voiture A  ← entrée en premier (sort en dernier)", cls: "text-rose-300" },
-                    { label: "  ███ (Mur / fond de voie)", cls: "text-slate-600" },
-                  ],
-                  pros: ["Optimisation automatique de la voie la plus vide", "Idéal pour sous-sols, hangars, impasses"],
-                  cons: ["Nécessite de déplacer les voitures devant pour accéder à une voiture du fond"],
+                  description: "Une seule ouverture : les véhicules entrent et sortent par la tête de voie. La dernière voiture entrée est la première à sortir.",
+                  renderDiagram: () => (
+                    <div className="bg-slate-950/80 rounded-2xl p-4 mb-3 border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 font-bold text-xs">
+                        <span className="flex items-center gap-1.5">🚪 Entrée & Sortie Unique (Tête de voie)</span>
+                        <span className="text-[10px] text-cyan-400 font-mono">Index 0</span>
+                      </div>
+                      
+                      <div className="flex flex-col gap-1.5 pl-4 border-l-2 border-dashed border-cyan-500/40 my-2">
+                        <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between text-xs">
+                          <span className="text-emerald-300 font-bold">🚗 Voiture 3 (Dernière entrée)</span>
+                          <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Sortie Directe</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs text-slate-300">
+                          <span>🚗 Voiture 2</span>
+                          <span className="text-[10px] text-slate-400">1 déplacement si sortie</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-rose-950/30 border border-rose-500/30 flex items-center justify-between text-xs">
+                          <span className="text-rose-300 font-bold">🚗 Voiture 1 (1ère entrée)</span>
+                          <span className="text-[10px] font-bold bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded-full">Bloquée au fond</span>
+                        </div>
+                      </div>
+
+                      <div className="text-center py-1 rounded-lg bg-slate-900/60 text-[10px] text-slate-400 font-bold border border-slate-800">
+                        🧱 Fond de voie fermé (Mur / Fin d'allée)
+                      </div>
+                    </div>
+                  ),
+                  pros: ["Idéal pour parkings en sous-sol, impasses et allées étroites", "Remplissage automatique optimisé"],
+                  cons: ["Nécessite de déplacer les voitures devant pour sortir celles du fond"],
                 },
                 {
                   id: "fifo",
                   label: "Drive-Through — FIFO",
-                  subtitle: "Couloir traversant / 2 sorties",
+                  subtitle: "Couloir traversant / 2 ouvertures",
                   badge: null,
                   badgeColor: "",
-                  description: "Deux ouvertures opposées. Les véhicules entrent par un bout et sortent par l'autre. Zéro blocage possible.",
-                  diagram: [
-                    { label: "[SORTIE →]          [← ENTRÉE]", cls: "text-cyan-400 font-black" },
-                    { label: "    ↓                     ↑", cls: "text-slate-500" },
-                    { label: "    🚗 A ← 🚗 B ← 🚗 C ← 🚗 D", cls: "text-slate-300" },
-                    { label: "    (1er sorti)        (dernier entré)", cls: "text-slate-500" },
-                  ],
-                  pros: ["Zéro blocage — toujours accès direct en tête", "Idéal pour aéroports, ferries, valet avec 2 accès"],
-                  cons: ["Nécessite 2 accès physiques opposés", "Impossible de récupérer une voiture au milieu sans attendre"],
+                  description: "Deux ouvertures opposées : les véhicules entrent par l'arrière et sortent par l'avant. Les véhicules avancent en file indienne sans aucun demi-tour.",
+                  renderDiagram: () => (
+                    <div className="bg-slate-950/80 rounded-2xl p-4 mb-3 border border-slate-800 space-y-3">
+                      {/* Flow Diagram */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+                        <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-center text-xs text-emerald-300 font-bold">
+                          <div className="text-[10px] text-emerald-400 font-semibold mb-0.5">Point d'accès 1</div>
+                          🚗 ENTRÉE
+                        </div>
+                        <div className="flex items-center justify-center text-cyan-400 font-bold text-xs gap-1">
+                          <span>Flux direct</span>
+                          <span>➔ ➔ ➔</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-center text-xs text-cyan-300 font-bold">
+                          <div className="text-[10px] text-cyan-400 font-semibold mb-0.5">Point d'accès 2</div>
+                          🏁 SORTIE
+                        </div>
+                      </div>
+
+                      {/* Lane Visualization */}
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2 overflow-x-auto text-xs">
+                        <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 text-center shrink-0">
+                          <div className="font-bold text-slate-300">Voiture 3</div>
+                          <div className="text-[9px] text-slate-400">Dernière entrée</div>
+                        </div>
+                        <div className="text-slate-600 font-bold">➔</div>
+                        <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 text-center shrink-0">
+                          <div className="font-bold">Voiture 2</div>
+                          <div className="text-[9px] text-slate-400">En transit</div>
+                        </div>
+                        <div className="text-slate-600 font-bold">➔</div>
+                        <div className="p-2 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-center shrink-0">
+                          <div className="font-bold">Voiture 1</div>
+                          <div className="text-[9px] text-cyan-400 font-bold">Prête à sortir (1ère)</div>
+                        </div>
+                      </div>
+                    </div>
+                  ),
+                  pros: ["Zéro blocage : la voiture en tête sort toujours immédiatement", "Idéal pour aéroports, ferries et drive-through"],
+                  cons: ["Nécessite deux voies d'accès physiques indépendantes"],
                 },
                 {
                   id: "bidir",
                   label: "Bidirectionnel",
-                  subtitle: "Double accès / Porte A + Porte B",
+                  subtitle: "Double accès / Sortie A & B",
                   badge: null,
                   badgeColor: "",
-                  description: "Deux ouvertures sur la même voie (Porte A en tête, Porte B en queue). L'algorithme choisit automatiquement le côté qui minimise les manœuvres.",
-                  diagram: [
-                    { label: "[PORTE A] ⇄ 🚗 🚗 🚗 🚗 ⇄ [PORTE B]", cls: "text-purple-300 font-black" },
-                    { label: "     ↓↑                      ↓↑", cls: "text-slate-500" },
-                    { label: "  Sort par le côté ayant", cls: "text-slate-300" },
-                    { label: "  le moins de blocages.", cls: "text-emerald-300" },
-                  ],
-                  pros: ["Flexibilité maximale : sort du côté le moins bloqué", "Réduit les manœuvres de 30 à 50% vs LIFO"],
-                  cons: ["Nécessite 2 accès physiques sur la même voie"],
+                  description: "Deux ouvertures sur la même voie : l'algorithme calcule quel côté (A ou B) a le moins d'obstacles pour évacuer la voiture au plus vite.",
+                  renderDiagram: () => (
+                    <div className="bg-slate-950/80 rounded-2xl p-4 mb-3 border border-slate-800 space-y-3">
+                      {/* Porte A <-> Cars <-> Porte B */}
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <div className="p-2 rounded-xl bg-indigo-950/60 border border-indigo-500/40 text-indigo-300 font-bold text-center flex-1">
+                          🚪 PORTE A
+                          <div className="text-[9px] text-indigo-400 font-normal">Entrée / Sortie</div>
+                        </div>
+                        <div className="text-purple-400 font-bold">⇄</div>
+                        <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 font-bold text-center flex-1">
+                          🚗 Voitures
+                          <div className="text-[9px] text-slate-400 font-normal">Voie centrale</div>
+                        </div>
+                        <div className="text-purple-400 font-bold">⇄</div>
+                        <div className="p-2 rounded-xl bg-purple-950/60 border border-purple-500/40 text-purple-300 font-bold text-center flex-1">
+                          🚪 PORTE B
+                          <div className="text-[9px] text-purple-400 font-normal">Entrée / Sortie</div>
+                        </div>
+                      </div>
+
+                      {/* Smart routing explanation */}
+                      <div className="p-2.5 rounded-xl bg-indigo-950/30 border border-indigo-500/30 flex items-center gap-2 text-xs text-indigo-200">
+                        <ArrowLeftRight size={16} className="text-indigo-400 shrink-0" />
+                        <span>L'algorithme analyse les deux issues et évacue par le côté nécessitant le moins de manœuvres.</span>
+                      </div>
+                    </div>
+                  ),
+                  pros: ["Flexibilité maximale : divise les manœuvres par 2", "Choix dynamique de l'issue la plus proche"],
+                  cons: ["Nécessite que les deux extrémités de la voie soient dégagées"],
                 },
               ].map((model) => {
                 const isSelected = (activeParking.model || "lifo") === model.id;
@@ -491,12 +561,8 @@ export default function SettingsView({
                         </div>
                         <p className="text-xs text-slate-300 mb-3">{model.description}</p>
 
-                        {/* Schéma visuel */}
-                        <div className="bg-slate-950 rounded-2xl p-3 mb-3 border border-slate-800 font-mono text-[11px] leading-relaxed space-y-0.5">
-                          {model.diagram.map((line, i) => (
-                            <div key={i} className={line.cls}>{line.label}</div>
-                          ))}
-                        </div>
+                        {/* Schéma visuel graphique */}
+                        {model.renderDiagram()}
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
                           <div>
@@ -519,7 +585,7 @@ export default function SettingsView({
 
                     {isSelected && onUpdateParkingModel && (
                       <div className="mt-3 pt-3 border-t border-cyan-500/20 text-[11px] text-cyan-300 font-semibold">
-                        ✅ Modèle actuel de "{activeParking.name}" — Cliquez sur un autre modèle pour changer.
+                        ✅ Modèle actif pour "{activeParking.name}". Cliquez sur une autre carte pour changer immédiatement.
                       </div>
                     )}
                   </div>
