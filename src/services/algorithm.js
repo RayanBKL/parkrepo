@@ -510,28 +510,29 @@ export function assignLaneBidir(lanes, capacity, vehicle) {
   lanes.forEach((lane, idx) => {
     if (lane.length >= capacity) return;
 
-    // Coût côté A : combien de voitures à droite partent APRÈS notre véhicule ?
-    // (elles seraient bloquées si elles doivent sortir par A avant nous)
-    const costA = lane.filter((v) => {
+    /**
+     * En bidirectionnel, si on insère côté A (index 0) :
+     *   - Les blocages = toutes les voitures déjà côté A (1ère moitié) qui partent APRÈS nous
+     *     (car elles seront devant nous, et on devra les sortir par A avant d'accéder à nous)
+     * Si on insère côté B (index fin) :
+     *   - Les blocages = toutes les voitures déjà côté B (2ème moitié) qui partent APRÈS nous
+     */
+    const half = Math.floor(lane.length / 2);
+    // Côté A : on pose la voiture en index 0, les "blocants" futurs sont ceux de la 1ère moitié qui partent après
+    const costSideA = lane.slice(0, half + 1).filter((v) => {
       const t = getVehicleTime(v);
       return !isNaN(t) && t > newTime;
     }).length;
-
-    // Coût côté B : combien de voitures à gauche partent APRÈS notre véhicule ?
-    const costB = lane.filter((v) => {
+    // Côté B : on pose la voiture en fin, les "blocants" futurs sont ceux de la 2ème moitié qui partent après
+    const costSideB = lane.slice(half).filter((v) => {
       const t = getVehicleTime(v);
       return !isNaN(t) && t > newTime;
     }).length;
-
-    // Pour côté A : les blocages sont les voitures déjà en position 0..N qui partent APRÈS nous
-    const costSideA = lane.slice(0, Math.ceil(lane.length / 2)).filter((v) => getVehicleTime(v) > newTime).length;
-    // Pour côté B : les blocages sont les voitures en position N/2..N qui partent APRÈS nous
-    const costSideB = lane.slice(Math.floor(lane.length / 2)).filter((v) => getVehicleTime(v) > newTime).length;
 
     const minCost = Math.min(costSideA, costSideB);
     const side = costSideA <= costSideB ? "A" : "B";
 
-    if (minCost < minBlockingCost) {
+    if (minCost < minBlockingCost || (minCost === minBlockingCost && bestLane === -1)) {
       minBlockingCost = minCost;
       bestLane = idx;
       bestSide = side;

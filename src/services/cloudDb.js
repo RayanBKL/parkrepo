@@ -253,6 +253,16 @@ export async function saveParkingData(parkingId, data) {
 }
 
 /**
+ * Met à jour le modèle physique d'un parking (lifo / fifo / bidir)
+ */
+export async function updateParkingModel(parkingId, model) {
+  await updateDoc(doc(db, "parkings", parkingId), {
+    model,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
  * Écoute les changements en temps réel d'un parking (mise à jour < 1 seconde)
  * Retourne une fonction de désabonnement (unsubscribe)
  */

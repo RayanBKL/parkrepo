@@ -22,6 +22,7 @@ import {
 import { updateOrganization, getOrganizationUsers, checkUserQuota, PLANS_CONFIG } from "../../services/organization";
 import { inviteMemberToOrg, updateUserRoleAndStatus, updateUserAccountPassword, saveUserProfile } from "../../services/auth";
 import { getLaneName } from "../../services/cloudDb";
+import { Layers, Car, ArrowRight, ArrowLeft, ArrowLeftRight } from "lucide-react";
 
 export default function SettingsView({
   organization,
@@ -29,9 +30,11 @@ export default function SettingsView({
   currentUser,
   userProfile,
   parkings = [],
+  activeParking = null,
+  onUpdateParkingModel = null,
   onRefreshOrg,
 }) {
-  const [activeTab, setActiveTab] = useState("team"); // "org" | "team" | "subscription" | "profile"
+  const [activeTab, setActiveTab] = useState("team"); // "org" | "team" | "subscription" | "profile" | "parking"
 
   // Feedback states
   const [successMsg, setSuccessMsg] = useState("");
@@ -251,6 +254,7 @@ export default function SettingsView({
       <div className="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto">
         {[
           { id: "team", label: "Utilisateurs & Équipe", icon: Users },
+          { id: "parking", label: "Modèle du Parking", icon: Layers },
           { id: "org", label: "Organisation", icon: Building2 },
           { id: "subscription", label: "Abonnement & Quotas", icon: CreditCard },
           { id: "profile", label: "Mon Compte", icon: User },
@@ -339,10 +343,11 @@ export default function SettingsView({
                               onChange={(e) => handleUpdateMemberRole(m.uid, e.target.value)}
                               className="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-700 text-cyan-300 text-xs font-bold focus:outline-none focus:border-cyan-500 cursor-pointer"
                             >
-                              <option value="OWNER">Owner (Gérant)</option>
+                          <option value="OWNER">Owner (Gérant)</option>
                               <option value="MANAGER">Manager</option>
                               <option value="VOITURIER">Voiturier</option>
                               <option value="VIEWER">Viewer (Lecture)</option>
+                              <option value="SUPER_ADMIN">Super Admin (⚡ accès total)</option>
                             </select>
                           ) : (
                             <span className="font-bold text-xs bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-xl text-amber-300">
@@ -386,6 +391,143 @@ export default function SettingsView({
               </table>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* TAB PARKING : MODÈLE PHYSIQUE */}
+      {activeTab === "parking" && (
+        <div className="space-y-6 max-w-3xl">
+          <div>
+            <h2 className="text-lg font-black text-white">Modèle Physique du Parking Actif</h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Définit la logique d'entrée / sortie des véhicules pour <span className="text-cyan-300 font-bold">{activeParking?.name || "votre parking actif"}</span>. Chaque parking peut avoir son propre modèle.
+            </p>
+          </div>
+
+          {!activeParking ? (
+            <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 text-center text-slate-400 text-sm">
+              Aucun parking actif sélectionné. Ouvrez un parking depuis la liste pour modifier son modèle.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {[
+                {
+                  id: "lifo",
+                  label: "Enfilade — LIFO",
+                  subtitle: "Cul-de-sac / Dead-end",
+                  badge: "DÉFAUT",
+                  badgeColor: "bg-cyan-600",
+                  description: "Une seule ouverture. Les véhicules entrent et sortent du même côté. La dernière voiture entrée est la première à pouvoir sortir.",
+                  diagram: [
+                    { label: "[SORTIE / ENTRÉE]", cls: "text-cyan-400 font-black" },
+                    { label: "  ↓ / ↑", cls: "text-slate-500" },
+                    { label: "  🚗 Voiture D  ← entrée en dernier (sort en 1er)", cls: "text-emerald-300" },
+                    { label: "  🚗 Voiture C", cls: "text-slate-300" },
+                    { label: "  🚗 Voiture B", cls: "text-slate-300" },
+                    { label: "  🚗 Voiture A  ← entrée en premier (sort en dernier)", cls: "text-rose-300" },
+                    { label: "  ███ (Mur / fond de voie)", cls: "text-slate-600" },
+                  ],
+                  pros: ["Optimisation automatique de la voie la plus vide", "Idéal pour sous-sols, hangars, impasses"],
+                  cons: ["Nécessite de déplacer les voitures devant pour accéder à une voiture du fond"],
+                },
+                {
+                  id: "fifo",
+                  label: "Drive-Through — FIFO",
+                  subtitle: "Couloir traversant / 2 sorties",
+                  badge: null,
+                  badgeColor: "",
+                  description: "Deux ouvertures opposées. Les véhicules entrent par un bout et sortent par l'autre. Zéro blocage possible.",
+                  diagram: [
+                    { label: "[SORTIE →]          [← ENTRÉE]", cls: "text-cyan-400 font-black" },
+                    { label: "    ↓                     ↑", cls: "text-slate-500" },
+                    { label: "    🚗 A ← 🚗 B ← 🚗 C ← 🚗 D", cls: "text-slate-300" },
+                    { label: "    (1er sorti)        (dernier entré)", cls: "text-slate-500" },
+                  ],
+                  pros: ["Zéro blocage — toujours accès direct en tête", "Idéal pour aéroports, ferries, valet avec 2 accès"],
+                  cons: ["Nécessite 2 accès physiques opposés", "Impossible de récupérer une voiture au milieu sans attendre"],
+                },
+                {
+                  id: "bidir",
+                  label: "Bidirectionnel",
+                  subtitle: "Double accès / Porte A + Porte B",
+                  badge: null,
+                  badgeColor: "",
+                  description: "Deux ouvertures sur la même voie (Porte A en tête, Porte B en queue). L'algorithme choisit automatiquement le côté qui minimise les manœuvres.",
+                  diagram: [
+                    { label: "[PORTE A] ⇄ 🚗 🚗 🚗 🚗 ⇄ [PORTE B]", cls: "text-purple-300 font-black" },
+                    { label: "     ↓↑                      ↓↑", cls: "text-slate-500" },
+                    { label: "  Sort par le côté ayant", cls: "text-slate-300" },
+                    { label: "  le moins de blocages.", cls: "text-emerald-300" },
+                  ],
+                  pros: ["Flexibilité maximale : sort du côté le moins bloqué", "Réduit les manœuvres de 30 à 50% vs LIFO"],
+                  cons: ["Nécessite 2 accès physiques sur la même voie"],
+                },
+              ].map((model) => {
+                const isSelected = (activeParking.model || "lifo") === model.id;
+                return (
+                  <div
+                    key={model.id}
+                    className={`p-5 rounded-3xl border transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-cyan-950/40 border-cyan-500 ring-2 ring-cyan-500/30 shadow-xl shadow-cyan-950/40"
+                        : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
+                    }`}
+                    onClick={() => {
+                      if (onUpdateParkingModel && !isSelected) {
+                        onUpdateParkingModel(activeParking.id, model.id);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h3 className="text-sm font-black text-white">{model.label}</h3>
+                          <span className="text-[10px] text-slate-400">{model.subtitle}</span>
+                          {model.badge && (
+                            <span className={`text-[9px] ${model.badgeColor} text-white px-1.5 py-0.5 rounded-full font-black`}>{model.badge}</span>
+                          )}
+                          {isSelected && (
+                            <span className="text-[9px] bg-cyan-500 text-white px-1.5 py-0.5 rounded-full font-black">ACTIF</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-300 mb-3">{model.description}</p>
+
+                        {/* Schéma visuel */}
+                        <div className="bg-slate-950 rounded-2xl p-3 mb-3 border border-slate-800 font-mono text-[11px] leading-relaxed space-y-0.5">
+                          {model.diagram.map((line, i) => (
+                            <div key={i} className={line.cls}>{line.label}</div>
+                          ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                          <div>
+                            <div className="text-emerald-400 font-bold mb-1">✅ Avantages</div>
+                            {model.pros.map((p, i) => <div key={i} className="text-slate-300">• {p}</div>)}
+                          </div>
+                          <div>
+                            <div className="text-rose-400 font-bold mb-1">⚠️ Contraintes</div>
+                            {model.cons.map((c, i) => <div key={i} className="text-slate-300">• {c}</div>)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
+                        isSelected ? "bg-cyan-500 border-cyan-400" : "bg-slate-800 border-slate-700"
+                      }`}>
+                        {isSelected ? <Check size={16} className="text-white" /> : <span className="text-slate-500 text-xs">○</span>}
+                      </div>
+                    </div>
+
+                    {isSelected && onUpdateParkingModel && (
+                      <div className="mt-3 pt-3 border-t border-cyan-500/20 text-[11px] text-cyan-300 font-semibold">
+                        ✅ Modèle actuel de "{activeParking.name}" — Cliquez sur un autre modèle pour changer.
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

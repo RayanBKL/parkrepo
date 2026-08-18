@@ -12,6 +12,7 @@ import {
   leaveParking,
   getLaneName,
   generateAccessCode,
+  updateParkingModel,
 } from "./services/cloudDb";
 import { getOrganization, createOrganization } from "./services/organization";
 import { assignLane, assignVehicleToParking, PARKING_MODELS, redistributeAllVehicles, generateVehicleId } from "./services/algorithm";
@@ -864,6 +865,11 @@ export default function App() {
               currentUser={currentUser}
               userProfile={userProfile}
               parkings={parkings}
+              activeParking={activeParking}
+              onUpdateParkingModel={async (parkingId, model) => {
+                await updateParkingModel(parkingId, model);
+                showToast(`Modèle mis à jour : ${model === "lifo" ? "Enfilade" : model === "fifo" ? "Drive-Through" : "Bidirectionnel"} ✅`);
+              }}
               onRefreshOrg={() => refreshUserData(currentUser)}
             />
           )}
