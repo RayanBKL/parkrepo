@@ -44,6 +44,32 @@ export function generateAccessCode() {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers pour la Sérialisation (Firestore ne supporte pas les nested arrays)
+// ---------------------------------------------------------------------------
+
+function serializeLanes(lanesArray) {
+  if (!Array.isArray(lanesArray)) return {};
+  const obj = {};
+  lanesArray.forEach((lane, i) => {
+    obj[i] = lane || [];
+  });
+  return obj;
+}
+
+function deserializeLanes(lanesObj, laneCount) {
+  const count = Number(laneCount) || 30;
+  if (!lanesObj) return Array.from({ length: count }, () => []);
+  if (Array.isArray(lanesObj) && !Array.isArray(lanesObj[0])) {
+    // Cas où c'était déjà un tableau, on s'assure que c'est un tableau de tableaux
+  }
+  const arr = [];
+  for (let i = 0; i < count; i++) {
+    arr.push(lanesObj[i] || []);
+  }
+  return arr;
+}
+
+// ---------------------------------------------------------------------------
 // PARKINGS — Création, Lecture, Mise à Jour Temps Réel
 // ---------------------------------------------------------------------------
 
@@ -65,7 +91,7 @@ export async function createParking(userId, config) {
     ownerId: userId,
     authorizedUsers: [userId], // Propriétaire toujours inclus
     hashedAccessCode: hashedCode,
-    lanes: Array.from({ length: config.laneCount || 30 }, () => []),
+    lanes: serializeLanes(Array.from({ length: config.laneCount || 30 }, () => [])),
     waiting: [],
     history: [
       {
@@ -90,7 +116,12 @@ export async function createParking(userId, config) {
   });
 
   // Retourner le parking avec le code brut (affiché une seule fois au propriétaire)
-  return { ...parkingData, rawAccessCode: rawCode };
+  // On renvoie un tableau de tableaux pour l'application Frontend
+  return { 
+    ...parkingData, 
+    rawAccessCode: rawCode, 
+    lanes: deserializeLanes(parkingData.lanes, parkingData.laneCount) 
+  };
 }
 
 /**
@@ -102,7 +133,10 @@ export async function getUserParkings(userId) {
     where("authorizedUsers", "array-contains", userId)
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ ...d.data(), id: d.id }));
+  return snap.docs.map((d) => {
+    const data = d.data();
+    return { ...data, id: d.id, lanes: deserializeLanes(data.lanes, data.laneCount) };
+  });
 }
 
 /**
@@ -144,7 +178,12 @@ export async function joinParkingWithCode(userId, rawCode) {
  * Appelé après chaque opération métier
  */
 export async function saveParkingData(parkingId, data) {
-  const { rawAccessCode, ...safeData } = data; // Ne jamais sauvegarder le code brut
+  const { rawAccessCode, lanes, ...safeData } = data; // Ne jamais sauvegarder le code brut
+  
+  if (lanes) {
+    safeData.lanes = serializeLanes(lanes);
+  }
+
   await updateDoc(doc(db, "parkings", parkingId), {
     ...safeData,
     updatedAt: serverTimestamp(),
@@ -158,7 +197,8 @@ export async function saveParkingData(parkingId, data) {
 export function subscribeToParking(parkingId, callback) {
   return onSnapshot(doc(db, "parkings", parkingId), (snap) => {
     if (snap.exists()) {
-      callback({ id: snap.id, ...snap.data() });
+      const data = snap.data();
+      callback({ id: snap.id, ...data, lanes: deserializeLanes(data.lanes, data.laneCount) });
     }
   });
 }
@@ -169,7 +209,10 @@ export function subscribeToParkingList(userId, callback, onError) {
     where("authorizedUsers", "array-contains", userId)
   );
   return onSnapshot(q, (snap) => {
-    const parkings = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const parkings = snap.docs.map((d) => {
+      const data = d.data();
+      return { id: d.id, ...data, lanes: deserializeLanes(data.lanes, data.laneCount) };
+    });
     callback(parkings);
   }, (err) => {
     console.error("Erreur onSnapshot (accès refusé ou DB manquante):", err);
