@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  Car,
-  Plus,
   FileSpreadsheet,
   Download,
   History,
@@ -17,6 +15,7 @@ import {
   User,
   Users,
   X,
+  Sliders,
 } from "lucide-react";
 
 import ParkflowLogo from "./ParkflowLogo";
@@ -30,26 +29,38 @@ export default function Navbar({
   setSearchQuery,
   activeTab,
   setActiveTab,
-  onOpenAddModal,
   onOpenImportModal,
   onExportExcel,
   onOpenHistoryModal,
   onOpenParkingsModal,
   onOpenSettingsModal,
   onOpenJoinParking,
-  onOpenAccessCode,
   onOpenProfileModal,
   onOpenCollaboratorsModal,
   onLogOut,
 }) {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  // Fermer le menu lors d'un clic en dehors
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const displayName = currentUser?.displayName || currentUser?.email?.split("@")[0] || "Mon Compte";
+  const teamCount = (activeParking?.authorizedUsers || []).length || 1;
 
   return (
     <header className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80 shadow-2xl">
@@ -136,73 +147,128 @@ export default function Navbar({
           )}
         </div>
 
-        {/* Actions Principales */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={onOpenAddModal}
-            className="group relative px-4 py-2 rounded-full bg-gradient-to-r from-cyan-600 via-emerald-600 to-cyan-600 hover:from-cyan-500 hover:via-emerald-500 hover:to-cyan-500 bg-[length:200%_auto] text-white text-xs font-black shadow-lg shadow-cyan-900/40 hover:shadow-cyan-700/60 transition-all flex items-center gap-1.5 cursor-pointer overflow-hidden hover:scale-105"
-          >
-            <div className="absolute inset-0 w-full h-full bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out"></div>
-            <Plus size={16} className="relative z-10" />
-            <span className="relative z-10">+ Véhicule</span>
-          </button>
+        {/* Actions & Menu Unifié */}
+        <div className="flex items-center gap-2">
+          {/* Menu Déroulant Centralisé (Paramètres & Outils) */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-full border text-xs font-bold transition-all cursor-pointer shadow-inner ${
+                isMenuOpen
+                  ? "bg-cyan-600 border-cyan-400 text-white shadow-lg shadow-cyan-900/50"
+                  : "bg-slate-900/90 hover:bg-slate-800 border-slate-700/80 text-slate-200 hover:text-white"
+              }`}
+              title="Menu des outils et paramètres du parking"
+            >
+              <Settings size={16} className={`transition-transform duration-300 ${isMenuOpen ? "rotate-90 text-white" : "text-cyan-400"}`} />
+              <span className="hidden sm:inline">Options</span>
+              <ChevronDown size={13} className={`text-slate-400 transition-transform ${isMenuOpen ? "rotate-180" : ""}`} />
+            </button>
 
-          <button
-            onClick={onOpenImportModal}
-            className="px-3 py-2 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-slate-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer hover:text-emerald-400 hover:border-emerald-500/30"
-          >
-            <FileSpreadsheet size={15} />
-            <span className="hidden sm:inline">Import</span>
-          </button>
+            {/* Menu Popover */}
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-slate-900/95 border border-slate-700/90 rounded-2xl p-1.5 shadow-2xl backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                <div className="px-3 py-2 border-b border-slate-800 mb-1">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    Outils & Paramètres
+                  </div>
+                  <div className="text-xs font-bold text-white truncate">
+                    {activeParking?.name || "Parking Actuel"}
+                  </div>
+                </div>
 
-          <button
-            onClick={onExportExcel}
-            title="Exporter l'état actuel du parc en Excel"
-            className="p-2 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-emerald-400 transition-colors cursor-pointer"
-          >
-            <Download size={15} />
-          </button>
+                <div className="space-y-0.5">
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenSettingsModal();
+                    }}
+                    className="w-full px-3 py-2 rounded-xl text-left text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center gap-2.5 cursor-pointer"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-cyan-600/20 text-cyan-400 flex items-center justify-center">
+                      <Sliders size={13} />
+                    </div>
+                    <span>Configuration du parking</span>
+                  </button>
 
-          <button
-            onClick={onOpenHistoryModal}
-            title="Historique des mouvements"
-            className="p-2 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-cyan-400 transition-colors cursor-pointer"
-          >
-            <History size={15} />
-          </button>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenCollaboratorsModal();
+                    }}
+                    className="w-full px-3 py-2 rounded-xl text-left text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-6 h-6 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+                        <Users size={13} />
+                      </div>
+                      <span>Équipe & Membres</span>
+                    </div>
+                    <span className="text-[10px] bg-slate-800 text-slate-300 font-mono px-2 py-0.5 rounded-full">
+                      {teamCount}
+                    </span>
+                  </button>
 
-          <button
-            onClick={onOpenSettingsModal}
-            title="Paramètres et sauvegardes"
-            className="p-2 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition-colors cursor-pointer"
-          >
-            <Settings size={15} />
-          </button>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenHistoryModal();
+                    }}
+                    className="w-full px-3 py-2 rounded-xl text-left text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center gap-2.5 cursor-pointer"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-sky-600/20 text-sky-400 flex items-center justify-center">
+                      <History size={13} />
+                    </div>
+                    <span>Historique des mouvements</span>
+                  </button>
 
-          {/* Panel Collaborateurs / Équipe */}
-          <button
-            onClick={onOpenCollaboratorsModal}
-            title="Voir l'équipe et les personnes ayant accès à ce parking"
-            className="px-3 py-1.5 rounded-full bg-cyan-600/15 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 hover:text-white transition-all cursor-pointer text-xs font-bold flex items-center gap-1.5 hover:shadow-[0_0_12px_rgba(6,182,212,0.3)]"
-          >
-            <Users size={14} className="text-cyan-400" />
-            <span className="hidden md:inline">Équipe</span>
-            <span className="text-[10px] bg-cyan-500/30 px-1.5 py-0.2 rounded-full font-mono">
-              {(activeParking?.authorizedUsers || []).length || 1}
-            </span>
-          </button>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenImportModal();
+                    }}
+                    className="w-full px-3 py-2 rounded-xl text-left text-xs font-semibold text-slate-200 hover:text-emerald-400 hover:bg-slate-800/80 transition-colors flex items-center gap-2.5 cursor-pointer"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center">
+                      <FileSpreadsheet size={13} />
+                    </div>
+                    <span>Importer Excel (.xlsx / .csv)</span>
+                  </button>
 
-          {/* Rejoindre un Parking */}
-          <button
-            onClick={onOpenJoinParking}
-            title="Rejoindre un parking via un code d'accès"
-            className="p-2 rounded-full bg-cyan-600/10 hover:bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 transition-colors cursor-pointer"
-          >
-            <KeyRound size={15} />
-          </button>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onExportExcel();
+                    }}
+                    className="w-full px-3 py-2 rounded-xl text-left text-xs font-semibold text-slate-200 hover:text-emerald-400 hover:bg-slate-800/80 transition-colors flex items-center gap-2.5 cursor-pointer"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center">
+                      <Download size={13} />
+                    </div>
+                    <span>Exporter l'état du parc</span>
+                  </button>
+
+                  <div className="pt-1 mt-1 border-t border-slate-800">
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        onOpenJoinParking();
+                      }}
+                      className="w-full px-3 py-2 rounded-xl text-left text-xs font-semibold text-cyan-300 hover:text-cyan-200 hover:bg-cyan-950/40 transition-colors flex items-center gap-2.5 cursor-pointer"
+                    >
+                      <div className="w-6 h-6 rounded-lg bg-cyan-600/20 text-cyan-400 flex items-center justify-center">
+                        <KeyRound size={13} />
+                      </div>
+                      <span>Rejoindre un autre parking</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Compte Utilisateur & Déconnexion */}
-          <div className="flex items-center gap-1.5 pl-3 border-l border-slate-800/80 ml-1">
+          <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800/80 ml-1">
             <button
               onClick={onOpenProfileModal}
               title="Gérer mon profil (Nom, Prénom, Téléphone, Titre)"
@@ -226,4 +292,5 @@ export default function Navbar({
     </header>
   );
 }
+
 
