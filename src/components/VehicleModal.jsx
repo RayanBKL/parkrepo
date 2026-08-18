@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { X, Car, Calendar, Clock, Plane, Phone, FileText, CheckCircle2, Sparkles } from "lucide-react";
 import { generateVehicleId } from "../services/algorithm";
+import { getLaneName } from "../services/cloudDb";
 
-export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, targetLaneIndex }) {
+export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, targetLaneIndex, parking }) {
   if (!isOpen) return null;
 
   const [plate, setPlate] = useState("");
@@ -30,24 +31,23 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
         }
       }
     } else {
-      // Valeurs par défaut pour nouvel ajout
-      const defaultDep = new Date(Date.now() + 2 * 24 * 3600 * 1000); // Dans 2 jours
-      defaultDep.setHours(15, 0, 0, 0);
-      setDepartureDate(defaultDep.toISOString().slice(0, 10));
-      setDepartureTime("15:00");
       setPlate("");
       setModel("");
       setFlightNumber("");
       setPhone("");
       setNotes("");
       setError("");
+
+      const tomorrow = new Date(Date.now() + 24 * 3600 * 1000);
+      setDepartureDate(tomorrow.toISOString().slice(0, 10));
+      setDepartureTime("14:00");
     }
   }, [editingVehicle, isOpen]);
 
-  // Formatter la plaque automatiquement en majuscules avec tirets
+  // Formatter la plaque automatiquement en majuscules
   const handlePlateChange = (val) => {
-    let clean = val.toUpperCase().replace(/[^A-Z0-9-]/g, "");
-    setPlate(clean);
+    setPlate(val.toUpperCase().replace(/\s+/g, ""));
+    setError("");
   };
 
   // Raccourcis de date de départ
@@ -59,22 +59,28 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     if (!plate.trim()) {
-      setError("Veuillez saisir la plaque d'immatriculation.");
-      return;
-    }
-    if (!departureDate || !departureTime) {
-      setError("Veuillez saisir la date et l'heure de départ.");
+      setError("Le numéro d'immatriculation est obligatoire.");
       return;
     }
 
-    const departureIso = new Date(`${departureDate}T${departureTime}:00`).toISOString();
+    if (!departureDate || !departureTime) {
+      setError("La date et l'heure de départ sont obligatoires.");
+      return;
+    }
+
+    const departureDateTime = new Date(`${departureDate}T${departureTime}:00`);
+    if (isNaN(departureDateTime.getTime())) {
+      setError("Date de départ invalide.");
+      return;
+    }
 
     const vehicleData = {
       id: editingVehicle ? editingVehicle.id : generateVehicleId(),
       plate: plate.trim().toUpperCase(),
       model: model.trim() || "Véhicule Client",
-      departure: departureIso,
+      departure: departureDateTime.toISOString(),
       arrivedAt: editingVehicle ? editingVehicle.arrivedAt : new Date().toISOString(),
       flightNumber: flightNumber.trim().toUpperCase(),
       phone: phone.trim(),
@@ -84,6 +90,11 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
     onSave(vehicleData, targetLaneIndex);
     onClose();
   };
+
+  const targetLaneDisplayName =
+    targetLaneIndex !== null && targetLaneIndex !== undefined
+      ? getLaneName(targetLaneIndex, parking)
+      : "";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
@@ -100,7 +111,7 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
               </h2>
               <p className="text-xs text-slate-400">
                 {targetLaneIndex !== null && targetLaneIndex !== undefined
-                  ? `Placement ciblé dans la Voie ${targetLaneIndex + 1}`
+                  ? `Placement ciblé dans ${targetLaneDisplayName}`
                   : "Placement optimisé automatique selon l'heure de départ"}
               </p>
             </div>

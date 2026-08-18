@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { Car, AlertTriangle, CheckCircle2, RefreshCw, Plus, Sparkles } from "lucide-react";
+import { Car, AlertTriangle, RefreshCw, Plus, Edit2, Check, X } from "lucide-react";
 import VehicleCard from "./VehicleCard";
 import { checkLaneConflicts } from "../services/algorithm";
+import { getLaneName, indexToLetter } from "../services/cloudDb";
 
 export default function ParkingGrid({
+  parking,
   lanes,
   capacity,
   searchQuery,
@@ -15,11 +17,31 @@ export default function ParkingGrid({
   onAddVehicleToLane,
   onSortLane,
   onDropVehicleToLane,
+  onRenameLane,
   selectedVehicleId,
   setSelectedVehicleId,
 }) {
   const [dragOverLaneIdx, setDragOverLaneIdx] = useState(null);
+  const [editingLaneIdx, setEditingLaneIdx] = useState(null);
+  const [tempLaneName, setTempLaneName] = useState("");
   const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const handleStartRename = (laneIdx) => {
+    setEditingLaneIdx(laneIdx);
+    setTempLaneName(getLaneName(laneIdx, parking));
+  };
+
+  const handleSaveRename = (laneIdx) => {
+    if (onRenameLane) {
+      onRenameLane(laneIdx, tempLaneName);
+    }
+    setEditingLaneIdx(null);
+  };
+
+  const handleCancelRename = () => {
+    setEditingLaneIdx(null);
+    setTempLaneName("");
+  };
 
   const handleDragOver = (e, laneIdx) => {
     e.preventDefault();
@@ -60,6 +82,14 @@ export default function ParkingGrid({
           const conflicts = checkLaneConflicts(lane);
           const hasConflicts = conflicts.length > 0;
           const isDragTarget = dragOverLaneIdx === laneIdx;
+          const currentLaneName = getLaneName(laneIdx, parking);
+          const isEditingThisLane = editingLaneIdx === laneIdx;
+
+          // Repère court pour le badge carré (ex: 1, 2, A, B, ...)
+          const shortBadge =
+            parking?.laneNaming === "alphabetic"
+              ? indexToLetter(laneIdx)
+              : `${laneIdx + 1}`;
 
           // Filtrer les véhicules selon la recherche ou le filtre d'urgence
           const visibleVehicles = lane.map((v, slotIdx) => {
@@ -68,7 +98,8 @@ export default function ParkingGrid({
               v.plate.toLowerCase().includes(normalizedQuery) ||
               (v.model && v.model.toLowerCase().includes(normalizedQuery)) ||
               (v.flightNumber && v.flightNumber.toLowerCase().includes(normalizedQuery)) ||
-              `voie ${laneIdx + 1}`.includes(normalizedQuery);
+              `voie ${laneIdx + 1}`.includes(normalizedQuery) ||
+              currentLaneName.toLowerCase().includes(normalizedQuery);
 
             const now = new Date();
             const diffH = (new Date(v.departure).getTime() - now.getTime()) / 3_600_000;
@@ -104,9 +135,9 @@ export default function ParkingGrid({
             >
               {/* Entête de la Voie */}
               <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/40 rounded-t-2xl">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                   <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
                       occupancy === 0
                         ? "bg-slate-800 text-slate-400"
                         : isFull
@@ -114,24 +145,71 @@ export default function ParkingGrid({
                         : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
                     }`}
                   >
-                    {laneIdx + 1}
+                    {shortBadge}
                   </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-slate-100 flex items-center gap-1.5">
-                      Voie {laneIdx + 1}
-                      {hasConflicts && (
-                        <span title="Conflit de sortie détecté !" className="text-amber-400">
-                          <AlertTriangle size={13} />
-                        </span>
-                      )}
-                    </h3>
-                    <p className="text-[10px] text-slate-400">
-                      {occupancy} / {capacity} places {freeSlots > 0 ? `(${freeSlots} libre${freeSlots > 1 ? "s" : ""})` : "(Pleine)"}
-                    </p>
-                  </div>
+
+                  {isEditingThisLane ? (
+                    <div className="flex items-center gap-1 flex-1" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="text"
+                        value={tempLaneName}
+                        onChange={(e) => setTempLaneName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveRename(laneIdx);
+                          if (e.key === "Escape") handleCancelRename();
+                        }}
+                        className="w-full px-2 py-0.5 rounded bg-slate-950 border border-cyan-500 text-white text-xs font-bold focus:outline-none"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveRename(laneIdx)}
+                        className="p-1 rounded bg-cyan-600 hover:bg-cyan-500 text-white cursor-pointer"
+                        title="Valider"
+                      >
+                        <Check size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelRename}
+                        className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
+                        title="Annuler"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="min-w-0 flex-1 group/title">
+                      <div className="flex items-center gap-1.5">
+                        <h3
+                          className="font-bold text-sm text-slate-100 truncate cursor-pointer hover:text-cyan-300 transition-colors"
+                          onClick={() => handleStartRename(laneIdx)}
+                          title="Cliquer pour renommer cette voie"
+                        >
+                          {currentLaneName}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => handleStartRename(laneIdx)}
+                          className="opacity-0 group-hover/title:opacity-100 text-slate-400 hover:text-cyan-300 transition-opacity p-0.5"
+                          title="Renommer"
+                        >
+                          <Edit2 size={11} />
+                        </button>
+                        {hasConflicts && (
+                          <span title="Conflit de sortie détecté !" className="text-amber-400 shrink-0">
+                            <AlertTriangle size={13} />
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        {occupancy} / {capacity} places {freeSlots > 0 ? `(${freeSlots} libre${freeSlots > 1 ? "s" : ""})` : "(Pleine)"}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0 ml-1">
                   {hasConflicts && (
                     <button
                       onClick={() => onSortLane(laneIdx)}
@@ -144,7 +222,7 @@ export default function ParkingGrid({
                   {freeSlots > 0 && (
                     <button
                       onClick={() => onAddVehicleToLane(laneIdx)}
-                      title={`Ajouter un véhicule directement dans la Voie ${laneIdx + 1}`}
+                      title={`Ajouter un véhicule directement dans ${currentLaneName}`}
                       className="p-1.5 rounded-lg bg-slate-800 hover:bg-cyan-600 text-slate-300 hover:text-white transition-colors cursor-pointer"
                     >
                       <Plus size={13} />
@@ -186,6 +264,7 @@ export default function ParkingGrid({
                         slotIndex={slotIdx}
                         isHead={slotIdx === 0}
                         isBlocked={isBlocked}
+                        parking={parking}
                         onExit={onExitVehicle}
                         onMove={onMoveVehicle}
                         onEdit={onEditVehicle}
@@ -204,3 +283,4 @@ export default function ParkingGrid({
     </div>
   );
 }
+

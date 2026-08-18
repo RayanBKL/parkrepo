@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { X, History, Search, Download, Trash2, ArrowRight, LogOut, Plus, RefreshCw } from "lucide-react";
 import { fmtDateTime } from "../services/algorithm";
+import { getLaneName } from "../services/cloudDb";
 import * as XLSX from "xlsx";
 
-export default function HistoryModal({ isOpen, onClose, history, onClearHistory, parkingName }) {
+export default function HistoryModal({ isOpen, onClose, history, onClearHistory, parking, parkingName }) {
   if (!isOpen) return null;
 
   const [search, setSearch] = useState("");
@@ -21,7 +22,7 @@ export default function HistoryModal({ isOpen, onClose, history, onClearHistory,
       Type: item.type,
       Plaque: item.details?.plate || item.details?.vehicle?.plate || "—",
       Modèle: item.details?.model || item.details?.vehicle?.model || "—",
-      Voie: item.details?.lane !== undefined ? `Voie ${item.details.lane + 1}` : "—",
+      Voie: item.details?.lane !== undefined ? getLaneName(item.details.lane, parking) : "—",
       Détails: JSON.stringify(item.details || {}),
     }));
 
@@ -30,6 +31,7 @@ export default function HistoryModal({ isOpen, onClose, history, onClearHistory,
     XLSX.utils.book_append_sheet(wb, ws, "Historique");
     XLSX.writeFile(wb, `Historique_${parkingName || "Parc"}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
+
 
   const getLogIcon = (type) => {
     switch (type) {

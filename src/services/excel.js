@@ -4,6 +4,7 @@
 
 import * as XLSX from "xlsx";
 import { generateVehicleId, fmtDateTime } from "./algorithm";
+import { getLaneName } from "./cloudDb";
 
 const COLUMN_HINTS = {
   plate: /plaque|immatricul|plate|registration|immat/i,
@@ -114,7 +115,7 @@ export function exportParkingToExcel(parking) {
     lane.forEach((v, pos) => {
       data.push({
         Statut: "En Parc",
-        Voie: `Voie ${laneIdx + 1}`,
+        Voie: getLaneName(laneIdx, parking),
         Position: pos + 1 === 1 ? "1 (Sortie)" : `${pos + 1}`,
         Immatriculation: v.plate,
         Modèle: v.model || "—",

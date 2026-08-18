@@ -15,10 +15,39 @@ import {
   where,
   serverTimestamp,
   arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
 // Suppression de hashAccessCode - le code brut sera utilisé comme identifiant simple.
+
+/**
+ * Convertit un index numérique (0, 1, 2... 25, 26, 27) en lettres (A, B, C... Z, AA, AB)
+ */
+export function indexToLetter(idx) {
+  let result = "";
+  let temp = Number(idx);
+  while (temp >= 0) {
+    result = String.fromCharCode(65 + (temp % 26)) + result;
+    temp = Math.floor(temp / 26) - 1;
+  }
+  return result;
+}
+
+/**
+ * Retourne le nom d'affichage d'une voie en tenant compte des personnalisations et du mode de nommage
+ */
+export function getLaneName(laneIdx, parking) {
+  if (laneIdx === undefined || laneIdx === null || laneIdx < 0) return "Voie ?";
+  const idx = Number(laneIdx);
+  if (parking?.laneNames && parking.laneNames[idx] && typeof parking.laneNames[idx] === "string" && parking.laneNames[idx].trim()) {
+    return parking.laneNames[idx].trim();
+  }
+  if (parking?.laneNaming === "alphabetic") {
+    return `Voie ${indexToLetter(idx)}`;
+  }
+  return `Voie ${idx + 1}`;
+}
 
 /**
  * Génère un code d'accès aléatoire lisible pour le partage
@@ -75,6 +104,8 @@ export async function createParking(userId, config) {
     description: config.description || "",
     laneCount: Number(config.laneCount) || 30,
     capacity: Number(config.capacity) || 10,
+    laneNaming: config.laneNaming || "numeric", // "numeric" | "alphabetic"
+    laneNames: config.laneNames || {}, // { 0: "Voie VIP", ... }
     ownerId: userId,
     authorizedUsers: [userId], // Propriétaire toujours inclus
     accessCode: rawCode,
@@ -128,12 +159,10 @@ export async function getUserParkings(userId) {
 
 /**
  * Rejoindre un parking via son Code d'Accès (lecture + écriture)
- * Le code est hashé avant toute requête — le code brut ne transite jamais
  */
 export async function joinParkingWithCode(userId, rawCode) {
   const normalizedCode = rawCode.trim().toUpperCase();
 
-  // Lookup dans la table des codes d'accès (autorisé pour tout user connecté)
   const codeDoc = await getDoc(doc(db, "accessCodes", normalizedCode));
   if (!codeDoc.exists()) {
     throw new Error("Code d'accès invalide ou expiré.");
@@ -141,25 +170,52 @@ export async function joinParkingWithCode(userId, rawCode) {
 
   const { parkingId, parkingName } = codeDoc.data();
 
-  // On tente directement l'ajout via arrayUnion.
-  // La règle Firestore autorise cet update si l'user ajoute uniquement son propre uid
-  // et qu'il ne supprime personne. arrayUnion est idempotent (pas d'erreur si déjà présent).
   try {
     await updateDoc(doc(db, "parkings", parkingId), {
       authorizedUsers: arrayUnion(userId),
     });
     return { alreadyJoined: false, parkingId, name: parkingName };
   } catch (err) {
-    // Si l'user est déjà dans authorizedUsers, l'update peut réussir quand même.
-    // Si refus de permissions, c'est un autre problème.
     if (err.code === "permission-denied") {
-      // L'user est peut-être déjà autorisé (ownerId), on considère alreadyJoined
       return { alreadyJoined: true, parkingId, name: parkingName };
     }
     throw err;
   }
 }
 
+/**
+ * Quitte un parking (retire l'utilisateur de authorizedUsers).
+ * Si plus personne n'est dans authorizedUsers, supprime définitivement le parking.
+ */
+export async function leaveParking(parkingId, userId) {
+  const snap = await getDoc(doc(db, "parkings", parkingId));
+  if (!snap.exists()) return { deletedPermanently: true };
+  
+  const data = snap.data();
+  const currentUsers = Array.isArray(data.authorizedUsers) ? data.authorizedUsers : [data.ownerId].filter(Boolean);
+  const remainingUsers = currentUsers.filter((u) => u !== userId);
+
+  if (remainingUsers.length === 0) {
+    // Plus personne n'a accès à ce parking -> suppression définitive automatique
+    const accessCode = data.accessCode;
+    if (accessCode) {
+      await deleteDoc(doc(db, "accessCodes", accessCode)).catch(() => {});
+    }
+    await deleteDoc(doc(db, "parkings", parkingId));
+    return { deletedPermanently: true };
+  } else {
+    // Il reste d'autres utilisateurs
+    const updates = {
+      authorizedUsers: arrayRemove(userId),
+    };
+    // Si c'était le créateur qui quitte, on transmet le rôle de propriétaire au premier membre restant
+    if (data.ownerId === userId && remainingUsers.length > 0) {
+      updates.ownerId = remainingUsers[0];
+    }
+    await updateDoc(doc(db, "parkings", parkingId), updates);
+    return { deletedPermanently: false };
+  }
+}
 
 /**
  * Met à jour les données complètes d'un parking (lanes, waiting, history...)
@@ -209,17 +265,19 @@ export function subscribeToParkingList(userId, callback, onError) {
 }
 
 /**
- * Supprime un parking (propriétaire uniquement)
+ * Supprime un parking définitivement pour tout le monde (créateur / propriétaire uniquement)
  */
 export async function deleteParking(parkingId, userId) {
   const snap = await getDoc(doc(db, "parkings", parkingId));
   if (!snap.exists()) throw new Error("Parking introuvable.");
-  if (snap.data().ownerId !== userId) throw new Error("Seul le propriétaire peut supprimer ce parking.");
+  if (snap.data().ownerId !== userId) {
+    throw new Error("Seul le créateur ou administrateur du parking peut le supprimer définitivement.");
+  }
 
   // Supprimer le code d'accès associé
   const accessCode = snap.data().accessCode;
   if (accessCode) {
-    await deleteDoc(doc(db, "accessCodes", accessCode));
+    await deleteDoc(doc(db, "accessCodes", accessCode)).catch(() => {});
   }
 
   await deleteDoc(doc(db, "parkings", parkingId));
@@ -235,7 +293,7 @@ export async function regenerateAccessCode(parkingId, userId) {
 
   // Supprimer l'ancien code d'accès
   const oldCode = snap.data().accessCode;
-  if (oldCode) await deleteDoc(doc(db, "accessCodes", oldCode));
+  if (oldCode) await deleteDoc(doc(db, "accessCodes", oldCode)).catch(() => {});
 
   const newRawCode = generateAccessCode();
 
@@ -253,3 +311,4 @@ export async function regenerateAccessCode(parkingId, userId) {
 
   return newRawCode;
 }
+

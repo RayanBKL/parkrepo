@@ -5,16 +5,11 @@ import {
   Plane,
   Phone,
   Printer,
-  LogOut,
-  ArrowRight,
-  Filter,
   Search,
-  CheckCircle2,
   Calendar,
-  AlertCircle,
-  FileText,
 } from "lucide-react";
-import { fmtDateTime, fmtDateOnly, fmtTimeOnly, timeUntil, getUrgencyStyle } from "../services/algorithm";
+import { fmtDateOnly, fmtTimeOnly, timeUntil, getUrgencyStyle } from "../services/algorithm";
+import { getLaneName } from "../services/cloudDb";
 
 export default function DeparturesSchedule({
   parking,
@@ -50,12 +45,14 @@ export default function DeparturesSchedule({
   // Filtrer selon la recherche et le filtre temporel
   const filteredList = allVehicles.filter((v) => {
     const q = query.trim().toLowerCase();
+    const laneName = getLaneName(v.laneIndex, parking).toLowerCase();
     const matchQuery =
       !q ||
       v.plate.toLowerCase().includes(q) ||
       (v.model && v.model.toLowerCase().includes(q)) ||
       (v.flightNumber && v.flightNumber.toLowerCase().includes(q)) ||
-      `voie ${v.laneIndex + 1}`.includes(q);
+      `voie ${v.laneIndex + 1}`.includes(q) ||
+      laneName.includes(q);
 
     if (!matchQuery) return false;
 
@@ -223,7 +220,7 @@ export default function DeparturesSchedule({
                       <td className="p-3.5 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <span className="px-2 py-1 rounded-lg bg-cyan-600/20 text-cyan-300 border border-cyan-500/30 font-bold text-xs">
-                            Voie {v.laneIndex + 1}
+                            {getLaneName(v.laneIndex, parking)}
                           </span>
                           <span
                             className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${

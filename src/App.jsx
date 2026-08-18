@@ -10,6 +10,8 @@ import {
   subscribeToParking,
   saveParkingData,
   deleteParking,
+  leaveParking,
+  getLaneName,
   generateAccessCode,
 } from "./services/cloudDb";
 import { assignLane, redistributeAllVehicles, generateVehicleId } from "./services/algorithm";
@@ -185,21 +187,22 @@ export default function App() {
 
       if (directLaneIndex !== null && directLaneIndex !== undefined && directLaneIndex >= 0) {
         const lane = newLanes[directLaneIndex] || [];
+        const laneName = getLaneName(directLaneIndex, p);
         if (lane.length < p.capacity) {
           const insertIdx = lane.findIndex((v) => new Date(v.departure).getTime() > new Date(vehicleData.departure).getTime());
           if (insertIdx === -1) lane.push(vehicleData);
           else lane.splice(insertIdx, 0, vehicleData);
           newLanes[directLaneIndex] = lane;
-          detailMsg = `Véhicule ${vehicleData.plate} placé dans la Voie ${directLaneIndex + 1}`;
+          detailMsg = `Véhicule ${vehicleData.plate} placé dans ${laneName}`;
         } else {
           newWaiting.push(vehicleData);
-          detailMsg = `Voie ${directLaneIndex + 1} pleine : ${vehicleData.plate} en file d'attente`;
+          detailMsg = `${laneName} pleine : ${vehicleData.plate} en file d'attente`;
         }
       } else {
         const assignment = assignLane(newLanes, p.capacity, vehicleData, activeStrategy);
         if (!assignment.waiting && assignment.laneIndex !== -1) {
           newLanes[assignment.laneIndex].splice(assignment.insertIndex, 0, vehicleData);
-          detailMsg = `Véhicule ${vehicleData.plate} affecté à la Voie ${assignment.laneIndex + 1}`;
+          detailMsg = `Véhicule ${vehicleData.plate} affecté à ${getLaneName(assignment.laneIndex, p)}`;
         } else {
           newWaiting.push(vehicleData);
           detailMsg = `Parc complet : ${vehicleData.plate} en file d'attente`;
@@ -264,13 +267,16 @@ export default function App() {
       if (insertIdx === -1) destLane.push(vehicle);
       else destLane.splice(insertIdx, 0, vehicle);
 
+      const fromName = getLaneName(fromLane, p);
+      const toName = getLaneName(targetLaneIndex, p);
+
       return {
         ...p,
         lanes: newLanes,
-        history: logMovement(p, "MOVE", { plate: vehicle.plate, fromLane, toLane: targetLaneIndex, message: `${vehicle.plate} déplacé Voie ${fromLane + 1} → Voie ${targetLaneIndex + 1}` }),
+        history: logMovement(p, "MOVE", { plate: vehicle.plate, fromLane, toLane: targetLaneIndex, message: `${vehicle.plate} déplacé ${fromName} → ${toName}` }),
       };
     });
-    showToast(`Véhicule ${vehicle.plate} déplacé en Voie ${targetLaneIndex + 1}`);
+    showToast(`Véhicule ${vehicle.plate} déplacé en ${getLaneName(targetLaneIndex, activeParking)}`);
   };
 
   const handleDropVehicleToLane = (vehicleId, fromLaneIndex, targetLaneIndex) => {
@@ -284,9 +290,23 @@ export default function App() {
     await updateActiveParking((p) => {
       const newLanes = p.lanes.map((l) => [...l]);
       newLanes[laneIndex].sort((a, b) => new Date(a.departure) - new Date(b.departure));
-      return { ...p, lanes: newLanes, history: logMovement(p, "SORT_LANE", { lane: laneIndex, message: `Réorganisation de la Voie ${laneIndex + 1}` }) };
+      return { ...p, lanes: newLanes, history: logMovement(p, "SORT_LANE", { lane: laneIndex, message: `Réorganisation de ${getLaneName(laneIndex, p)}` }) };
     });
-    showToast(`Voie ${laneIndex + 1} réorganisée !`);
+    showToast(`${getLaneName(laneIndex, activeParking)} réorganisée !`);
+  };
+
+  const handleRenameLane = async (laneIdx, newName) => {
+    if (!activeParking) return;
+    await updateActiveParking((p) => {
+      const nextNames = { ...(p.laneNames || {}) };
+      if (newName && newName.trim()) {
+        nextNames[laneIdx] = newName.trim();
+      } else {
+        delete nextNames[laneIdx];
+      }
+      return { ...p, laneNames: nextNames };
+    });
+    showToast(`Voie mise à jour : ${newName || "Par défaut"}`);
   };
 
   const handleAutoRedistributeAll = async (strategy = activeStrategy) => {
@@ -330,7 +350,7 @@ export default function App() {
       const newParking = await createParking(currentUser.uid, config);
       setActiveParkingId(newParking.id);
       showToast(`Parking "${config.name}" créé !`);
-      return newParking; // Contient rawAccessCode pour l'affichage initial
+      return newParking;
     } catch (err) {
       showToast("Erreur lors de la création du parking.", "error");
     }
@@ -343,7 +363,7 @@ export default function App() {
 
     try {
       await deleteParking(pkgId, currentUser.uid);
-      showToast(`Parking "${pName}" supprimé avec succès.`);
+      showToast(`Parking "${pName}" supprimé définitivement.`);
 
       const remaining = parkings.filter((p) => p.id !== pkgId);
       if (remaining.length > 0) {
@@ -358,6 +378,31 @@ export default function App() {
     }
   };
 
+  const handleLeaveParking = async (pkgId) => {
+    if (!currentUser) return;
+    const targetParking = parkings.find((p) => p.id === pkgId);
+    const pName = targetParking?.name || "ce parking";
+
+    try {
+      const res = await leaveParking(pkgId, currentUser.uid);
+      if (res?.deletedPermanently) {
+        showToast(`Dernier membre parti : parking "${pName}" supprimé.`);
+      } else {
+        showToast(`Parking "${pName}" retiré de votre compte.`);
+      }
+
+      const remaining = parkings.filter((p) => p.id !== pkgId);
+      if (remaining.length > 0) {
+        setActiveParkingId(remaining[0].id);
+      } else {
+        setActiveParkingId(null);
+        setIsParkingsModalOpen(false);
+      }
+    } catch (err) {
+      console.error("Erreur départ parking:", err);
+      showToast(err.message || "Erreur lors du retrait du parking.", "error");
+    }
+  };
 
   const handleJoinedParking = (parkingId, alreadyJoined) => {
     setActiveParkingId(parkingId);
@@ -374,7 +419,15 @@ export default function App() {
         newLanes = newLanes.slice(0, settings.laneCount);
         p.waiting = [...(p.waiting || []), ...overflow];
       }
-      return { ...p, name: settings.name, laneCount: settings.laneCount, capacity: settings.capacity, lanes: newLanes };
+      return {
+        ...p,
+        name: settings.name,
+        laneCount: settings.laneCount,
+        capacity: settings.capacity,
+        laneNaming: settings.laneNaming || p.laneNaming || "numeric",
+        laneNames: settings.laneNames !== undefined ? settings.laneNames : (p.laneNames || {}),
+        lanes: newLanes,
+      };
     });
     showToast("Paramètres enregistrés.");
   };
@@ -401,7 +454,7 @@ export default function App() {
       const assign = assignLane(newLanes, p.capacity, vehicle, activeStrategy);
       if (!assign.waiting && assign.laneIndex !== -1) {
         newLanes[assign.laneIndex].splice(assign.insertIndex, 0, vehicle);
-        showToast(`${vehicle.plate} placé en Voie ${assign.laneIndex + 1}`);
+        showToast(`${vehicle.plate} placé en ${getLaneName(assign.laneIndex, p)}`);
       } else {
         newWaiting.push(vehicle);
         showToast("Aucune place disponible.", "error");
@@ -447,7 +500,7 @@ export default function App() {
           </div>
           <h2 className="text-lg font-black text-white mb-2">Erreur de Connexion Firestore</h2>
           <p className="text-sm text-slate-400 mb-6">{firestoreError}</p>
-          <button onClick={() => logOut()} className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-colors">
+          <button onClick={() => logOut()} className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-colors cursor-pointer">
             Se déconnecter
           </button>
         </div>
@@ -478,26 +531,36 @@ export default function App() {
           <div className="flex flex-col gap-3">
             <button
               onClick={() => setIsParkingsModalOpen(true)}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-sm shadow-lg shadow-cyan-900/40 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-sm shadow-lg shadow-cyan-900/40 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] cursor-pointer"
             >
               <Plus size={18} /> Créer un Parking
             </button>
             <button
               onClick={() => setIsJoinModalOpen(true)}
-              className="w-full py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 font-bold text-sm shadow-inner transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+              className="w-full py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 font-bold text-sm shadow-inner transition-all flex items-center justify-center gap-2 hover:scale-[1.02] cursor-pointer"
             >
               <KeyRound size={18} /> Rejoindre avec un Code
             </button>
           </div>
 
-          <button onClick={() => logOut()} className="mt-8 text-xs font-bold text-slate-500 hover:text-slate-300 transition-colors">
+          <button onClick={() => logOut()} className="mt-8 text-xs font-bold text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">
             Se déconnecter
           </button>
         </div>
 
         {/* Modales nécessaires pour l'état vide */}
-        <ParkingsModal isOpen={isParkingsModalOpen} onClose={() => setIsParkingsModalOpen(false)} parkings={parkings} activeParkingId={null} onSelectParking={setActiveParkingId} onCreateParking={handleCreateParking} onDeleteParking={handleDeleteParking} />
-        <JoinParkingModal isOpen={isJoinModalOpen} onClose={() => setIsJoinModalOpen(false)} userId={currentUser?.uid} onParкingJoined={handleJoinedParking} />
+        <ParkingsModal
+          isOpen={isParkingsModalOpen}
+          onClose={() => setIsParkingsModalOpen(false)}
+          parkings={parkings}
+          activeParkingId={null}
+          currentUser={currentUser}
+          onSelectParking={setActiveParkingId}
+          onCreateParking={handleCreateParking}
+          onDeleteParking={handleDeleteParking}
+          onLeaveParking={handleLeaveParking}
+        />
+        <JoinParkingModal isOpen={isJoinModalOpen} onClose={() => setIsJoinModalOpen(false)} userId={currentUser?.uid} onParkingJoined={handleJoinedParking} />
       </div>
     );
   }
@@ -507,6 +570,8 @@ export default function App() {
     name: "Chargement...",
     laneCount: 30,
     capacity: 10,
+    laneNaming: "numeric",
+    laneNames: {},
     lanes: Array.from({ length: 30 }, () => []),
     waiting: [],
     history: [],
@@ -566,6 +631,7 @@ export default function App() {
 
         {activeTab === "grid" && (
           <ParkingGrid
+            parking={parking}
             lanes={parking.lanes}
             capacity={parking.capacity}
             searchQuery={searchQuery}
@@ -577,6 +643,7 @@ export default function App() {
             onAddVehicleToLane={(laneIdx) => { setEditingVehicle(null); setTargetLaneForAdd(laneIdx); setIsAddModalOpen(true); }}
             onSortLane={handleSortLane}
             onDropVehicleToLane={handleDropVehicleToLane}
+            onRenameLane={handleRenameLane}
             selectedVehicleId={selectedVehicleId}
             setSelectedVehicleId={setSelectedVehicleId}
           />
@@ -594,16 +661,68 @@ export default function App() {
       </main>
 
       {/* Modales */}
-      <VehicleModal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); setEditingVehicle(null); setTargetLaneForAdd(null); }} onSave={handleSaveVehicle} editingVehicle={editingVehicle} targetLaneIndex={targetLaneForAdd} />
+      <VehicleModal
+        isOpen={isAddModalOpen}
+        onClose={() => { setIsAddModalOpen(false); setEditingVehicle(null); setTargetLaneForAdd(null); }}
+        onSave={handleSaveVehicle}
+        editingVehicle={editingVehicle}
+        targetLaneIndex={targetLaneForAdd}
+        parking={parking}
+      />
       <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImportVehicles={handleImportVehicles} />
-      <MoveModal isOpen={isMoveModalOpen} onClose={() => { setIsMoveModalOpen(false); setMovingVehicle(null); }} vehicle={movingVehicle} lanes={parking.lanes} capacity={parking.capacity} onConfirmMove={handleConfirmMove} />
-      <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} history={parking.history} onClearHistory={handleClearHistory} parkingName={parking.name} />
-      <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} parking={parking} databaseState={{}} onUpdateParkingSettings={handleUpdateParkingSettings} onRestoreDatabase={() => {}} onResetParking={handleResetParking} onDeleteParking={handleDeleteParking} />
+      <MoveModal
+        isOpen={isMoveModalOpen}
+        onClose={() => { setIsMoveModalOpen(false); setMovingVehicle(null); }}
+        vehicle={movingVehicle}
+        parking={parking}
+        lanes={parking.lanes}
+        capacity={parking.capacity}
+        onConfirmMove={handleConfirmMove}
+      />
+      <HistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        history={parking.history}
+        parking={parking}
+        onClearHistory={handleClearHistory}
+        parkingName={parking.name}
+      />
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        parking={parking}
+        databaseState={{}}
+        currentUser={currentUser}
+        onUpdateParkingSettings={handleUpdateParkingSettings}
+        onRestoreDatabase={() => {}}
+        onResetParking={handleResetParking}
+        onDeleteParking={handleDeleteParking}
+        onLeaveParking={handleLeaveParking}
+      />
       <WaitingQueueModal isOpen={isWaitingModalOpen} onClose={() => setIsWaitingModalOpen(false)} waitingVehicles={parking.waiting || []} onAssignWaitingVehicle={handleAssignWaitingVehicle} onAutoAssignAllWaiting={handleAutoAssignAllWaiting} onRemoveFromWaiting={handleRemoveFromWaiting} />
-      <TicketModal isOpen={isTicketModalOpen} onClose={() => { setIsTicketModalOpen(false); setTicketData(null); }} vehicle={ticketData?.vehicle} laneIndex={ticketData?.laneIndex} slotIndex={ticketData?.slotIndex} parkingName={parking.name} />
-      <ParkingsModal isOpen={isParkingsModalOpen} onClose={() => setIsParkingsModalOpen(false)} parkings={parkings} activeParkingId={parking.id} onSelectParking={setActiveParkingId} onCreateParking={handleCreateParking} onDeleteParking={handleDeleteParking} />
-      <JoinParkingModal isOpen={isJoinModalOpen} onClose={() => setIsJoinModalOpen(false)} userId={currentUser?.uid} onParкingJoined={handleJoinedParking} />
+      <TicketModal
+        isOpen={isTicketModalOpen}
+        onClose={() => { setIsTicketModalOpen(false); setTicketData(null); }}
+        vehicle={ticketData?.vehicle}
+        laneIndex={ticketData?.laneIndex}
+        slotIndex={ticketData?.slotIndex}
+        parking={parking}
+        parkingName={parking.name}
+      />
+      <ParkingsModal
+        isOpen={isParkingsModalOpen}
+        onClose={() => setIsParkingsModalOpen(false)}
+        parkings={parkings}
+        activeParkingId={parking.id}
+        currentUser={currentUser}
+        onSelectParking={setActiveParkingId}
+        onCreateParking={handleCreateParking}
+        onDeleteParking={handleDeleteParking}
+        onLeaveParking={handleLeaveParking}
+      />
+      <JoinParkingModal isOpen={isJoinModalOpen} onClose={() => setIsJoinModalOpen(false)} userId={currentUser?.uid} onParkingJoined={handleJoinedParking} />
       <AccessCodeModal isOpen={isAccessCodeModalOpen} onClose={() => setIsAccessCodeModalOpen(false)} parking={parking} userId={currentUser?.uid} />
     </div>
   );
 }
+

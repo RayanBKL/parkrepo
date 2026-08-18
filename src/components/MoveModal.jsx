@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { X, ArrowRight, Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { X, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
 import { fmtDateTime, assignLane } from "../services/algorithm";
+import { getLaneName } from "../services/cloudDb";
 
 export default function MoveModal({
   isOpen,
   onClose,
   vehicle,
+  parking,
   lanes,
   capacity,
   onConfirmMove,
@@ -33,6 +35,9 @@ export default function MoveModal({
     onConfirmMove(vehicle, targetIdx);
     onClose();
   };
+
+  const suggestionLaneName = suggestion.laneIndex !== -1 ? getLaneName(suggestion.laneIndex, parking) : "";
+  const selectedLaneName = getLaneName(selectedLane, parking);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
@@ -83,12 +88,12 @@ export default function MoveModal({
                 <div className="text-xs font-bold">
                   {suggestion.laneIndex === currentLaneIndex
                     ? "Emplacement Actuel Optimal !"
-                    : `Voie ${suggestion.laneIndex + 1} Recommandée`}
+                    : `${suggestionLaneName} Recommandée`}
                 </div>
                 <div className="text-[11px] opacity-80">
                   {suggestion.laneIndex === currentLaneIndex
                     ? "Ce véhicule est déjà parfaitement positionné sans blocage."
-                    : `Regroupement optimal sans blocage de sortie dans la Voie ${suggestion.laneIndex + 1}.`}
+                    : `Regroupement optimal sans blocage de sortie dans ${suggestionLaneName}.`}
                 </div>
               </div>
             </div>
@@ -98,7 +103,7 @@ export default function MoveModal({
                 onClick={() => handleMove(suggestion.laneIndex)}
                 className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-colors cursor-pointer shrink-0"
               >
-                Placer en V{suggestion.laneIndex + 1}
+                Placer en {suggestionLaneName}
               </button>
             )}
           </div>
@@ -115,6 +120,7 @@ export default function MoveModal({
               const isCurrent = idx === currentLaneIndex;
               const isFull = count >= capacity && !isCurrent;
               const isRec = idx === suggestion.laneIndex;
+              const laneName = getLaneName(idx, parking);
 
               return (
                 <button
@@ -134,7 +140,9 @@ export default function MoveModal({
                       : "bg-slate-950 hover:bg-slate-800 text-slate-300 border-slate-800"
                   }`}
                 >
-                  <div className="text-xs font-black">Voie {idx + 1}</div>
+                  <div className="text-xs font-black truncate" title={laneName}>
+                    {laneName}
+                  </div>
                   <div className="text-[10px] mt-0.5 opacity-80">
                     {count}/{capacity}
                   </div>
@@ -160,10 +168,11 @@ export default function MoveModal({
             onClick={() => handleMove(selectedLane)}
             className="px-6 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold shadow-lg shadow-cyan-900/40 transition-all flex items-center gap-2 cursor-pointer"
           >
-            <CheckCircle2 size={16} /> Déplacer vers Voie {selectedLane + 1}
+            <CheckCircle2 size={16} /> Déplacer vers {selectedLaneName}
           </button>
         </div>
       </div>
     </div>
   );
 }
+

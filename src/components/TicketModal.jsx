@@ -1,13 +1,19 @@
 import React from "react";
-import { X, Printer, Car, QrCode, Calendar, Clock, Plane, Phone, FileText } from "lucide-react";
+import { X, Printer, FileText } from "lucide-react";
 import { fmtDateTime } from "../services/algorithm";
+import { getLaneName } from "../services/cloudDb";
 
-export default function TicketModal({ isOpen, onClose, vehicle, laneIndex, slotIndex, parkingName }) {
+export default function TicketModal({ isOpen, onClose, vehicle, laneIndex, slotIndex, parking, parkingName }) {
   if (!isOpen || !vehicle) return null;
 
   const handlePrint = () => {
     window.print();
   };
+
+  const laneDisplayName =
+    laneIndex !== undefined && laneIndex !== null
+      ? getLaneName(laneIndex, parking).toUpperCase()
+      : "VOIE ?";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-in fade-in duration-150">
@@ -46,9 +52,10 @@ export default function TicketModal({ isOpen, onClose, vehicle, laneIndex, slotI
             <div className="flex items-center justify-between pt-1">
               <span className="text-slate-500 font-semibold">Emplacement :</span>
               <span className="font-black text-sm bg-cyan-100 text-cyan-900 px-2 py-0.5 rounded">
-                VOIE {laneIndex !== undefined ? laneIndex + 1 : "?"} (Pos {slotIndex !== undefined ? slotIndex + 1 : "?"})
+                {laneDisplayName} (Pos {slotIndex !== undefined ? slotIndex + 1 : "?"})
               </span>
             </div>
+
 
             <div className="flex items-center justify-between pt-1.5">
               <span className="text-slate-500 font-semibold">Modèle :</span>
