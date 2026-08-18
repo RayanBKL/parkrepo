@@ -147,7 +147,7 @@ export default function LoginPage({ onNavigate, onLoginSuccess }) {
             onClick={() => onNavigate("signup")}
             className="mt-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
           >
-            Créer votre organisation et commencer l'essai gratuit →
+            Créer votre organisation professionnelle →
           </button>
         </div>
       </main>

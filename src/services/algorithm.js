@@ -127,7 +127,12 @@ export const getUrgencyStyle = (iso, now = new Date()) => {
  * - 'flight' : Priorité au regroupement par numéro de vol si renseigné
  */
 export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
-  const newTime = new Date(vehicle.departure).getTime();
+  const departureStr =
+    vehicle.departure ||
+    (vehicle.departureDate && vehicle.departureTime
+      ? `${vehicle.departureDate}T${vehicle.departureTime}`
+      : vehicle.departureDate);
+  const newTime = new Date(departureStr).getTime();
   const now = new Date();
   const diffH = (newTime - now.getTime()) / 3_600_000;
   const laneCount = lanes.length;
@@ -135,6 +140,13 @@ export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
   if (isNaN(newTime)) {
     return { laneIndex: -1, insertIndex: -1, waiting: true, strategy: "invalid_date" };
   }
+
+  // Helper pour extraire le timestamp de n'importe quel véhicule
+  const getVehicleTime = (v) => {
+    if (!v) return NaN;
+    const str = v.departure || (v.departureDate && v.departureTime ? `${v.departureDate}T${v.departureTime}` : v.departureDate);
+    return new Date(str).getTime();
+  };
 
   // 1. Stratégie Optionnelle : Regroupement par Vol (si renseigné)
   if (strategy === "flight" && vehicle.flightNumber) {
@@ -154,7 +166,7 @@ export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
 
     if (bestFlightLane !== -1) {
       const lane = lanes[bestFlightLane];
-      let insertIndex = lane.findIndex((v) => new Date(v.departure).getTime() > newTime);
+      let insertIndex = lane.findIndex((v) => getVehicleTime(v) > newTime);
       if (insertIndex === -1) insertIndex = lane.length;
       return { laneIndex: bestFlightLane, insertIndex, waiting: false, strategy: "flight_match" };
     }
@@ -187,10 +199,10 @@ export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
     if (lane.length >= capacity || lane.length === 0) return;
 
     const backVehicle = lane[lane.length - 1];
-    const backTime = new Date(backVehicle.departure).getTime();
+    const backTime = getVehicleTime(backVehicle);
 
     // Condition Zéro Blocage : le véhicule au fond part avant ou en même temps
-    if (backTime <= newTime) {
+    if (!isNaN(backTime) && backTime <= newTime) {
       const gap = newTime - backTime;
       // On veut le gap le plus petit possible (ex: 2h d'écart plutôt que 5 jours)
       if (gap < smallestGap) {
@@ -243,7 +255,7 @@ export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
     if (free <= 0) return;
 
     // Calcul de l'indice d'insertion pour maintenir le tri
-    let insertIdx = lane.findIndex((v) => new Date(v.departure).getTime() > newTime);
+    let insertIdx = lane.findIndex((v) => getVehicleTime(v) > newTime);
     if (insertIdx === -1) insertIdx = lane.length;
 
     // Coût : nombre de véhicules à déplacer pour cette insertion

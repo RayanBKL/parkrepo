@@ -20,15 +20,15 @@ import { getLaneName } from "../../services/cloudDb";
 // Données initiales de simulation pour la démo
 const INITIAL_DEMO_LANES = [
   [
-    { id: "d1", plate: "AA-123-BB", model: "Peugeot 208", departureDate: "2026-08-20", departureTime: "14:00", flightNumber: "AF1234" },
-    { id: "d2", plate: "BB-456-CC", model: "Tesla Model 3", departureDate: "2026-08-21", departureTime: "09:30" },
+    { id: "d1", plate: "AA-123-BB", model: "Peugeot 208", departure: "2026-08-20T14:00", departureDate: "2026-08-20", departureTime: "14:00", flightNumber: "AF1234" },
+    { id: "d2", plate: "BB-456-CC", model: "Tesla Model 3", departure: "2026-08-21T09:30", departureDate: "2026-08-21", departureTime: "09:30" },
   ],
   [
-    { id: "d3", plate: "CC-789-DD", model: "Audi A3", departureDate: "2026-08-19", departureTime: "18:00", flightNumber: "TO456" },
+    { id: "d3", plate: "CC-789-DD", model: "Audi A3", departure: "2026-08-19T18:00", departureDate: "2026-08-19", departureTime: "18:00", flightNumber: "TO456" },
   ],
   [
-    { id: "d4", plate: "DD-012-EE", model: "Renault Clio", departureDate: "2026-08-22", departureTime: "11:15" },
-    { id: "d5", plate: "EE-345-FF", model: "VW Golf", departureDate: "2026-08-23", departureTime: "16:45" },
+    { id: "d4", plate: "DD-012-EE", model: "Renault Clio", departure: "2026-08-22T11:15", departureDate: "2026-08-22", departureTime: "11:15" },
+    { id: "d5", plate: "EE-345-FF", model: "VW Golf", departure: "2026-08-23T16:45", departureDate: "2026-08-23", departureTime: "16:45" },
   ],
 ];
 
@@ -51,10 +51,12 @@ export default function DemoSandboxModal({ isOpen, onClose, onSignup }) {
     e.preventDefault();
     if (!plate.trim()) return;
 
+    const isoDeparture = `${departureDate}T${departureTime}`;
     const newVehicle = {
       id: "demo-" + Date.now(),
       plate: plate.toUpperCase().trim(),
       model: model.trim() || "Véhicule",
+      departure: isoDeparture,
       departureDate,
       departureTime,
       flightNumber: flightNumber.trim() || undefined,
@@ -66,7 +68,7 @@ export default function DemoSandboxModal({ isOpen, onClose, onSignup }) {
     if (assignment.waiting || assignment.laneIndex === -1) {
       setLastAlgorithmResult({
         success: false,
-        message: "Toutes les voies sont pleines ! Le véhicule est placé en file d'attente.",
+        message: "Toutes les voies sont actuellement pleines à leur capacité maximale (4/4) ! Le véhicule est placé en file d'attente.",
       });
       return;
     }
@@ -80,7 +82,8 @@ export default function DemoSandboxModal({ isOpen, onClose, onSignup }) {
       success: true,
       laneName,
       position: assignment.insertIndex + 1,
-      message: `✨ Véhicule assigné automatiquement à la ${laneName} (Position ${assignment.insertIndex + 1}/${capacity}) pour garantir une sortie sans blocage selon l'heure de départ (${departureDate} à ${departureTime}).`,
+      strategy: assignment.strategy,
+      message: `✨ Véhicule assigné automatiquement à la ${laneName} (Position ${assignment.insertIndex + 1}/${capacity}) pour un départ prévu le ${departureDate} à ${departureTime}.`,
     });
 
     // Reset formulaire
