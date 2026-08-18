@@ -299,15 +299,108 @@ export default function LandingPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800 py-10 bg-slate-950 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <ParkflowLogo size={24} />
-            <span className="font-bold text-slate-300">ParkFlow SaaS B2B</span>
-            <span>— Optimisation intelligente des parkings d'aéroports & voituriers.</span>
+      {/* Footer B2B Complet */}
+      <footer className="border-t border-slate-800/80 pt-16 pb-12 bg-slate-950 text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-5 gap-8 pb-12 border-b border-slate-850">
+          {/* Col 1 : Marque & Présentation */}
+          <div className="col-span-2 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <ParkflowLogo size={28} />
+              <span className="text-lg font-black text-white">
+                Park<span className="text-cyan-400">Flow</span>
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+              La plateforme intelligente de gestion et d'optimisation des parkings professionnels, voituriers aéroportuaires et parcs longue durée.
+            </p>
+            <div className="flex items-center gap-2 text-[11px] text-emerald-400 font-semibold">
+              <ShieldCheck size={14} />
+              <span>Conformité RGPD & Hébergement Cloud Sécurisé</span>
+            </div>
           </div>
-          <div>© {new Date().getFullYear()} ParkFlow. Tous droits réservés.</div>
+
+          {/* Col 2 : Produit */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-white uppercase text-[11px] font-mono tracking-wider">Produit</h4>
+            <ul className="space-y-2">
+              <li>
+                <a href="#how-it-works" className="hover:text-cyan-400 transition-colors">Fonctionnalités</a>
+              </li>
+              <li>
+                <button onClick={() => onNavigate("pricing")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+                  Tarifs & Abonnements
+                </button>
+              </li>
+              <li>
+                <a href="#problem-solution" className="hover:text-cyan-400 transition-colors">Récupération Optimisée</a>
+              </li>
+              <li>
+                <button onClick={() => onNavigate("signup")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+                  Essai Gratuit
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Col 3 : Entreprise */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-white uppercase text-[11px] font-mono tracking-wider">Entreprise</h4>
+            <ul className="space-y-2">
+              <li>
+                <a href="#problem-solution" className="hover:text-cyan-400 transition-colors">À propos</a>
+              </li>
+              <li>
+                <a href="mailto:contact@parkflow.app" className="hover:text-cyan-400 transition-colors">Contact Support</a>
+              </li>
+              <li>
+                <button onClick={() => onNavigate("login")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+                  Espace Client
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Col 4 : Légal & RGPD */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-white uppercase text-[11px] font-mono tracking-wider">Légal & Données</h4>
+            <ul className="space-y-2 text-slate-400">
+              <li>
+                <button onClick={() => onNavigate("legal-mentions")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+                  Mentions Légales
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate("legal-privacy")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+                  Politique de Confidentialité
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate("legal-dpa")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+                  Accord DPA (Sous-traitance)
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate("legal-cgu")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+                  CGU / CGV B2B
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate("legal-cookies")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+                  Gestion des Cookies
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate("legal-subprocessors")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+                  Sous-traitants techniques
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
+          <div>© {new Date().getFullYear()} ParkFlow SaaS — Tous droits réservés.</div>
+          <div>Plateforme B2B éditée par Rayan BOUAKKAZ (EI).</div>
         </div>
       </footer>
     </div>

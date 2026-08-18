@@ -236,6 +236,28 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
           </div>
         </div>
       </section>
+
+      {/* Footer B2B */}
+      <footer className="border-t border-slate-800/80 pt-12 pb-10 bg-slate-950 text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <ParkflowLogo size={24} />
+            <span className="font-bold text-white">ParkFlow SaaS</span>
+            <span>— Tarifs transparents & conformité RGPD.</span>
+          </div>
+          <div className="flex items-center gap-4 text-slate-400">
+            <button onClick={() => onNavigate("legal-mentions")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+              Mentions Légales
+            </button>
+            <button onClick={() => onNavigate("legal-privacy")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+              Confidentialité & DPA
+            </button>
+            <button onClick={() => onNavigate("legal-cgu")} className="hover:text-cyan-400 transition-colors cursor-pointer">
+              CGV B2B
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

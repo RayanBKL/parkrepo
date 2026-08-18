@@ -23,6 +23,7 @@ import LandingPage from "./components/public/LandingPage";
 import PricingPage from "./components/public/PricingPage";
 import SignupOnboarding from "./components/public/SignupOnboarding";
 import LoginPage from "./components/public/LoginPage";
+import LegalPages from "./components/public/LegalPages";
 
 // Composants SaaS App
 import Sidebar from "./components/app/Sidebar";
@@ -451,6 +452,11 @@ export default function App() {
 
   // Utilisateur NON connecté -> Affichage des pages publiques
   if (!currentUser) {
+    if (publicPage.startsWith("legal-")) {
+      const tab = publicPage.replace("legal-", "");
+      return <LegalPages onNavigate={(page) => setPublicPage(page)} initialTab={tab} />;
+    }
+
     if (publicPage === "pricing") {
       return (
         <PricingPage
