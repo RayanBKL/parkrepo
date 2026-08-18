@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   ShieldCheck,
   Zap,
@@ -17,10 +17,20 @@ import {
   Layers,
 } from "lucide-react";
 import ParkflowLogo from "../ParkflowLogo";
+import DemoSandboxModal from "./DemoSandboxModal";
 
 export default function LandingPage({ onNavigate }) {
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-white font-sans antialiased overflow-x-hidden">
+      {/* Modale Démo Gratuite */}
+      <DemoSandboxModal
+        isOpen={isDemoOpen}
+        onClose={() => setIsDemoOpen(false)}
+        onSignup={() => onNavigate("signup")}
+      />
+
       {/* Navigation Publique */}
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
@@ -34,8 +44,9 @@ export default function LandingPage({ onNavigate }) {
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
-            <button onClick={() => onNavigate("home")} className="hover:text-white transition-colors cursor-pointer">
-              Produit
+            <button onClick={() => setIsDemoOpen(true)} className="flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer font-bold">
+              <Play size={13} className="fill-cyan-400" />
+              <span>Tester la Démo</span>
             </button>
             <a href="#problem-solution" className="hover:text-white transition-colors">
               Fonctionnalités
@@ -101,11 +112,11 @@ export default function LandingPage({ onNavigate }) {
               <ArrowRight size={18} />
             </button>
             <button
-              onClick={() => onNavigate("pricing")}
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white font-bold text-base transition-all flex items-center justify-center gap-2 cursor-pointer shadow-inner"
+              onClick={() => setIsDemoOpen(true)}
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 hover:text-white font-bold text-base transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-lg shadow-cyan-950/40 hover:scale-105"
             >
-              <BarChart3 size={18} className="text-cyan-400" />
-              <span>Voir les offres & tarifs</span>
+              <Play size={18} className="text-cyan-400 fill-cyan-400" />
+              <span>Tester la Démo en Direct</span>
             </button>
           </div>
 
