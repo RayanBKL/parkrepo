@@ -343,11 +343,10 @@ export default function SettingsView({
                               onChange={(e) => handleUpdateMemberRole(m.uid, e.target.value)}
                               className="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-700 text-cyan-300 text-xs font-bold focus:outline-none focus:border-cyan-500 cursor-pointer"
                             >
-                          <option value="OWNER">Owner (Gérant)</option>
+                              <option value="OWNER">Owner (Gérant)</option>
                               <option value="MANAGER">Manager</option>
                               <option value="VOITURIER">Voiturier</option>
                               <option value="VIEWER">Viewer (Lecture)</option>
-                              <option value="SUPER_ADMIN">Super Admin (⚡ accès total)</option>
                             </select>
                           ) : (
                             <span className="font-bold text-xs bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-xl text-amber-300">
