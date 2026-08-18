@@ -102,6 +102,8 @@ export async function createParking(userId, config) {
     id: parkingId,
     name: config.name,
     description: config.description || "",
+    address: config.address || "",
+    organizationId: config.organizationId || null,
     laneCount: Number(config.laneCount) || 30,
     capacity: Number(config.capacity) || 10,
     laneNaming: config.laneNaming || "numeric", // "numeric" | "alphabetic"
@@ -116,6 +118,7 @@ export async function createParking(userId, config) {
         id: `log-${Date.now()}`,
         timestamp: new Date().toISOString(),
         type: "CREATE_PARKING",
+        user: config.userName || "Administrateur",
         details: { message: `Parking "${config.name}" créé` },
       },
     ],

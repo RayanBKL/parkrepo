@@ -310,3 +310,83 @@ export function checkLaneConflicts(lane) {
   }
   return conflicts;
 }
+
+/**
+ * Calcule le plan de récupération optimisé pour sortir un véhicule donné.
+ * Détecte les véhicules bloquants et détermine l'ordre exact de déplacement.
+ */
+export function calculateRetrievalPlan(parking, vehicleId) {
+  if (!parking || !parking.lanes || !vehicleId) return null;
+
+  let targetLaneIndex = -1;
+  let targetSlotIndex = -1;
+  let targetVehicle = null;
+
+  parking.lanes.forEach((lane, lIdx) => {
+    lane.forEach((v, sIdx) => {
+      if (v.id === vehicleId || v.plate?.toUpperCase() === vehicleId?.toUpperCase()) {
+        targetLaneIndex = lIdx;
+        targetSlotIndex = sIdx;
+        targetVehicle = v;
+      }
+    });
+  });
+
+  if (!targetVehicle) return null;
+
+  const currentLane = parking.lanes[targetLaneIndex] || [];
+  
+  // Dans une voie enfilade, les véhicules situés aux indices 0 .. targetSlotIndex - 1 bloquent la sortie
+  const blockingVehicles = [];
+  for (let i = 0; i < targetSlotIndex; i++) {
+    const blockingV = currentLane[i];
+    if (blockingV) {
+      // Trouver la meilleure voie d'accueil temporaire ou définitive pour ce véhicule
+      const simulatedLanes = parking.lanes.map((l, idx) => (idx === targetLaneIndex ? l.slice(i + 1) : [...l]));
+      const destAssignment = assignLane(simulatedLanes, parking.capacity || 10, blockingV, "patience");
+      
+      blockingVehicles.push({
+        slotIndex: i,
+        vehicle: blockingV,
+        suggestedLaneIndex: destAssignment.laneIndex !== -1 ? destAssignment.laneIndex : null,
+      });
+    }
+  }
+
+  const movesCount = blockingVehicles.length;
+  const isDirect = movesCount === 0;
+
+  // Étapes de récupération
+  const steps = [];
+  blockingVehicles.forEach((item, stepNum) => {
+    steps.push({
+      step: stepNum + 1,
+      type: "MOVE_BLOCKING",
+      vehicle: item.vehicle,
+      fromLaneIndex: targetLaneIndex,
+      fromSlotIndex: item.slotIndex,
+      toLaneIndex: item.suggestedLaneIndex,
+      description: `Déplacer ${item.vehicle.plate} (${item.vehicle.model || "Véhicule"}) vers une voie dégagée`,
+    });
+  });
+
+  steps.push({
+    step: steps.length + 1,
+    type: "RETRIEVE_TARGET",
+    vehicle: targetVehicle,
+    fromLaneIndex: targetLaneIndex,
+    fromSlotIndex: targetSlotIndex,
+    description: `Récupérer et sortir ${targetVehicle.plate} (Voie maintenant libre)`,
+  });
+
+  return {
+    targetVehicle,
+    targetLaneIndex,
+    targetSlotIndex,
+    isDirect,
+    movesCount,
+    blockingVehicles,
+    steps,
+  };
+}
+

@@ -8,13 +8,14 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  updatePassword,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { doc, setDoc, getDoc, getDocs, collection, query, where, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, getDocs, updateDoc, collection, query, where, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 /**
- * Crée un nouveau compte utilisateur
+ * Crée un nouveau compte utilisateur avec organisation et rôle RBAC
  */
 export async function signUp(email, password, profileData = {}) {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -31,6 +32,11 @@ export async function signUp(email, password, profileData = {}) {
     console.warn("Could not update profile displayName:", e);
   }
 
+  const role = profileData.role || "OWNER"; // Par défaut OWNER lors de la création d'entreprise
+  const status = profileData.status || "active"; // "active" | "invited" | "disabled"
+  const organizationId = profileData.organizationId || null;
+  const assignedParkingIds = profileData.assignedParkingIds || ["*"];
+
   // Créer le profil utilisateur dans Firestore
   try {
     await setDoc(doc(db, "users", user.uid), {
@@ -40,10 +46,13 @@ export async function signUp(email, password, profileData = {}) {
       lastName,
       displayName: fullName,
       phone: profileData.phone?.trim() || "",
-      jobTitle: profileData.jobTitle?.trim() || "Voiturier",
+      jobTitle: profileData.jobTitle?.trim() || (role === "OWNER" ? "Gérant / Propriétaire" : "Voiturier"),
+      role,
+      status,
+      organizationId,
+      assignedParkingIds,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-      plan: "free",
     });
   } catch (e) {
     console.warn("User doc in Firestore could not be written yet:", e);
@@ -153,6 +162,64 @@ export async function getUserProfile(uid) {
 }
 
 /**
+ * Met à jour le mot de passe de l'utilisateur connecté
+ */
+export async function updateUserAccountPassword(newPassword) {
+  if (!auth.currentUser) throw new Error("Aucun utilisateur connecté.");
+  await updatePassword(auth.currentUser, newPassword);
+}
+
+/**
+ * Met à jour le rôle, statut ou parkings assignés d'un utilisateur
+ */
+export async function updateUserRoleAndStatus(userId, { role, status, assignedParkingIds, jobTitle }) {
+  const ref = doc(db, "users", userId);
+  const data = { updatedAt: serverTimestamp() };
+  if (role !== undefined) data.role = role;
+  if (status !== undefined) data.status = status;
+  if (assignedParkingIds !== undefined) data.assignedParkingIds = assignedParkingIds;
+  if (jobTitle !== undefined) data.jobTitle = jobTitle;
+
+  await updateDoc(ref, data);
+  return data;
+}
+
+/**
+ * Invite un nouvel employé dans une organisation
+ */
+export async function inviteMemberToOrg({ orgId, email, role = "VOITURIER", assignedParkingIds = ["*"], inviterName = "L'administrateur" }) {
+  const inviteId = `inv_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+  const inviteData = {
+    id: inviteId,
+    email: email.toLowerCase().trim(),
+    organizationId: orgId,
+    role,
+    assignedParkingIds,
+    status: "invited", // "invited" | "accepted" | "declined"
+    inviterName,
+    createdAt: serverTimestamp(),
+  };
+
+  await setDoc(doc(db, "invitations", inviteId), inviteData);
+  return inviteData;
+}
+
+/**
+ * Récupère les invitations en attente pour une organisation
+ */
+export async function getOrganizationInvitations(orgId) {
+  if (!orgId) return [];
+  try {
+    const q = query(collection(db, "invitations"), where("organizationId", "==", orgId));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    console.warn("Could not fetch invitations:", err);
+    return [];
+  }
+}
+
+/**
  * Envoie un email de réinitialisation de mot de passe
  */
 export async function resetPassword(email) {
@@ -165,4 +232,7 @@ export async function resetPassword(email) {
 export function getCurrentUser() {
   return auth.currentUser;
 }
+
+
+
 
