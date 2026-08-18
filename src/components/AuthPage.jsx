@@ -12,8 +12,13 @@ export default function AuthPage({ onAuthenticated }) {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const getFirebaseError = (code) => {
+  const getFirebaseError = (err) => {
+    console.error("Firebase Error:", err);
+    const code = err?.code || "";
     switch (code) {
+      case "auth/operation-not-allowed":
+      case "auth/admin-restricted-operation":
+        return "L'authentification Email/Mot de passe n'est pas encore activée dans la console Firebase (Étape 4).";
       case "auth/email-already-in-use":
         return "Cette adresse email est déjà utilisée par un autre compte.";
       case "auth/weak-password":
@@ -28,8 +33,10 @@ export default function AuthPage({ onAuthenticated }) {
         return "Trop de tentatives. Compte temporairement bloqué. Réessayez dans quelques minutes.";
       case "auth/network-request-failed":
         return "Erreur réseau. Vérifiez votre connexion internet.";
+      case "permission-denied":
+        return "Accès refusé par les règles Firestore. Vérifiez l'onglet Règles.";
       default:
-        return "Une erreur est survenue. Réessayez.";
+        return err?.message ? `Erreur (${code || "détail"}): ${err.message}` : "Une erreur est survenue. Réessayez.";
     }
   };
 
@@ -44,7 +51,7 @@ export default function AuthPage({ onAuthenticated }) {
         await resetPassword(email);
         setSuccessMessage("Email de réinitialisation envoyé ! Vérifiez votre boîte mail.");
       } catch (err) {
-        setError(getFirebaseError(err.code));
+        setError(getFirebaseError(err));
       } finally {
         setLoading(false);
       }
@@ -72,7 +79,7 @@ export default function AuthPage({ onAuthenticated }) {
       }
       onAuthenticated(user);
     } catch (err) {
-      setError(getFirebaseError(err.code));
+      setError(getFirebaseError(err));
     } finally {
       setLoading(false);
     }
