@@ -14,7 +14,6 @@ export default function ParkingsModal({
 
   const [isCreating, setIsCreating] = useState(false);
   const [name, setName] = useState("");
-  const [code, setCode] = useState("");
   const [laneCount, setLaneCount] = useState(30);
   const [capacity, setCapacity] = useState(10);
   const [copiedId, setCopiedId] = useState(null);
@@ -25,13 +24,12 @@ export default function ParkingsModal({
 
     onCreateParking({
       name: name.trim(),
-      code: code.trim() || `PARK-${Math.floor(10 + Math.random() * 89)}`,
+      // Ne pas passer de code — generateAccessCode() dans cloudDb.js s'en charge
       laneCount: Number(laneCount) || 30,
       capacity: Number(capacity) || 10,
     });
 
     setName("");
-    setCode("");
     setIsCreating(false);
   };
 
@@ -184,17 +182,12 @@ export default function ParkingsModal({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Code d'accès / Identifiant de partage
-                </label>
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  placeholder="ex: PARK-ORLY-01"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-amber-300 font-mono text-sm focus:outline-none focus:border-cyan-500"
-                />
+              <div className="p-3 bg-amber-950/30 border border-amber-500/30 rounded-2xl flex items-start gap-2">
+                <span className="text-amber-400 text-lg leading-none mt-0.5">🔑</span>
+                <div>
+                  <div className="text-xs font-bold text-amber-300 mb-0.5">Code d'accès généré automatiquement</div>
+                  <div className="text-[11px] text-amber-200/70">Un code unique au format <span className="font-mono font-bold">PARK-XXXX-XXXX</span> sera créé automatiquement. Vous pourrez le copier et le partager après la création.</div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
