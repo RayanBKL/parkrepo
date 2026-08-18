@@ -16,6 +16,7 @@ import {
   Users,
   X,
   Sliders,
+  Plus,
 } from "lucide-react";
 
 import ParkflowLogo from "./ParkflowLogo";
@@ -29,6 +30,7 @@ export default function Navbar({
   setSearchQuery,
   activeTab,
   setActiveTab,
+  onOpenAddModal,
   onOpenImportModal,
   onExportExcel,
   onOpenHistoryModal,
@@ -149,6 +151,16 @@ export default function Navbar({
 
         {/* Actions & Menu Unifié */}
         <div className="flex items-center gap-2">
+          {/* Bouton + Véhicule */}
+          <button
+            onClick={onOpenAddModal}
+            className="px-3.5 py-2 rounded-full bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white text-xs font-black shadow-lg shadow-cyan-900/40 hover:shadow-cyan-700/60 transition-all flex items-center gap-1.5 cursor-pointer hover:scale-105"
+            title="Ajouter / Déposer un véhicule"
+          >
+            <Plus size={15} />
+            <span className="hidden sm:inline">+ Véhicule</span>
+          </button>
+
           {/* Menu Déroulant Centralisé (Paramètres & Outils) */}
           <div className="relative" ref={menuRef}>
             <button

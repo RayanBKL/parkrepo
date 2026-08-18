@@ -255,7 +255,6 @@ export default function App() {
       };
     });
 
-    confetti({ particleCount: 25, spread: 60, origin: { y: 0.8 }, colors: ["#10B981", "#3B82F6", "#F59E0B"] });
     showToast(`Véhicule ${vehicle.plate} sorti du parc !`);
   };
 
@@ -674,6 +673,7 @@ export default function App() {
         editingVehicle={editingVehicle}
         targetLaneIndex={targetLaneForAdd}
         parking={parking}
+        activeStrategy={activeStrategy}
       />
       <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImportVehicles={handleImportVehicles} />
       <MoveModal
