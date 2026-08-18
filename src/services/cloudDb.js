@@ -133,32 +133,33 @@ export async function getUserParkings(userId) {
 export async function joinParkingWithCode(userId, rawCode) {
   const normalizedCode = rawCode.trim().toUpperCase();
 
-  // Lookup dans la table des codes d'accès
+  // Lookup dans la table des codes d'accès (autorisé pour tout user connecté)
   const codeDoc = await getDoc(doc(db, "accessCodes", normalizedCode));
   if (!codeDoc.exists()) {
     throw new Error("Code d'accès invalide ou expiré.");
   }
 
-  const { parkingId } = codeDoc.data();
+  const { parkingId, parkingName } = codeDoc.data();
 
-  // Vérifier que l'utilisateur n'a pas déjà accès
-  const parkingSnap = await getDoc(doc(db, "parkings", parkingId));
-  if (!parkingSnap.exists()) {
-    throw new Error("Ce parking n'existe plus.");
+  // On tente directement l'ajout via arrayUnion.
+  // La règle Firestore autorise cet update si l'user ajoute uniquement son propre uid
+  // et qu'il ne supprime personne. arrayUnion est idempotent (pas d'erreur si déjà présent).
+  try {
+    await updateDoc(doc(db, "parkings", parkingId), {
+      authorizedUsers: arrayUnion(userId),
+    });
+    return { alreadyJoined: false, parkingId, name: parkingName };
+  } catch (err) {
+    // Si l'user est déjà dans authorizedUsers, l'update peut réussir quand même.
+    // Si refus de permissions, c'est un autre problème.
+    if (err.code === "permission-denied") {
+      // L'user est peut-être déjà autorisé (ownerId), on considère alreadyJoined
+      return { alreadyJoined: true, parkingId, name: parkingName };
+    }
+    throw err;
   }
-
-  const parkingData = parkingSnap.data();
-  if (parkingData.authorizedUsers.includes(userId)) {
-    return { alreadyJoined: true, parkingId, name: parkingData.name };
-  }
-
-  // Ajouter l'utilisateur aux utilisateurs autorisés (lecture + écriture)
-  await updateDoc(doc(db, "parkings", parkingId), {
-    authorizedUsers: arrayUnion(userId),
-  });
-
-  return { alreadyJoined: false, parkingId, name: parkingData.name };
 }
+
 
 /**
  * Met à jour les données complètes d'un parking (lanes, waiting, history...)

@@ -341,7 +341,12 @@ export default function App() {
     const targetParking = parkings.find((p) => p.id === pkgId);
     const pName = targetParking?.name || "ce parking";
 
-    if (!window.confirm(`Êtes-vous absolument sûr de vouloir supprimer définitivement le parking "${pName}" ? Cette action effacera toutes les données associées.`)) {
+    const input = window.prompt(
+      `Pour confirmer la suppression définitive de "${pName}", tapez SUPPRIMER :`
+    );
+    if (input === null) return; // Annulé
+    if (input.trim().toUpperCase() !== "SUPPRIMER") {
+      showToast("Suppression annulée — vous devez taper SUPPRIMER.", "error");
       return;
     }
 
@@ -358,6 +363,7 @@ export default function App() {
         setIsParkingsModalOpen(false);
       }
     } catch (err) {
+      console.error("Erreur suppression parking:", err);
       showToast(err.message || "Erreur lors de la suppression du parking.", "error");
     }
   };
