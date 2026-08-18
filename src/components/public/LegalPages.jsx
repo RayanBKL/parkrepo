@@ -37,9 +37,6 @@ export default function LegalPages({ onNavigate, initialTab = "mentions" }) {
             </div>
             <span className="text-xl font-black text-white tracking-tight flex items-center">
               Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">eya</span>
-              <span className="ml-2 text-[10px] uppercase font-mono tracking-widest bg-cyan-950 text-cyan-400 border border-cyan-500/40 px-2 py-0.5 rounded-full font-bold">
-                Espace Juridique
-              </span>
             </span>
           </div>
 
