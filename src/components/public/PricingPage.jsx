@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, ArrowRight, Sparkles, Building2, HelpCircle, ShieldCheck, Zap, ArrowLeft, X } from "lucide-react";
+import { Check, ArrowRight, Sparkles, Building2, HelpCircle, ShieldCheck, Zap, ArrowLeft, Car, Users, Layers, Shield } from "lucide-react";
 import ParkflowLogo from "../ParkflowLogo";
 import { PLANS_CONFIG } from "../../services/organization";
 
@@ -44,17 +44,17 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
       </header>
 
       {/* Hero Pricing */}
-      <section className="pt-16 pb-14 text-center max-w-5xl mx-auto px-4 sm:px-6">
+      <section className="pt-16 pb-10 text-center max-w-5xl mx-auto px-4 sm:px-6">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900 border border-cyan-500/30 text-cyan-300 text-xs font-bold mb-4 shadow-inner">
           <Sparkles size={14} className="text-cyan-400" />
-          <span>💰 Des tarifs transparents & rentabilisés dès le 1er mois</span>
+          <span>💰 Tarification claire basée sur le volume de véhicules actifs</span>
         </div>
 
         <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-tight">
-          Une offre adaptée à votre volume de véhicules.
+          Une formule adaptée à la capacité de vos parcs.
         </h1>
         <p className="mt-4 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-          Optimisez vos parcs, gagnez des heures de manœuvres chaque jour et éliminez les blocages de sorties.
+          Payez uniquement en fonction du nombre de véhicules stationnés simultanément.
         </p>
 
         {/* Toggle Facturation */}
@@ -78,6 +78,17 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
             </span>
           </div>
         </div>
+
+        {/* Bannière "Inclus dans toutes les offres" */}
+        <div className="mt-10 p-4 rounded-2xl bg-cyan-950/40 border border-cyan-500/40 max-w-4xl mx-auto text-left sm:text-center text-xs text-cyan-200 shadow-xl flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="flex items-center gap-2 font-bold text-cyan-300 shrink-0">
+            <ShieldCheck size={18} className="text-cyan-400" />
+            <span>Inclus à 100% dans toutes les formules :</span>
+          </div>
+          <span className="text-slate-300 text-[11px] sm:text-xs">
+            Tous les algorithmes de tri (Tightest Fit, Zonage, Vols) • Assistant de déblocage/récupération • Planning départs/arrivées • Journal d'audit complet
+          </span>
+        </div>
       </section>
 
       {/* Grille des 4 Plans */}
@@ -90,8 +101,8 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                 <h3 className="text-xl font-black text-white">Starter</h3>
                 <span className="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-bold">1 Parking</span>
               </div>
-              <p className="text-xs text-slate-400 mb-6 min-h-[32px]">
-                Pour les petits parcs indépendants jusqu'à 300 places.
+              <p className="text-xs text-slate-400 mb-5 min-h-[32px]">
+                Pour les petits parcs indépendants.
               </p>
 
               <div className="flex items-baseline gap-1 mb-6">
@@ -101,26 +112,26 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                 <span className="text-xs text-slate-400 font-semibold">/ mois HT</span>
               </div>
 
-              {/* Specs clés */}
-              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-850 space-y-1.5 text-xs text-slate-300 mb-6">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Parkings :</span>
-                  <strong className="text-white">1</strong>
+              {/* Specs clés différenciantes */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-850 space-y-2.5 text-xs mb-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Layers size={13} className="text-slate-500" /> Parkings :</span>
+                  <strong className="text-white font-bold">1</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Véhicules :</span>
-                  <strong className="text-cyan-300">300 max</strong>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Car size={13} className="text-cyan-400" /> Véhicules actifs :</span>
+                  <strong className="text-cyan-300 font-bold">300 max</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Utilisateurs :</span>
-                  <strong className="text-white">5 inclus</strong>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Users size={13} className="text-slate-500" /> Utilisateurs :</span>
+                  <strong className="text-white font-bold">5 inclus</strong>
                 </div>
               </div>
 
               <ul className="space-y-2.5 text-xs text-slate-300 border-t border-slate-800 pt-4">
                 {PLANS_CONFIG.starter.features.map((f, i) => (
                   <li key={i} className="flex items-center gap-2">
-                    <Check size={15} className="text-cyan-400 shrink-0" />
+                    <Check size={14} className="text-cyan-400 shrink-0" />
                     <span>{f}</span>
                   </li>
                 ))}
@@ -142,8 +153,8 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                 <h3 className="text-xl font-black text-white">Business</h3>
                 <span className="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-bold">1 Parking</span>
               </div>
-              <p className="text-xs text-slate-400 mb-6 min-h-[32px]">
-                Pour les parcs moyens à fort débit jusqu'à 600 places.
+              <p className="text-xs text-slate-400 mb-5 min-h-[32px]">
+                Pour les parcs moyens à fort trafic.
               </p>
 
               <div className="flex items-baseline gap-1 mb-6">
@@ -153,26 +164,26 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                 <span className="text-xs text-slate-400 font-semibold">/ mois HT</span>
               </div>
 
-              {/* Specs clés */}
-              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-850 space-y-1.5 text-xs text-slate-300 mb-6">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Parkings :</span>
-                  <strong className="text-white">1</strong>
+              {/* Specs clés différenciantes */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-850 space-y-2.5 text-xs mb-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Layers size={13} className="text-slate-500" /> Parkings :</span>
+                  <strong className="text-white font-bold">1</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Véhicules :</span>
-                  <strong className="text-cyan-300">600 max</strong>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Car size={13} className="text-cyan-400" /> Véhicules actifs :</span>
+                  <strong className="text-cyan-300 font-bold">600 max</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Utilisateurs :</span>
-                  <strong className="text-white">10 inclus</strong>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Users size={13} className="text-slate-500" /> Utilisateurs :</span>
+                  <strong className="text-white font-bold">10 inclus</strong>
                 </div>
               </div>
 
               <ul className="space-y-2.5 text-xs text-slate-300 border-t border-slate-800 pt-4">
                 {PLANS_CONFIG.business.features.map((f, i) => (
                   <li key={i} className="flex items-center gap-2">
-                    <Check size={15} className="text-cyan-400 shrink-0" />
+                    <Check size={14} className="text-cyan-400 shrink-0" />
                     <span>{f}</span>
                   </li>
                 ))}
@@ -187,7 +198,7 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
             </button>
           </div>
 
-          {/* PRO (LE PLUS POPULAIRE) */}
+          {/* PRO (LE PLUS RECOMMANDÉ) */}
           <div className="p-6 rounded-3xl bg-gradient-to-b from-slate-900 via-cyan-950/50 to-slate-900 border-2 border-cyan-500/80 flex flex-col justify-between relative shadow-2xl shadow-cyan-950/60 transform lg:-translate-y-2">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 text-white text-[10px] font-black tracking-wider uppercase shadow-md flex items-center gap-1">
               <Zap size={11} />
@@ -201,8 +212,8 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                   3 Parkings
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mb-6 min-h-[32px]">
-                Pour les sociétés multi-parkings et services voituriers aéroportuaires.
+              <p className="text-xs text-slate-300 mb-5 min-h-[32px]">
+                Pour les sociétés multi-parkings & voituriers aéroport.
               </p>
 
               <div className="flex items-baseline gap-1 mb-6">
@@ -212,26 +223,26 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                 <span className="text-xs text-slate-400 font-semibold">/ mois HT</span>
               </div>
 
-              {/* Specs clés */}
-              <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-cyan-500/30 space-y-1.5 text-xs text-slate-200 mb-6">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Parkings :</span>
-                  <strong className="text-cyan-300">Jusqu'à 3</strong>
+              {/* Specs clés différenciantes */}
+              <div className="p-4 rounded-2xl bg-slate-950/90 border border-cyan-500/30 space-y-2.5 text-xs mb-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300 flex items-center gap-1.5"><Layers size={13} className="text-cyan-400" /> Parkings :</span>
+                  <strong className="text-cyan-300 font-bold">Jusqu'à 3</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Véhicules :</span>
-                  <strong className="text-emerald-300">1 000 / parking</strong>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300 flex items-center gap-1.5"><Car size={13} className="text-emerald-400" /> Véhicules actifs :</span>
+                  <strong className="text-emerald-300 font-bold">1 000 / parking</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Utilisateurs :</span>
-                  <strong className="text-white">20 inclus</strong>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300 flex items-center gap-1.5"><Users size={13} className="text-cyan-400" /> Utilisateurs :</span>
+                  <strong className="text-white font-bold">20 inclus</strong>
                 </div>
               </div>
 
               <ul className="space-y-2.5 text-xs text-slate-200 border-t border-slate-800/80 pt-4">
                 {PLANS_CONFIG.pro.features.map((f, i) => (
                   <li key={i} className="flex items-center gap-2">
-                    <Check size={15} className="text-emerald-400 shrink-0" />
+                    <Check size={14} className="text-emerald-400 shrink-0" />
                     <span className="font-semibold">{f}</span>
                   </li>
                 ))}
@@ -256,34 +267,34 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                   4+ Parcs
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mb-6 min-h-[32px]">
-                Pour les grands groupes aéroportuaires et réseaux nationaux.
+              <p className="text-xs text-slate-400 mb-5 min-h-[32px]">
+                Pour les grands réseaux nationaux & aéroports.
               </p>
 
               <div className="flex items-baseline gap-1 mb-6">
                 <span className="text-3xl font-black text-white">Sur devis</span>
               </div>
 
-              {/* Specs clés */}
-              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-850 space-y-1.5 text-xs text-slate-300 mb-6">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Parkings :</span>
-                  <strong className="text-indigo-300">4+ (Sur mesure)</strong>
+              {/* Specs clés différenciantes */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-850 space-y-2.5 text-xs mb-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Layers size={13} className="text-indigo-400" /> Parkings :</span>
+                  <strong className="text-indigo-300 font-bold">4+ (Sur mesure)</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Véhicules :</span>
-                  <strong className="text-white">Sur mesure</strong>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Car size={13} className="text-white" /> Véhicules actifs :</span>
+                  <strong className="text-white font-bold">Sur mesure</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Utilisateurs :</span>
-                  <strong className="text-white">Sur mesure</strong>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Users size={13} className="text-white" /> Utilisateurs :</span>
+                  <strong className="text-white font-bold">Sur mesure</strong>
                 </div>
               </div>
 
               <ul className="space-y-2.5 text-xs text-slate-300 border-t border-slate-800 pt-4">
                 {PLANS_CONFIG.enterprise.features.map((f, i) => (
                   <li key={i} className="flex items-center gap-2">
-                    <Check size={15} className="text-cyan-400 shrink-0" />
+                    <Check size={14} className="text-cyan-400 shrink-0" />
                     <span>{f}</span>
                   </li>
                 ))}
@@ -305,7 +316,7 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
         <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-2xl space-y-6">
           <div className="text-center max-w-xl mx-auto">
             <h3 className="text-xl sm:text-2xl font-black text-white">Tableau Comparatif Détaillé</h3>
-            <p className="text-xs text-slate-400 mt-1">Comparez les capacités et caractéristiques de chaque plan</p>
+            <p className="text-xs text-slate-400 mt-1">Comparez les capacités et caractéristiques de chaque formule</p>
           </div>
 
           <div className="overflow-x-auto">
@@ -328,16 +339,16 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                   <td className="py-3.5 px-4 text-center font-bold text-white">Sur devis</td>
                 </tr>
                 <tr>
-                  <td className="py-3.5 px-4 font-semibold text-white">Nombre de Parkings</td>
+                  <td className="py-3.5 px-4 font-semibold text-white">Nombre de Parkings gérés</td>
                   <td className="py-3.5 px-4 text-center">1</td>
                   <td className="py-3.5 px-4 text-center">1</td>
                   <td className="py-3.5 px-4 text-center text-cyan-300 font-bold">Jusqu'à 3</td>
                   <td className="py-3.5 px-4 text-center">4+</td>
                 </tr>
                 <tr>
-                  <td className="py-3.5 px-4 font-semibold text-white">Nombre max de Véhicules</td>
-                  <td className="py-3.5 px-4 text-center">300</td>
-                  <td className="py-3.5 px-4 text-center">600</td>
+                  <td className="py-3.5 px-4 font-semibold text-white">Véhicules Actifs (Simultanément garés)</td>
+                  <td className="py-3.5 px-4 text-center font-bold text-cyan-300">300 max</td>
+                  <td className="py-3.5 px-4 text-center font-bold text-cyan-300">600 max</td>
                   <td className="py-3.5 px-4 text-center text-emerald-300 font-bold">1 000 / parking</td>
                   <td className="py-3.5 px-4 text-center">Sur mesure</td>
                 </tr>
@@ -349,21 +360,28 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                   <td className="py-3.5 px-4 text-center">Sur mesure</td>
                 </tr>
                 <tr>
-                  <td className="py-3.5 px-4 font-semibold text-white">Algorithme Tightest Fit (Rangement)</td>
+                  <td className="py-3.5 px-4 font-semibold text-white">Algorithmes de Tri (Tightest Fit, Zonage, Vols)</td>
                   <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
                   <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
                   <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
                   <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="py-3.5 px-4 font-semibold text-white">Module Récupération Optimisée (Déblocage)</td>
+                  <td className="py-3.5 px-4 font-semibold text-white">Assistant Récupération & Déblocage Pas-à-Pas</td>
                   <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
                   <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
                   <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
                   <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="py-3.5 px-4 font-semibold text-white">Journal d'Audit & Traçabilité Complète</td>
+                  <td className="py-3.5 px-4 font-semibold text-white">Planning Départs / Arrivées & Grille 2D</td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-white">Journal d'Audit & Traçabilité Opérationnelle</td>
                   <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
                   <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
                   <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
@@ -393,16 +411,16 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
           <div className="space-y-4">
             {[
               {
+                q: "Que signifie la limite de véhicules 'actifs' ?",
+                a: "La limite de véhicules correspond au nombre maximum de voitures physiquement stationnées en même temps sur votre parking. Lorsqu'un client récupère sa voiture et qu'elle sort du parc, une place se libère immédiatement dans votre quota !",
+              },
+              {
+                q: "Les véhicules sortis restent-ils dans l'historique et les statistiques ?",
+                a: "Oui ! Chaque sortie est archivée avec son heure exacte, son voiturier responsable et la durée du séjour pour alimenter vos rapports d'activité, votre journal d'audit et vos analyses de performance.",
+              },
+              {
                 q: "Puis-je changer d'offre ou faire évoluer mes quotas à tout moment ?",
                 a: "Oui, vous pouvez faire évoluer votre abonnement (passer de Starter à Business ou Pro pour ajouter des parkings et utilisateurs) en un clic depuis les paramètres de votre organisation.",
-              },
-              {
-                q: "Comment fonctionne le quota de véhicules ?",
-                a: "Le quota correspond au nombre maximum de véhicules stationnés simultanément dans vos parcs. Les sorties libèrent instantanément de la place pour de nouveaux dépôts.",
-              },
-              {
-                q: "Mes données et celles de mes clients sont-elles sécurisées ?",
-                a: "Absolument. Parkeya utilise une architecture multi-tenant étanche avec chiffrement des flux et hébergement certifié RGPD en Union Européenne.",
               },
             ].map((faq, i) => (
               <div key={i} className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800/80 space-y-2">

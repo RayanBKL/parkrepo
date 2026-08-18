@@ -322,10 +322,21 @@ export default function App() {
         }
       }
 
+      const archivedRecord = {
+        ...vehicle,
+        exitedAt: new Date().toISOString(),
+        exitedBy: authorName,
+        exitedLane: exitedLaneIndex,
+      };
+
+      const prevArchived = Array.isArray(p.archivedVehicles) ? p.archivedVehicles : [];
+      const updatedArchived = [archivedRecord, ...prevArchived].slice(0, 1000);
+
       return {
         ...p,
         lanes: newLanes,
         waiting: newWaiting,
+        archivedVehicles: updatedArchived,
         history: logMovement(p, "EXIT", {
           plate: vehicle.plate,
           model: vehicle.model,
