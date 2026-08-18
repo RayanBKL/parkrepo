@@ -104,7 +104,7 @@ export function JoinParkingModal({ isOpen, onClose, userId, onParкingJoined }) 
 export function AccessCodeModal({ isOpen, onClose, parking, userId }) {
   const [copied, setCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
-  const [currentCode, setCurrentCode] = useState(parking?.rawAccessCode || null);
+  const [currentCode, setCurrentCode] = useState(parking?.accessCode || null);
 
   if (!isOpen || !parking) return null;
 
@@ -150,27 +150,18 @@ export function AccessCodeModal({ isOpen, onClose, parking, userId }) {
         </div>
 
         <div className="mt-5 space-y-4">
-          {currentCode ? (
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl text-center">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Code d'Accès Partageable</div>
-              <div className="font-mono font-black text-2xl text-amber-300 tracking-widest mb-3">
-                {currentCode}
-              </div>
-              <button
-                onClick={handleCopy}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer"
-              >
-                {copied ? <><Check size={14} className="text-emerald-400" /> Copié !</> : <><Copy size={14} /> Copier le Code</>}
-              </button>
+          <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl text-center shadow-inner">
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Code d'Accès Partageable</div>
+            <div className="font-mono font-black text-2xl text-amber-300 tracking-widest mb-3 select-all">
+              {currentCode}
             </div>
-          ) : (
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl text-center">
-              <div className="text-sm text-slate-400 font-medium">
-                Le code est masqué pour votre sécurité.<br />
-                Régénérez-en un nouveau si nécessaire.
-              </div>
-            </div>
-          )}
+            <button
+              onClick={handleCopy}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all shadow-lg hover:shadow-slate-900/50 cursor-pointer"
+            >
+              {copied ? <><Check size={14} className="text-emerald-400" /> Copié !</> : <><Copy size={14} /> Copier le Code</>}
+            </button>
+          </div>
 
           <div className="p-3 bg-blue-950/40 border border-blue-500/30 rounded-xl text-xs text-blue-200 space-y-1">
             <div className="font-bold">ℹ Comment partager l'accès :</div>

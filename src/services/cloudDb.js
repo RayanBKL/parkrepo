@@ -18,19 +18,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-// ---------------------------------------------------------------------------
-// HACHAGE SHA-256 du Code d'Accès (côté client, via Web Crypto API)
-// Le code brut n'est JAMAIS stocké dans la base de données.
-// ---------------------------------------------------------------------------
-
-async function hashAccessCode(code) {
-  const normalized = code.trim().toUpperCase();
-  const encoder = new TextEncoder();
-  const data = encoder.encode(normalized + "::PARKOPTIMIZER_SALT_2026");
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+// Suppression de hashAccessCode - le code brut sera utilisé comme identifiant simple.
 
 /**
  * Génère un code d'accès aléatoire lisible pour le partage
@@ -80,7 +68,6 @@ function deserializeLanes(lanesObj, laneCount) {
 export async function createParking(userId, config) {
   const parkingId = `pkg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const rawCode = config.code || generateAccessCode();
-  const hashedCode = await hashAccessCode(rawCode);
 
   const parkingData = {
     id: parkingId,
@@ -90,7 +77,7 @@ export async function createParking(userId, config) {
     capacity: Number(config.capacity) || 10,
     ownerId: userId,
     authorizedUsers: [userId], // Propriétaire toujours inclus
-    hashedAccessCode: hashedCode,
+    accessCode: rawCode,
     lanes: serializeLanes(Array.from({ length: config.laneCount || 30 }, () => [])),
     waiting: [],
     history: [
@@ -108,7 +95,7 @@ export async function createParking(userId, config) {
   await setDoc(doc(db, "parkings", parkingId), parkingData);
 
   // Stocker une entrée dans la collection des codes d'accès pour lookup rapide
-  await setDoc(doc(db, "accessCodes", hashedCode), {
+  await setDoc(doc(db, "accessCodes", rawCode), {
     parkingId,
     ownerId: userId,
     parkingName: config.name,
@@ -144,10 +131,10 @@ export async function getUserParkings(userId) {
  * Le code est hashé avant toute requête — le code brut ne transite jamais
  */
 export async function joinParkingWithCode(userId, rawCode) {
-  const hashedCode = await hashAccessCode(rawCode);
+  const normalizedCode = rawCode.trim().toUpperCase();
 
-  // Lookup du hash dans la table des codes d'accès
-  const codeDoc = await getDoc(doc(db, "accessCodes", hashedCode));
+  // Lookup dans la table des codes d'accès
+  const codeDoc = await getDoc(doc(db, "accessCodes", normalizedCode));
   if (!codeDoc.exists()) {
     throw new Error("Code d'accès invalide ou expiré.");
   }
@@ -178,7 +165,7 @@ export async function joinParkingWithCode(userId, rawCode) {
  * Appelé après chaque opération métier
  */
 export async function saveParkingData(parkingId, data) {
-  const { rawAccessCode, lanes, ...safeData } = data; // Ne jamais sauvegarder le code brut
+  const { rawAccessCode, accessCode, lanes, ...safeData } = data; // Ne pas recraser l'accessCode
   
   if (lanes) {
     safeData.lanes = serializeLanes(lanes);
@@ -229,9 +216,9 @@ export async function deleteParking(parkingId, userId) {
   if (snap.data().ownerId !== userId) throw new Error("Seul le propriétaire peut supprimer ce parking.");
 
   // Supprimer le code d'accès associé
-  const hashedCode = snap.data().hashedAccessCode;
-  if (hashedCode) {
-    await deleteDoc(doc(db, "accessCodes", hashedCode));
+  const accessCode = snap.data().accessCode;
+  if (accessCode) {
+    await deleteDoc(doc(db, "accessCodes", accessCode));
   }
 
   await deleteDoc(doc(db, "parkings", parkingId));
@@ -246,18 +233,17 @@ export async function regenerateAccessCode(parkingId, userId) {
   if (snap.data().ownerId !== userId) throw new Error("Seul le propriétaire peut régénérer le code.");
 
   // Supprimer l'ancien code d'accès
-  const oldHash = snap.data().hashedAccessCode;
-  if (oldHash) await deleteDoc(doc(db, "accessCodes", oldHash));
+  const oldCode = snap.data().accessCode;
+  if (oldCode) await deleteDoc(doc(db, "accessCodes", oldCode));
 
   const newRawCode = generateAccessCode();
-  const newHash = await hashAccessCode(newRawCode);
 
   await updateDoc(doc(db, "parkings", parkingId), {
-    hashedAccessCode: newHash,
+    accessCode: newRawCode,
     updatedAt: serverTimestamp(),
   });
 
-  await setDoc(doc(db, "accessCodes", newHash), {
+  await setDoc(doc(db, "accessCodes", newRawCode), {
     parkingId,
     ownerId: userId,
     parkingName: snap.data().name,
