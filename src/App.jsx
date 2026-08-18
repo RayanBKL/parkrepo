@@ -14,7 +14,7 @@ import {
   generateAccessCode,
 } from "./services/cloudDb";
 import { getOrganization, createOrganization } from "./services/organization";
-import { assignLane, redistributeAllVehicles, generateVehicleId } from "./services/algorithm";
+import { assignLane, assignVehicleToParking, PARKING_MODELS, redistributeAllVehicles, generateVehicleId } from "./services/algorithm";
 import { exportParkingToExcel } from "./services/excel";
 import { logMovement } from "./services/db";
 
@@ -264,7 +264,7 @@ export default function App() {
             newWaiting.push(vehicleData);
           }
         } else {
-          const assignment = assignLane(newLanes, p.capacity, vehicleData, activeStrategy);
+          const assignment = assignVehicleToParking(newLanes, p.capacity, vehicleData, p.model || PARKING_MODELS.LIFO, activeStrategy);
           if (assignment.waiting || assignment.laneIndex === -1) {
             newWaiting.push(vehicleData);
           } else {
@@ -315,7 +315,7 @@ export default function App() {
 
       if (newWaiting.length > 0) {
         const nextWaiting = newWaiting[0];
-        const assign = assignLane(newLanes, p.capacity, nextWaiting, activeStrategy);
+        const assign = assignVehicleToParking(newLanes, p.capacity, nextWaiting, p.model || PARKING_MODELS.LIFO, activeStrategy);
         if (!assign.waiting && assign.laneIndex !== -1) {
           newLanes[assign.laneIndex].splice(assign.insertIndex, 0, nextWaiting);
           newWaiting.shift();

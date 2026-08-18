@@ -106,6 +106,7 @@ export async function createParking(userId, config) {
     organizationId: config.organizationId || null,
     laneCount: Number(config.laneCount) || 30,
     capacity: Number(config.capacity) || 10,
+    model: config.model || "lifo",  // "lifo" | "fifo" | "bidir" | "tightest_fit"
     laneNaming: config.laneNaming || "numeric", // "numeric" | "alphabetic"
     laneNames: config.laneNames || {}, // { 0: "Voie VIP", ... }
     ownerId: userId,

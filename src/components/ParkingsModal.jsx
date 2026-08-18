@@ -44,6 +44,7 @@ export default function ParkingsModal({
   const [laneCount, setLaneCount] = useState(30);
   const [capacity, setCapacity] = useState(10);
   const [laneNaming, setLaneNaming] = useState("numeric"); // "numeric" | "alphabetic"
+  const [parkingModel, setParkingModel] = useState("lifo"); // "lifo" | "fifo" | "bidir"
   const [copiedId, setCopiedId] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null); // { id: string, type: 'delete' | 'leave' }
 
@@ -98,12 +99,14 @@ export default function ParkingsModal({
       laneCount: Number(laneCount) || 30,
       capacity: Number(capacity) || 10,
       laneNaming,
+      model: parkingModel,
     });
 
     setName("");
     setLaneCount(30);
     setCapacity(10);
     setLaneNaming("numeric");
+    setParkingModel("lifo");
     setIsCreating(false);
   };
 
@@ -282,13 +285,17 @@ export default function ParkingsModal({
                                 </span>
                               )}
                             </div>
-                            <div className="text-xs text-slate-400 mt-1 flex items-center gap-3">
+                            <div className="text-xs text-slate-400 mt-1 flex items-center gap-3 flex-wrap">
                               <span>
-                                {p.laneCount || 30} voies ({p.laneNaming === "alphabetic" ? "Voie A, B..." : "Voie 1, 2..."}) × {p.capacity || 10} places
+                                {p.laneCount || 30} voies × {p.capacity || 10} places
                               </span>
                               <span>•</span>
                               <span className="text-emerald-400 font-semibold">
                                 {totalCars} / {maxCap} véhicules
+                              </span>
+                              <span>•</span>
+                              <span className="text-cyan-400/80 font-semibold text-[10px]">
+                                {p.model === "fifo" ? "↔️ Drive-Through" : p.model === "bidir" ? "⇄ Bidirectionnel" : "🅿️ Enfilade"}
                               </span>
                             </div>
                           </div>
@@ -499,6 +506,64 @@ export default function ParkingsModal({
                       <div className="text-[10px] text-slate-400">Voie A, Voie B, Voie C...</div>
                     </div>
                   </button>
+                </div>
+              </div>
+
+              {/* Modèle de parking physique */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Modèle physique du parking
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    {
+                      id: "lifo",
+                      label: "Enfilade (LIFO)",
+                      emoji: "🅿️",
+                      desc: "Cul-de-sac — 1 seule ouverture. Entrée et sortie par le même côté.",
+                      detail: "Dernière voiture entrée = première à sortir.",
+                    },
+                    {
+                      id: "fifo",
+                      label: "Drive-Through (FIFO)",
+                      emoji: "↔️",
+                      desc: "Couloir traversant — 2 ouvertures. Entrée d'un côté, sortie de l'autre.",
+                      detail: "Première voiture entrée = première à sortir. Zéro blocage.",
+                    },
+                    {
+                      id: "bidir",
+                      label: "Bidirectionnel",
+                      emoji: "⇄",
+                      desc: "Double accès — 2 ouvertures sur la même voie (Porte A et Porte B).",
+                      detail: "L'algorithme choisit le côté optimal pour minimiser les blocages.",
+                    },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setParkingModel(m.id)}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-3 ${
+                        parkingModel === m.id
+                          ? "bg-cyan-950/60 border-cyan-400 ring-2 ring-cyan-500/40"
+                          : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
+                      }`}
+                    >
+                      <span className="text-lg leading-none mt-0.5">{m.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-white flex items-center gap-2">
+                          {m.label}
+                          {m.id === "lifo" && (
+                            <span className="text-[9px] bg-cyan-600 text-white px-1.5 py-0.5 rounded-full font-black">DÉFAUT</span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">{m.desc}</div>
+                        <div className="text-[10px] text-cyan-400/80 mt-0.5 font-semibold">{m.detail}</div>
+                      </div>
+                      {parkingModel === m.id && (
+                        <Check size={15} className="text-cyan-400 shrink-0 mt-0.5" />
+                      )}
+                    </button>
+                  ))}
                 </div>
               </div>
 

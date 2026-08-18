@@ -281,6 +281,399 @@ export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
   return { laneIndex: -1, insertIndex: -1, waiting: true, strategy: "waiting_queue" };
 }
 
+// ===========================================================================
+// MODÈLES DE PARKING PHYSIQUES
+// ===========================================================================
+
+/**
+ * Constantes des modèles de parking physiques.
+ * Chaque parking peut avoir son propre modèle.
+ */
+export const PARKING_MODELS = {
+  TIGHTEST_FIT: "tightest_fit", // Ancien système (rétrocompat) — tri chronologique optimisé
+  LIFO: "lifo",                 // Enfilade / Cul-de-sac — Last In First Out
+  FIFO: "fifo",                 // Couloir traversant — First In First Out (2 sorties)
+  BIDIR: "bidir",               // Bidirectionnel — 2 accès, sortie du côté le moins bloqué
+};
+
+// ---------------------------------------------------------------------------
+// LIFO — Enfilade (Dead-end / Stack)
+// Convention : index 0 = SORTIE. La dernière voiture entrée est en position 0.
+// Pour récupérer une voiture profonde, toutes celles au-dessus doivent partir d'abord.
+// ---------------------------------------------------------------------------
+
+/**
+ * LIFO : insère la voiture en tête de voie (index 0 = sortie).
+ * Choisit la voie avec le plus de places libres pour minimiser les empilements futurs.
+ */
+export function assignLaneLIFO(lanes, capacity, vehicle) {
+  // Cherche la voie non pleine avec le moins de véhicules (la plus vide) → moins de blocages futurs
+  let bestLane = -1;
+  let fewestCars = Infinity;
+
+  lanes.forEach((lane, idx) => {
+    if (lane.length < capacity && lane.length < fewestCars) {
+      fewestCars = lane.length;
+      bestLane = idx;
+    }
+  });
+
+  if (bestLane === -1) {
+    return { laneIndex: -1, insertIndex: -1, waiting: true, strategy: "lifo_full" };
+  }
+
+  // En LIFO, on insère TOUJOURS en position 0 (tête = sortie)
+  return { laneIndex: bestLane, insertIndex: 0, waiting: false, strategy: "lifo" };
+}
+
+/**
+ * LIFO : calcule le plan de récupération.
+ * Toutes les voitures de position 0..targetPos-1 bloquent la voiture cible.
+ * Elles doivent être déplacées dans d'autres voies (elles-mêmes en position 0).
+ */
+export function getRetrievalPlanLIFO(parking, vehicleId) {
+  const lanes = parking.lanes || [];
+  const capacity = parking.capacity || 10;
+
+  let targetLaneIdx = -1;
+  let targetPosIdx = -1;
+  let targetVehicle = null;
+
+  lanes.forEach((lane, li) => {
+    lane.forEach((v, pi) => {
+      if (v.id === vehicleId || v.plate?.toUpperCase() === vehicleId?.toUpperCase()) {
+        targetLaneIdx = li;
+        targetPosIdx = pi;
+        targetVehicle = v;
+      }
+    });
+  });
+
+  if (!targetVehicle) return null;
+
+  // Véhicules bloquants : positions 0 .. targetPosIdx - 1
+  const steps = [];
+  for (let i = 0; i < targetPosIdx; i++) {
+    const blocker = lanes[targetLaneIdx][i];
+    // Trouver une voie d'accueil (on prend la plus vide, insère en tête)
+    let destLane = -1;
+    let fewest = Infinity;
+    lanes.forEach((lane, idx) => {
+      if (idx !== targetLaneIdx && lane.length < capacity && lane.length < fewest) {
+        fewest = lane.length;
+        destLane = idx;
+      }
+    });
+    steps.push({
+      step: i + 1,
+      type: "MOVE_BLOCKING",
+      vehicle: blocker,
+      fromLaneIndex: targetLaneIdx,
+      fromSlotIndex: i,
+      toLaneIndex: destLane,
+      description: `Sortir temporairement ${blocker.plate} (${blocker.model || "Véhicule"}) → ${destLane !== -1 ? `Voie ${destLane + 1}` : "Parking externe"}`,
+    });
+  }
+
+  steps.push({
+    step: steps.length + 1,
+    type: "RETRIEVE_TARGET",
+    vehicle: targetVehicle,
+    fromLaneIndex: targetLaneIdx,
+    fromSlotIndex: targetPosIdx,
+    toLaneIndex: null,
+    description: `Récupérer et sortir ${targetVehicle.plate} — voie dégagée`,
+  });
+
+  return {
+    model: "lifo",
+    targetVehicle,
+    targetLaneIndex: targetLaneIdx,
+    targetSlotIndex: targetPosIdx,
+    isDirect: targetPosIdx === 0,
+    movesCount: targetPosIdx,
+    steps,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// FIFO — Drive-Through (Couloir traversant, 2 ouvertures)
+// Convention : les voitures entrent par la QUEUE (fin), sortent par la TÊTE (index 0).
+// Aucun blocage possible : la première voiture entrée est toujours en tête.
+// ---------------------------------------------------------------------------
+
+/**
+ * FIFO : insère la voiture en queue de voie (fin = côté entrée).
+ * Choisit la voie avec le moins de véhicules.
+ */
+export function assignLaneFIFO(lanes, capacity, vehicle) {
+  let bestLane = -1;
+  let fewestCars = Infinity;
+
+  lanes.forEach((lane, idx) => {
+    if (lane.length < capacity && lane.length < fewestCars) {
+      fewestCars = lane.length;
+      bestLane = idx;
+    }
+  });
+
+  if (bestLane === -1) {
+    return { laneIndex: -1, insertIndex: -1, waiting: true, strategy: "fifo_full" };
+  }
+
+  // En FIFO, on insère TOUJOURS en fin de voie
+  return { laneIndex: bestLane, insertIndex: lanes[bestLane].length, waiting: false, strategy: "fifo" };
+}
+
+/**
+ * FIFO : pas de blocage possible — la voiture en position 0 sort toujours directement.
+ */
+export function getRetrievalPlanFIFO(parking, vehicleId) {
+  const lanes = parking.lanes || [];
+
+  let targetLaneIdx = -1;
+  let targetPosIdx = -1;
+  let targetVehicle = null;
+
+  lanes.forEach((lane, li) => {
+    lane.forEach((v, pi) => {
+      if (v.id === vehicleId || v.plate?.toUpperCase() === vehicleId?.toUpperCase()) {
+        targetLaneIdx = li;
+        targetPosIdx = pi;
+        targetVehicle = v;
+      }
+    });
+  });
+
+  if (!targetVehicle) return null;
+
+  // En FIFO, seule la voiture en position 0 peut sortir par la tête.
+  // Si la voiture n'est pas en position 0, elle n'est pas encore accessible par la sortie.
+  // Elle sortira naturellement quand les voitures devant elle seront sorties.
+  const isAccessible = targetPosIdx === 0;
+
+  const steps = [];
+  if (!isAccessible) {
+    steps.push({
+      step: 1,
+      type: "INFO",
+      vehicle: null,
+      description: `En mode Drive-Through, ${targetVehicle.plate} sortira automatiquement après les ${targetPosIdx} véhicule(s) entrés avant elle. Aucune manœuvre requise.`,
+    });
+  }
+
+  steps.push({
+    step: steps.length + 1,
+    type: "RETRIEVE_TARGET",
+    vehicle: targetVehicle,
+    fromLaneIndex: targetLaneIdx,
+    fromSlotIndex: targetPosIdx,
+    toLaneIndex: null,
+    description: isAccessible
+      ? `Récupérer ${targetVehicle.plate} — en tête de couloir, sortie directe`
+      : `${targetVehicle.plate} sera disponible en sortie après ${targetPosIdx} départ(s)`,
+  });
+
+  return {
+    model: "fifo",
+    targetVehicle,
+    targetLaneIndex: targetLaneIdx,
+    targetSlotIndex: targetPosIdx,
+    isDirect: isAccessible,
+    movesCount: 0, // jamais de manœuvres en FIFO
+    steps,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// BIDIRECTIONNEL — Double accès (Porte A = index 0, Porte B = index fin)
+// On peut entrer/sortir des deux côtés.
+// L'algorithme choisit le côté qui minimise les blocages futurs.
+// ---------------------------------------------------------------------------
+
+/**
+ * BIDIR : calcule le coût d'insertion des deux côtés et choisit le meilleur.
+ * "Côté A" = index 0 (tête), "Côté B" = dernier index (queue).
+ */
+export function assignLaneBidir(lanes, capacity, vehicle) {
+  const getVehicleTime = (v) => {
+    if (!v) return NaN;
+    const str = v.departure || (v.departureDate && v.departureTime ? `${v.departureDate}T${v.departureTime}` : v.departureDate);
+    return new Date(str).getTime();
+  };
+  const newTime = getVehicleTime(vehicle);
+
+  let bestLane = -1;
+  let bestSide = "A"; // "A" = tête (index 0), "B" = queue (index fin)
+  let minBlockingCost = Infinity;
+
+  lanes.forEach((lane, idx) => {
+    if (lane.length >= capacity) return;
+
+    // Coût côté A : combien de voitures à droite partent APRÈS notre véhicule ?
+    // (elles seraient bloquées si elles doivent sortir par A avant nous)
+    const costA = lane.filter((v) => {
+      const t = getVehicleTime(v);
+      return !isNaN(t) && t > newTime;
+    }).length;
+
+    // Coût côté B : combien de voitures à gauche partent APRÈS notre véhicule ?
+    const costB = lane.filter((v) => {
+      const t = getVehicleTime(v);
+      return !isNaN(t) && t > newTime;
+    }).length;
+
+    // Pour côté A : les blocages sont les voitures déjà en position 0..N qui partent APRÈS nous
+    const costSideA = lane.slice(0, Math.ceil(lane.length / 2)).filter((v) => getVehicleTime(v) > newTime).length;
+    // Pour côté B : les blocages sont les voitures en position N/2..N qui partent APRÈS nous
+    const costSideB = lane.slice(Math.floor(lane.length / 2)).filter((v) => getVehicleTime(v) > newTime).length;
+
+    const minCost = Math.min(costSideA, costSideB);
+    const side = costSideA <= costSideB ? "A" : "B";
+
+    if (minCost < minBlockingCost) {
+      minBlockingCost = minCost;
+      bestLane = idx;
+      bestSide = side;
+    }
+  });
+
+  if (bestLane === -1) {
+    // Aucune voie non-pleine — chercher juste la première non-pleine
+    const fallback = lanes.findIndex((l) => l.length < capacity);
+    if (fallback === -1) return { laneIndex: -1, insertIndex: -1, waiting: true, strategy: "bidir_full" };
+    bestLane = fallback;
+    bestSide = "A";
+  }
+
+  const insertIndex = bestSide === "A" ? 0 : lanes[bestLane].length;
+  return { laneIndex: bestLane, insertIndex, waiting: false, strategy: `bidir_${bestSide.toLowerCase()}`, side: bestSide };
+}
+
+/**
+ * BIDIR : calcule le plan de récupération (sortie par le côté le moins bloqué).
+ */
+export function getRetrievalPlanBidir(parking, vehicleId) {
+  const lanes = parking.lanes || [];
+  const capacity = parking.capacity || 10;
+
+  let targetLaneIdx = -1;
+  let targetPosIdx = -1;
+  let targetVehicle = null;
+
+  lanes.forEach((lane, li) => {
+    lane.forEach((v, pi) => {
+      if (v.id === vehicleId || v.plate?.toUpperCase() === vehicleId?.toUpperCase()) {
+        targetLaneIdx = li;
+        targetPosIdx = pi;
+        targetVehicle = v;
+      }
+    });
+  });
+
+  if (!targetVehicle) return null;
+
+  const lane = lanes[targetLaneIdx] || [];
+  const laneLen = lane.length;
+
+  // Blocages côté A (index 0) : véhicules de 0..targetPosIdx-1
+  const blockersA = lane.slice(0, targetPosIdx);
+  // Blocages côté B (fin) : véhicules de targetPosIdx+1..fin
+  const blockersB = lane.slice(targetPosIdx + 1);
+
+  const useSideA = blockersA.length <= blockersB.length;
+  const blockers = useSideA ? blockersA : blockersB;
+  const sideLabel = useSideA ? "A (avant)" : "B (arrière)";
+
+  const steps = [];
+  blockers.forEach((blocker, i) => {
+    let destLane = -1;
+    let fewest = Infinity;
+    lanes.forEach((l, idx) => {
+      if (idx !== targetLaneIdx && l.length < capacity && l.length < fewest) {
+        fewest = l.length;
+        destLane = idx;
+      }
+    });
+    steps.push({
+      step: i + 1,
+      type: "MOVE_BLOCKING",
+      vehicle: blocker,
+      fromLaneIndex: targetLaneIdx,
+      fromSlotIndex: useSideA ? i : targetPosIdx + 1 + i,
+      toLaneIndex: destLane,
+      description: `Sortir temporairement ${blocker.plate} par Porte ${sideLabel} → ${destLane !== -1 ? `Voie ${destLane + 1}` : "Parking externe"}`,
+    });
+  });
+
+  steps.push({
+    step: steps.length + 1,
+    type: "RETRIEVE_TARGET",
+    vehicle: targetVehicle,
+    fromLaneIndex: targetLaneIdx,
+    fromSlotIndex: targetPosIdx,
+    toLaneIndex: null,
+    description: `Récupérer ${targetVehicle.plate} par Porte ${sideLabel}`,
+  });
+
+  return {
+    model: "bidir",
+    targetVehicle,
+    targetLaneIndex: targetLaneIdx,
+    targetSlotIndex: targetPosIdx,
+    isDirect: blockers.length === 0,
+    movesCount: blockers.length,
+    usedSide: useSideA ? "A" : "B",
+    steps,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// DISPATCHER — Sélectionne l'algorithme selon le modèle du parking
+// ---------------------------------------------------------------------------
+
+/**
+ * Assigne un véhicule selon le modèle physique du parking.
+ * @param {Array[]} lanes - tableau de voies
+ * @param {number} capacity - capacité par voie
+ * @param {Object} vehicle - le véhicule à placer
+ * @param {string} model - le modèle physique du parking (PARKING_MODELS)
+ * @param {string} strategy - stratégie Tightest Fit si model="tightest_fit"
+ */
+export function assignVehicleToParking(lanes, capacity, vehicle, model = PARKING_MODELS.LIFO, strategy = "patience") {
+  switch (model) {
+    case PARKING_MODELS.FIFO:
+      return assignLaneFIFO(lanes, capacity, vehicle);
+    case PARKING_MODELS.BIDIR:
+      return assignLaneBidir(lanes, capacity, vehicle);
+    case PARKING_MODELS.TIGHTEST_FIT:
+      return assignLane(lanes, capacity, vehicle, strategy);
+    case PARKING_MODELS.LIFO:
+    default:
+      return assignLaneLIFO(lanes, capacity, vehicle);
+  }
+}
+
+/**
+ * Calcule le plan de récupération selon le modèle physique du parking.
+ * @param {Object} parking - objet parking complet (avec .model, .lanes, .capacity)
+ * @param {string} vehicleId - ID ou plaque du véhicule à récupérer
+ */
+export function getRetrievalPlan(parking, vehicleId) {
+  const model = parking?.model || PARKING_MODELS.LIFO;
+  switch (model) {
+    case PARKING_MODELS.FIFO:
+      return getRetrievalPlanFIFO(parking, vehicleId);
+    case PARKING_MODELS.BIDIR:
+      return getRetrievalPlanBidir(parking, vehicleId);
+    case PARKING_MODELS.TIGHTEST_FIT:
+      return calculateRetrievalPlan(parking, vehicleId); // ancien système
+    case PARKING_MODELS.LIFO:
+    default:
+      return getRetrievalPlanLIFO(parking, vehicleId);
+  }
+}
+
 /**
  * Réorganise et distribue l'ensemble des véhicules
  */
