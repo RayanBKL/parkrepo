@@ -118,11 +118,13 @@ export const getUrgencyStyle = (iso, now = new Date()) => {
 };
 
 /**
- * Assigne automatiquement la voie optimale pour un véhicule selon la stratégie choisie.
+ * Assigne automatiquement la voie optimale pour un véhicule.
+ * Algorithme Expert : Tightest Fit Decreasing (Plus proche voisin chronologique) + Score Anti-Blocage
+ *
  * Stratégies :
- * - 'patience' : Patience Sorting pur (regroupement même heure + tri sans blocage)
- * - 'zoning' : Zonage aéroportuaire (Voies 1-30 découpées en zones court, moyen et long séjour)
- * - 'flight' : Priorité au regroupement par numéro de vol
+ * - 'patience' : Optimisation mathématique pure (Zéro blocage + écart temporel minimal)
+ * - 'zoning' : Zonage aéroportuaire par durée de séjour (Court <24h / Moyen 1-7j / Long >7j)
+ * - 'flight' : Priorité au regroupement par numéro de vol si renseigné
  */
 export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
   const newTime = new Date(vehicle.departure).getTime();
@@ -130,122 +132,140 @@ export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
   const diffH = (newTime - now.getTime()) / 3_600_000;
   const laneCount = lanes.length;
 
-  // 1. Stratégie : Priorité Vol (si le véhicule a un n° de vol)
+  if (isNaN(newTime)) {
+    return { laneIndex: -1, insertIndex: -1, waiting: true, strategy: "invalid_date" };
+  }
+
+  // 1. Stratégie Optionnelle : Regroupement par Vol (si renseigné)
   if (strategy === "flight" && vehicle.flightNumber) {
     const flightNorm = vehicle.flightNumber.trim().toUpperCase();
-    let flightLane = -1;
-    let flightFree = -1;
+    let bestFlightLane = -1;
+    let maxFreeInFlight = -1;
 
     lanes.forEach((lane, idx) => {
       const free = capacity - lane.length;
       if (free <= 0) return;
       const hasSameFlight = lane.some((v) => v.flightNumber && v.flightNumber.trim().toUpperCase() === flightNorm);
-      if (hasSameFlight && free > flightFree) {
-        flightFree = free;
-        flightLane = idx;
+      if (hasSameFlight && free > maxFreeInFlight) {
+        maxFreeInFlight = free;
+        bestFlightLane = idx;
       }
     });
 
-    if (flightLane !== -1) {
-      const lane = lanes[flightLane];
+    if (bestFlightLane !== -1) {
+      const lane = lanes[bestFlightLane];
       let insertIndex = lane.findIndex((v) => new Date(v.departure).getTime() > newTime);
       if (insertIndex === -1) insertIndex = lane.length;
-      return { laneIndex: flightLane, insertIndex, waiting: false, strategy: "flight_match" };
+      return { laneIndex: bestFlightLane, insertIndex, waiting: false, strategy: "flight_match" };
     }
   }
 
-  // 2. Stratégie : Zonage Aéroportuaire
+  // 2. Définition de la plage de voies si Zonage activé
   let allowedRange = [0, laneCount - 1];
   if (strategy === "zoning") {
     if (diffH <= 24) {
-      // Court séjour (< 24h) -> Premières voies (ex: tiers 1)
       allowedRange = [0, Math.max(0, Math.floor(laneCount * 0.35) - 1)];
     } else if (diffH <= 168) {
-      // Moyen séjour (1 à 7j) -> Voies du milieu (ex: tiers 2)
       allowedRange = [Math.floor(laneCount * 0.35), Math.max(0, Math.floor(laneCount * 0.7) - 1)];
     } else {
-      // Long séjour (> 7j) -> Dernières voies (ex: tiers 3)
       allowedRange = [Math.floor(laneCount * 0.7), laneCount - 1];
     }
   }
 
-  // Helper pour vérifier si un idx de voie est dans la zone autorisée
   const isAllowed = (idx) => idx >= allowedRange[0] && idx <= allowedRange[1];
 
-  // A. Priorité absolue : même heure exacte de départ
-  let sameDateLane = -1;
-  let sameDateFree = -1;
+  // -------------------------------------------------------------------------
+  // ÉTAPE A : Recherche du "Tightest Fit" (ZÉRO BLOCAGE + Écart temporel minimal)
+  // -------------------------------------------------------------------------
+  // On cherche la voie dont le véhicule au fond part AVANT ou en même temps,
+  // MAIS le plus PROCHE possible du nouveau véhicule pour compacter les vagues de sortie !
+  let bestTightestLane = -1;
+  let smallestGap = Infinity; // Écart en millisecondes le plus faible
 
   lanes.forEach((lane, idx) => {
     if (strategy === "zoning" && !isAllowed(idx)) return;
-    const free = capacity - lane.length;
-    if (free <= 0) return;
-    const hasSameDate = lane.some((v) => new Date(v.departure).getTime() === newTime);
-    if (hasSameDate && free > sameDateFree) {
-      sameDateFree = free;
-      sameDateLane = idx;
+    if (lane.length >= capacity || lane.length === 0) return;
+
+    const backVehicle = lane[lane.length - 1];
+    const backTime = new Date(backVehicle.departure).getTime();
+
+    // Condition Zéro Blocage : le véhicule au fond part avant ou en même temps
+    if (backTime <= newTime) {
+      const gap = newTime - backTime;
+      // On veut le gap le plus petit possible (ex: 2h d'écart plutôt que 5 jours)
+      if (gap < smallestGap) {
+        smallestGap = gap;
+        bestTightestLane = idx;
+      }
     }
   });
 
-  if (sameDateLane !== -1) {
-    const lane = lanes[sameDateLane];
-    let insertIndex = lane.findIndex((v) => new Date(v.departure).getTime() > newTime);
-    if (insertIndex === -1) insertIndex = lane.length;
-    return { laneIndex: sameDateLane, insertIndex, waiting: false, strategy: "same_date" };
+  if (bestTightestLane !== -1) {
+    const isSameDate = smallestGap === 0;
+    return {
+      laneIndex: bestTightestLane,
+      insertIndex: lanes[bestTightestLane].length,
+      waiting: false,
+      strategy: isSameDate ? "same_date" : "tightest_fit",
+    };
   }
 
-  // B. Cas optimal : voie dont le dernier véhicule (au fond) part AVANT ou EN MÊME TEMPS
-  let bestLane = -1;
-  let bestBackDeparture = -Infinity;
-  let emptyLane = -1;
-
+  // -------------------------------------------------------------------------
+  // ÉTAPE B : Voie totalement vide (Préserve les voies pour démarrer de nouvelles vagues)
+  // -------------------------------------------------------------------------
+  let firstEmptyLane = -1;
   lanes.forEach((lane, idx) => {
     if (strategy === "zoning" && !isAllowed(idx)) return;
-    if (lane.length >= capacity) return;
-    if (lane.length === 0) {
-      if (emptyLane === -1) emptyLane = idx;
-      return;
-    }
-    const backTime = new Date(lane[lane.length - 1].departure).getTime();
-    if (backTime <= newTime && backTime > bestBackDeparture) {
-      bestBackDeparture = backTime;
-      bestLane = idx;
+    if (lane.length === 0 && firstEmptyLane === -1) {
+      firstEmptyLane = idx;
     }
   });
 
-  if (bestLane !== -1) {
-    return { laneIndex: bestLane, insertIndex: lanes[bestLane].length, waiting: false, strategy: "optimal_order" };
+  if (firstEmptyLane !== -1) {
+    return { laneIndex: firstEmptyLane, insertIndex: 0, waiting: false, strategy: "empty_lane" };
   }
 
-  if (emptyLane !== -1) {
-    return { laneIndex: emptyLane, insertIndex: 0, waiting: false, strategy: "empty_lane" };
-  }
-
-  // C. Repli 1 : essayer sur toutes les voies même hors zone si zonage était activé
+  // Si zonage strict n'a rien trouvé, on réessaie sur l'ensemble du parc
   if (strategy === "zoning") {
     return assignLane(lanes, capacity, vehicle, "patience");
   }
 
-  // D. Repli 2 : voie la plus dégagée
-  let fallbackLane = -1;
-  let mostFree = -1;
+  // -------------------------------------------------------------------------
+  // ÉTAPE C : Repli d'optimisation (Voie avec le moins de perturbation)
+  // -------------------------------------------------------------------------
+  // Si toutes les voies sont déjà occupées avec des départs futurs, on calcule
+  // le coût de réorganisation pour choisir la voie causant le moins de gêne.
+  let bestFallbackLane = -1;
+  let minConflictCost = Infinity;
 
   lanes.forEach((lane, idx) => {
     const free = capacity - lane.length;
-    if (free > 0 && free > mostFree) {
-      mostFree = free;
-      fallbackLane = idx;
+    if (free <= 0) return;
+
+    // Calcul de l'indice d'insertion pour maintenir le tri
+    let insertIdx = lane.findIndex((v) => new Date(v.departure).getTime() > newTime);
+    if (insertIdx === -1) insertIdx = lane.length;
+
+    // Coût : nombre de véhicules à déplacer pour cette insertion
+    const vehiclesBehind = lane.length - insertIdx;
+    const cost = vehiclesBehind * 100 - free;
+
+    if (cost < minConflictCost) {
+      minConflictCost = cost;
+      bestFallbackLane = idx;
     }
   });
 
-  if (fallbackLane !== -1) {
-    const lane = lanes[fallbackLane];
+  if (bestFallbackLane !== -1) {
+    const lane = lanes[bestFallbackLane];
     let insertIndex = lane.findIndex((v) => new Date(v.departure).getTime() > newTime);
     if (insertIndex === -1) insertIndex = lane.length;
-    return { laneIndex: fallbackLane, insertIndex, waiting: false, strategy: "fallback_sorted" };
+    return { laneIndex: bestFallbackLane, insertIndex, waiting: false, strategy: "min_cost_fallback" };
   }
 
-  // E. Aucune place
+  // -------------------------------------------------------------------------
+  // ÉTAPE D : Parc saturé -> File d'attente
+  // -------------------------------------------------------------------------
   return { laneIndex: -1, insertIndex: -1, waiting: true, strategy: "waiting_queue" };
 }
 
