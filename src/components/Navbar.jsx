@@ -201,15 +201,6 @@ export default function Navbar({
             <KeyRound size={15} />
           </button>
 
-          {/* Code d'Accès du Parking Actif */}
-          <button
-            onClick={onOpenAccessCode}
-            title="Voir et partager le code d'accès de ce parking"
-            className="px-3 py-1.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:text-amber-300 transition-all cursor-pointer text-[10px] font-black flex items-center gap-1.5 hover:shadow-[0_0_10px_rgba(245,158,11,0.2)]"
-          >
-            <KeyRound size={13} /> Code
-          </button>
-
           {/* Compte Utilisateur & Déconnexion */}
           <div className="flex items-center gap-1.5 pl-3 border-l border-slate-800/80 ml-1">
             <button

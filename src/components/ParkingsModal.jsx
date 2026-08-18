@@ -271,16 +271,16 @@ export default function ParkingsModal({
                         </div>
                       )}
 
-                      {/* Confirmation inline pour Membre Invité (Quitter) */}
+                      {/* Confirmation inline pour Membre Invité (Supprimer de son compte) */}
                       {isConfirming && confirmAction?.type === "leave" && (
                         <div
                           className="p-3.5 bg-slate-900 border border-amber-500/50 rounded-xl space-y-2 animate-in fade-in duration-150"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="text-xs text-amber-200 font-semibold">
-                            🚪 <span className="font-black text-white">Retirer {p.name} de votre compte ?</span>
+                            🗑️ <span className="font-black text-white">Supprimer {p.name} de votre compte ?</span>
                             <div className="text-[11px] text-slate-300 mt-0.5">
-                              Ce parking ne sera plus visible sur votre compte. Il restera accessible aux autres membres et vous pourrez le rejoindre à nouveau avec son code d'accès.
+                              Retire ce parking de votre liste personnelle (il reste accessible pour vos collègues).
                             </div>
                           </div>
                           <div className="flex items-center justify-end gap-2 shrink-0 pt-1">
@@ -296,7 +296,7 @@ export default function ParkingsModal({
                               onClick={() => handleConfirmAction(p.id, "leave")}
                               className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-amber-900/50 flex items-center gap-1.5"
                             >
-                              <LogOut size={13} /> Retirer de mon compte
+                              <Trash2 size={13} /> Supprimer de mon compte
                             </button>
                           </div>
                         </div>

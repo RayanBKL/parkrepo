@@ -405,13 +405,13 @@ export default function SettingsModal({
               </div>
             )}
 
-            {/* Quitter le parking (pour membres ou créateurs voulant juste se retirer) */}
+            {/* Supprimer de son compte (pour membres ou créateurs voulant juste se retirer) */}
             {onLeaveParking && (
               <div className="flex items-center justify-between p-3 bg-amber-950/20 border border-amber-500/30 rounded-2xl">
                 <div>
-                  <div className="text-xs font-bold text-amber-300">Quitter ce parking</div>
+                  <div className="text-xs font-bold text-amber-300">Supprimer ce parking de votre compte</div>
                   <div className="text-[10px] text-slate-400">
-                    Retire ce parking de votre compte sans le supprimer pour les autres membres
+                    Retire ce parking de votre liste personnelle
                   </div>
                 </div>
                 <button
@@ -422,7 +422,7 @@ export default function SettingsModal({
                   }}
                   className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg shadow-amber-950/50 cursor-pointer"
                 >
-                  <LogOut size={14} /> Quitter
+                  <Trash2 size={14} /> Supprimer de mon compte
                 </button>
               </div>
             )}
