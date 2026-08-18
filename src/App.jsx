@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Plus, KeyRound, AlertCircle, LogOut } from "lucide-react";
+import { Plus, KeyRound, AlertCircle, LogOut, ArrowLeft, ChevronRight, Sparkles } from "lucide-react";
 
 // Services Auth & Cloud
 import { onAuthChange, logOut, getUserProfile } from "./services/auth";
@@ -107,6 +107,28 @@ export default function App() {
     setToastMessage({ message, type });
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  // --- Navigation Fluide avec Historique Navigateur ---
+  const handleNavigatePublic = (page) => {
+    setPublicPage(page);
+    window.history.pushState({ publicPage: page }, "");
+  };
+
+  const handleNavigateView = (view) => {
+    setActiveView(view);
+    window.history.pushState({ activeView: view }, "");
+  };
+
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (e.state) {
+        if (e.state.publicPage) setPublicPage(e.state.publicPage);
+        if (e.state.activeView) setActiveView(e.state.activeView);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   // --- Active Parking ---
   const activeParking = useMemo(() => {
@@ -454,16 +476,16 @@ export default function App() {
   if (!currentUser) {
     if (publicPage.startsWith("legal-")) {
       const tab = publicPage.replace("legal-", "");
-      return <LegalPages onNavigate={(page) => setPublicPage(page)} initialTab={tab} />;
+      return <LegalPages onNavigate={handleNavigatePublic} initialTab={tab} />;
     }
 
     if (publicPage === "pricing") {
       return (
         <PricingPage
-          onNavigate={(page) => setPublicPage(page)}
+          onNavigate={handleNavigatePublic}
           onSelectPlan={(planId) => {
             setSelectedPlanForSignup(planId);
-            setPublicPage("signup");
+            handleNavigatePublic("signup");
           }}
         />
       );
@@ -472,12 +494,12 @@ export default function App() {
     if (publicPage === "signup") {
       return (
         <SignupOnboarding
-          onNavigate={(page) => setPublicPage(page)}
+          onNavigate={handleNavigatePublic}
           initialPlan={selectedPlanForSignup}
           onComplete={async ({ user }) => {
             setCurrentUser(user);
             await refreshUserData(user);
-            setActiveView("dashboard");
+            handleNavigateView("dashboard");
           }}
         />
       );
@@ -486,18 +508,18 @@ export default function App() {
     if (publicPage === "login") {
       return (
         <LoginPage
-          onNavigate={(page) => setPublicPage(page)}
+          onNavigate={handleNavigatePublic}
           onLoginSuccess={async (user) => {
             setCurrentUser(user);
             await refreshUserData(user);
-            setActiveView("dashboard");
+            handleNavigateView("dashboard");
           }}
         />
       );
     }
 
     // Par défaut : Landing Page
-    return <LandingPage onNavigate={(page) => setPublicPage(page)} />;
+    return <LandingPage onNavigate={handleNavigatePublic} />;
   }
 
   // Utilisateur DÉSACTIVÉ par son gérant
@@ -527,6 +549,17 @@ export default function App() {
   // APPLICATION SAAS B2B (Connecté)
   // =========================================================================
 
+  const viewTitles = {
+    parkings: "Gestion des Voies & Parkings",
+    vehicles: "Gestionnaire de Flotte & Véhicules",
+    schedule: "Planning des Arrivées & Départs",
+    retrieval: "Assistant de Récupération Optimisée",
+    placement: "Optimisation de Rangement des Voies",
+    history: "Journal d'Activité & Audit",
+    analytics: "Statistiques & Performance",
+    settings: "Paramètres de l'Organisation",
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans antialiased selection:bg-cyan-500 selection:text-white">
       {/* Toast Notification */}
@@ -548,7 +581,7 @@ export default function App() {
       {/* Sidebar Navigation */}
       <Sidebar
         activeView={activeView}
-        setActiveView={setActiveView}
+        setActiveView={handleNavigateView}
         organization={organization}
         currentUser={currentUser}
         userProfile={userProfile}
@@ -558,20 +591,39 @@ export default function App() {
         onOpenParkingsModal={() => setIsParkingsModalOpen(true)}
         onLogOut={async () => {
           await logOut();
-          setPublicPage("home");
+          handleNavigatePublic("home");
         }}
       />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
         <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-8 pt-6 pb-12">
+          {/* Barre de retour rapide & Fil d'Ariane pour les sous-vues */}
+          {activeView !== "dashboard" && (
+            <div className="mb-4 flex items-center justify-between gap-3 text-xs">
+              <button
+                onClick={() => handleNavigateView("dashboard")}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all cursor-pointer shadow-inner"
+              >
+                <ArrowLeft size={14} className="text-cyan-400" />
+                <span>Retour au Tableau de Bord</span>
+              </button>
+
+              <div className="hidden sm:flex items-center gap-2 text-slate-500 font-medium">
+                <span className="cursor-pointer hover:text-slate-300" onClick={() => handleNavigateView("dashboard")}>Dashboard</span>
+                <ChevronRight size={12} />
+                <span className="text-cyan-400 font-bold uppercase tracking-wider text-[11px]">{viewTitles[activeView] || activeView}</span>
+              </div>
+            </div>
+          )}
+
           {/* VUE 1 : DASHBOARD */}
           {activeView === "dashboard" && (
             <DashboardView
               organization={organization}
               parkings={parkings}
               activeParking={activeParking}
-              onNavigateView={setActiveView}
+              onNavigateView={handleNavigateView}
               onOpenAddModal={() => {
                 setEditingVehicle(null);
                 setTargetLaneForAdd(null);
@@ -579,7 +631,7 @@ export default function App() {
               }}
               onSelectVehicleForRetrieval={(vId) => {
                 setSelectedVehicleId(vId);
-                setActiveView("retrieval");
+                handleNavigateView("retrieval");
               }}
             />
           )}

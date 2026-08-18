@@ -3,6 +3,7 @@ import {
   Mail,
   Lock,
   ArrowRight,
+  ArrowLeft,
   Loader2,
   AlertCircle,
   ShieldCheck,
@@ -61,9 +62,10 @@ export default function LoginPage({ onNavigate, onLoginSuccess }) {
         </div>
         <button
           onClick={() => onNavigate("home")}
-          className="text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer shadow-inner"
         >
-          Retour au site
+          <ArrowLeft size={14} />
+          <span>Retour à l'accueil</span>
         </button>
       </header>
 

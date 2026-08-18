@@ -146,12 +146,21 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
             Park<span className="text-cyan-400">eya</span>
           </span>
         </div>
-        <button
-          onClick={() => onNavigate("login")}
-          className="text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer"
-        >
-          Déjà un compte ? <span className="text-cyan-400">Se connecter</span>
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => onNavigate("home")}
+            className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer"
+          >
+            <ArrowLeft size={14} />
+            <span>Retour au site</span>
+          </button>
+          <button
+            onClick={() => onNavigate("login")}
+            className="text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+          >
+            Se connecter
+          </button>
+        </div>
       </header>
 
       {/* Card Form */}
@@ -263,10 +272,18 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
               </div>
             </div>
 
-            <div className="pt-4">
+            <div className="pt-4 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => onNavigate("home")}
+                className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-bold cursor-pointer flex items-center gap-1.5"
+              >
+                <ArrowLeft size={14} />
+                <span>Retour</span>
+              </button>
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-900/40 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="flex-1 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-900/40 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Continuer vers l'entreprise</span>
                 <ArrowRight size={15} />
