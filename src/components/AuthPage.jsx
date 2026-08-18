@@ -105,7 +105,7 @@ export default function AuthPage({ onAuthenticated }) {
           </div>
 
           <h1 className="text-3xl font-black text-white text-center mb-8 tracking-tight">
-            Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">Flow</span>
+            Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">eya</span>
           </h1>
         </div>
 

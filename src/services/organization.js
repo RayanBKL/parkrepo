@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Service Organisation & Abonnements — ParkFlow SaaS B2B
+// Service Organisation & Abonnements — Parkeya SaaS B2B
 // ---------------------------------------------------------------------------
 
 import {

@@ -36,7 +36,7 @@ export default function LegalPages({ onNavigate, initialTab = "mentions" }) {
               <ParkflowLogo size={36} />
             </div>
             <span className="text-xl font-black text-white tracking-tight flex items-center">
-              Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">Flow</span>
+              Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">eya</span>
               <span className="ml-2 text-[10px] uppercase font-mono tracking-widest bg-cyan-950 text-cyan-400 border border-cyan-500/40 px-2 py-0.5 rounded-full font-bold">
                 Espace Juridique
               </span>
@@ -88,7 +88,7 @@ export default function LegalPages({ onNavigate, initialTab = "mentions" }) {
                 <span>Conformité RGPD & B2B</span>
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                ParkFlow garantit la stricte isolation des données de chaque organisation cliente et agit en qualité de <strong>sous-traitant technique</strong> (Art. 28 RGPD).
+                Parkeya garantit la stricte isolation des données de chaque organisation cliente et agit en qualité de <strong>sous-traitant technique</strong> (Art. 28 RGPD).
               </p>
             </div>
           </aside>
@@ -106,10 +106,10 @@ export default function LegalPages({ onNavigate, initialTab = "mentions" }) {
                 <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
                   <h3 className="font-bold text-white text-base">1. Éditeur de la Plateforme</h3>
                   <ul className="space-y-1.5 text-xs text-slate-300">
-                    <li><strong>Service SaaS :</strong> ParkFlow (Logiciel B2B de gestion de parkings)</li>
+                    <li><strong>Service SaaS :</strong> Parkeya (Logiciel B2B de gestion de parkings)</li>
                     <li><strong>Exploitant :</strong> Rayan BOUAKKAZ (Entrepreneur Individuel / EI)</li>
                     <li><strong>Statut juridique :</strong> Micro-entreprise / Entrepreneur Individuel</li>
-                    <li><strong>Contact Email :</strong> contact@parkflow.app (ou email du gérant)</li>
+                    <li><strong>Contact Email :</strong> contact@parkeya.com (ou email du gérant)</li>
                     <li><strong>Directeur de la publication :</strong> Rayan BOUAKKAZ</li>
                   </ul>
                 </div>
@@ -127,7 +127,7 @@ export default function LegalPages({ onNavigate, initialTab = "mentions" }) {
                 <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
                   <h3 className="font-bold text-white text-base">3. Propriété Intellectuelle</h3>
                   <p className="text-xs text-slate-300">
-                    L'ensemble des éléments constituant le logiciel ParkFlow (algorithmes de tri, code source, interfaces, logos, marques et graphismes) est la propriété exclusive de l'Éditeur. Toute reproduction ou distribution non autorisée est formellement interdite.
+                    L'ensemble des éléments constituant le logiciel Parkeya (algorithmes de tri, code source, interfaces, logos, marques et graphismes) est la propriété exclusive de l'Éditeur. Toute reproduction ou distribution non autorisée est formellement interdite.
                   </p>
                 </div>
               </div>
@@ -142,7 +142,7 @@ export default function LegalPages({ onNavigate, initialTab = "mentions" }) {
                 </div>
 
                 <div className="p-4 rounded-2xl bg-cyan-950/40 border border-cyan-500/40 text-cyan-200 text-xs">
-                  <strong>Principe Fondamental :</strong> ParkFlow fournit une solution logicielle à destination des professionnels du stationnement. Les données personnelles saisies dans l'application par les clients sont strictement confidentielles et ne font l'objet d'aucune vente ou exploitation commerciale tierce.
+                  <strong>Principe Fondamental :</strong> Parkeya fournit une solution logicielle à destination des professionnels du stationnement. Les données personnelles saisies dans l'application par les clients sont strictement confidentielles et ne font l'objet d'aucune vente ou exploitation commerciale tierce.
                 </div>
 
                 <div className="space-y-3">
@@ -152,7 +152,7 @@ export default function LegalPages({ onNavigate, initialTab = "mentions" }) {
                       <strong>A. Le Client (L'exploitant du parking) :</strong> Agit en qualité de <strong>Responsable du Traitement (Data Controller)</strong> pour toutes les données de ses clients finaux (plaques d'immatriculation, numéros de vol, dates, téléphones clients).
                     </p>
                     <p>
-                      <strong>B. ParkFlow :</strong> Agit en qualité de <strong>Sous-Traitant Technique (Data Processor)</strong> au sens de l'Article 28 du RGPD, hébergeant les données uniquement pour permettre le fonctionnement des fonctionnalités opérationnelles de tri et de gestion.
+                      <strong>B. Parkeya :</strong> Agit en qualité de <strong>Sous-Traitant Technique (Data Processor)</strong> au sens de l'Article 28 du RGPD, hébergeant les données uniquement pour permettre le fonctionnement des fonctionnalités opérationnelles de tri et de gestion.
                     </p>
                   </div>
                 </div>
@@ -169,7 +169,7 @@ export default function LegalPages({ onNavigate, initialTab = "mentions" }) {
                 <div className="space-y-3">
                   <h3 className="font-bold text-white text-base">3. Durée de Conservation & Exercice des Droits</h3>
                   <p className="text-xs text-slate-300">
-                    Les données sont conservées pendant toute la durée active de l'abonnement du Client. Conformément au RGPD, chaque utilisateur dispose d'un droit d'accès, de rectification, de portabilité et de suppression de ses données sur simple demande à <strong>contact@parkflow.app</strong>.
+                    Les données sont conservées pendant toute la durée active de l'abonnement du Client. Conformément au RGPD, chaque utilisateur dispose d'un droit d'accès, de rectification, de portabilité et de suppression de ses données sur simple demande à <strong>contact@parkeya.com</strong>.
                   </p>
                 </div>
               </div>
@@ -184,18 +184,18 @@ export default function LegalPages({ onNavigate, initialTab = "mentions" }) {
                 </div>
 
                 <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-200 text-xs">
-                  <strong>Clause de Non-Responsabilité sur les Données Métier :</strong> L'exploitant du parking assume l'entière responsabilité de la légitimité de la collecte des données de ses propres clients (plaques d'immatriculation, informations clients). ParkFlow n'effectue aucun traitement de ces données en dehors des instructions et requêtes logicielles initiées par le Client.
+                  <strong>Clause de Non-Responsabilité sur les Données Métier :</strong> L'exploitant du parking assume l'entière responsabilité de la légitimité de la collecte des données de ses propres clients (plaques d'immatriculation, informations clients). Parkeya n'effectue aucun traitement de ces données en dehors des instructions et requêtes logicielles initiées par le Client.
                 </div>
 
                 <div className="space-y-3">
                   <h3 className="font-bold text-white text-base">1. Objet du DPA</h3>
                   <p className="text-xs text-slate-300">
-                    Le présent Accord régit le traitement des données à caractère personnel effectué par ParkFlow pour le compte du Client dans le cadre de l'utilisation du logiciel de gestion de parkings en mode SaaS.
+                    Le présent Accord régit le traitement des données à caractère personnel effectué par Parkeya pour le compte du Client dans le cadre de l'utilisation du logiciel de gestion de parkings en mode SaaS.
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="font-bold text-white text-base">2. Engagements de ParkFlow (Sous-Traitant)</h3>
+                  <h3 className="font-bold text-white text-base">2. Engagements de Parkeya (Sous-Traitant)</h3>
                   <ul className="space-y-2 text-xs text-slate-300">
                     <li>• <strong>Stricte Confidentialité :</strong> Les données du Client sont traitées uniquement selon ses instructions directes.</li>
                     <li>• <strong>Isolation Multi-Tenant :</strong> Chaque organisation cliente dispose d'un espace hermétique inaccessible aux tiers.</li>
@@ -211,20 +211,20 @@ export default function LegalPages({ onNavigate, initialTab = "mentions" }) {
               <div className="space-y-6 animate-in fade-in">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-black text-white">Conditions Générales d'Utilisation & de Vente (B2B)</h1>
-                  <p className="text-xs text-slate-400 mt-1">Régissant l'accès et l'abonnement professionnel aux services ParkFlow.</p>
+                  <p className="text-xs text-slate-400 mt-1">Régissant l'accès et l'abonnement professionnel aux services Parkeya.</p>
                 </div>
 
                 <div className="space-y-3">
                   <h3 className="font-bold text-white text-base">1. Souscription & Plans SaaS</h3>
                   <p className="text-xs text-slate-300">
-                    Les abonnements ParkFlow sont souscrits au mois ou à l'année selon les plans *Starter*, *Business* ou *Enterprise*. Chaque plan définit un quota maximal d'utilisateurs et de parkings gérés.
+                    Les abonnements Parkeya sont souscrits au mois ou à l'année selon les plans *Starter*, *Business* ou *Enterprise*. Chaque plan définit un quota maximal d'utilisateurs et de parkings gérés.
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <h3 className="font-bold text-white text-base">2. Disponibilité & Maintenance</h3>
                   <p className="text-xs text-slate-300">
-                    ParkFlow met en œuvre tous les moyens raisonnables pour assurer une disponibilité de 99.9% de ses services hébergés. Des opérations de maintenance programmées peuvent être effectuées lors des heures de faible affluence.
+                    Parkeya met en œuvre tous les moyens raisonnables pour assurer une disponibilité de 99.9% de ses services hébergés. Des opérations de maintenance programmées peuvent être effectuées lors des heures de faible affluence.
                   </p>
                 </div>
 
@@ -246,7 +246,7 @@ export default function LegalPages({ onNavigate, initialTab = "mentions" }) {
                 </div>
 
                 <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-xs">
-                  <strong>Cookies Strictement Nécessaires :</strong> ParkFlow utilise exclusivement des cookies et tokens techniques d'authentification et de maintien de session sécurisée. Aucun cookie publicitaire tiers ou traceur invasif n'est installé sans votre consentement.
+                  <strong>Cookies Strictement Nécessaires :</strong> Parkeya utilise exclusivement des cookies et tokens techniques d'authentification et de maintien de session sécurisée. Aucun cookie publicitaire tiers ou traceur invasif n'est installé sans votre consentement.
                 </div>
 
                 <div className="space-y-3">

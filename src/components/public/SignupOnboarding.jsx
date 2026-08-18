@@ -143,7 +143,7 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate("home")}>
           <ParkflowLogo size={32} />
           <span className="text-lg font-black text-white">
-            Park<span className="text-cyan-400">Flow</span>
+            Park<span className="text-cyan-400">eya</span>
           </span>
         </div>
         <button
@@ -466,7 +466,7 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
                 className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-white text-xs font-black shadow-xl shadow-cyan-950/60 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                <span>Finaliser & Ouvrir ParkFlow</span>
+                <span>Finaliser & Ouvrir Parkeya</span>
               </button>
             </div>
           </form>
@@ -475,7 +475,7 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
 
       {/* Footer */}
       <footer className="text-center text-xs text-slate-500 py-2">
-        <span>© {new Date().getFullYear()} ParkFlow SaaS B2B — Données chiffrées & isolées.</span>
+        <span>© {new Date().getFullYear()} Parkeya SaaS B2B — Données chiffrées & isolées.</span>
       </footer>
     </div>
   );

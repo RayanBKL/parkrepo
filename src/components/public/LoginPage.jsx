@@ -56,7 +56,7 @@ export default function LoginPage({ onNavigate, onLoginSuccess }) {
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate("home")}>
           <ParkflowLogo size={32} />
           <span className="text-lg font-black text-white">
-            Park<span className="text-cyan-400">Flow</span>
+            Park<span className="text-cyan-400">eya</span>
           </span>
         </div>
         <button
@@ -152,7 +152,7 @@ export default function LoginPage({ onNavigate, onLoginSuccess }) {
 
       {/* Footer */}
       <footer className="text-center text-xs text-slate-500 py-2">
-        <span>© {new Date().getFullYear()} ParkFlow SaaS B2B — Espace Sécurisé</span>
+        <span>© {new Date().getFullYear()} Parkeya SaaS B2B — Espace Sécurisé</span>
       </footer>
 
       {/* Modal Mot de Passe Oublié */}

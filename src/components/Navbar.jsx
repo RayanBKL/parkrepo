@@ -73,7 +73,7 @@ export default function Navbar({
             <ParkflowLogo size={36} />
           </div>
           <span className="text-lg font-black text-white tracking-tight flex items-center">
-            Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">Flow</span>
+            Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">eya</span>
           </span>
         </div>
 

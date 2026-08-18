@@ -70,7 +70,7 @@ export default function Sidebar({
             {!isCollapsed && (
               <div className="truncate">
                 <div className="text-sm font-black text-white tracking-tight flex items-center">
-                  Park<span className="text-cyan-400">Flow</span>
+                  Park<span className="text-cyan-400">eya</span>
                 </div>
                 <div className="text-[10px] text-slate-400 font-semibold truncate max-w-[140px]">
                   {organization?.name || "Mon Entreprise"}

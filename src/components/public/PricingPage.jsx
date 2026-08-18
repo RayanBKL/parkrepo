@@ -21,7 +21,7 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
               <ParkflowLogo size={36} />
             </div>
             <span className="text-xl font-black text-white tracking-tight flex items-center">
-              Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">Flow</span>
+              Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">eya</span>
             </span>
           </div>
 
@@ -207,7 +207,7 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-black text-white">Questions Fréquentes</h2>
-            <p className="text-xs text-slate-400 mt-2">Tout ce que vous devez savoir avant de déployer ParkFlow</p>
+            <p className="text-xs text-slate-400 mt-2">Tout ce que vous devez savoir avant de déployer Parkeya</p>
           </div>
 
           <div className="space-y-4">
@@ -222,7 +222,7 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
               },
               {
                 q: "Mes données sont-elles isolées des autres entreprises ?",
-                a: "Absolument. ParkFlow utilise une architecture multi-tenant stricte : aucune autre entreprise ne peut accéder à vos parcs, véhicules ou plannings.",
+                a: "Absolument. Parkeya utilise une architecture multi-tenant stricte : aucune autre entreprise ne peut accéder à vos parcs, véhicules ou plannings.",
               },
             ].map((faq, i) => (
               <div key={i} className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800/80 space-y-2">
@@ -242,7 +242,7 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <ParkflowLogo size={24} />
-            <span className="font-bold text-white">ParkFlow SaaS</span>
+            <span className="font-bold text-white">Parkeya SaaS</span>
             <span>— Tarifs transparents & conformité RGPD.</span>
           </div>
           <div className="flex items-center gap-4 text-slate-400">

@@ -167,7 +167,7 @@ export function AccessCodeModal({ isOpen, onClose, parking, userId, onOpenCollab
           <div className="p-3 bg-cyan-950/40 border border-cyan-500/30 rounded-xl text-xs text-cyan-200 space-y-1">
             <div className="font-bold">ℹ Comment partager l'accès :</div>
             <div>1. Transmettez ce code à votre collaborateur (par message, email...)</div>
-            <div>2. Il crée un compte sur ParkFlow et clique sur "Rejoindre un Parking"</div>
+            <div>2. Il crée un compte sur Parkeya et clique sur "Rejoindre un Parking"</div>
             <div>3. Il saisit ce code → il accède immédiatement en lecture et écriture</div>
           </div>
 

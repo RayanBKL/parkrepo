@@ -29,7 +29,7 @@ export default function LandingPage({ onNavigate }) {
               <ParkflowLogo size={36} />
             </div>
             <span className="text-xl font-black text-white tracking-tight flex items-center">
-              Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">Flow</span>
+              Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">eya</span>
               <span className="ml-2 text-[10px] uppercase font-mono tracking-widest bg-cyan-950 text-cyan-400 border border-cyan-500/40 px-2 py-0.5 rounded-full font-bold">
                 B2B SaaS
               </span>
@@ -152,7 +152,7 @@ export default function LandingPage({ onNavigate }) {
               <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
                 <AlertTriangle size={24} />
               </div>
-              <h3 className="text-xl font-black text-rose-200">Sans ParkFlow : Chaos & Manœuvres Inutiles</h3>
+              <h3 className="text-xl font-black text-rose-200">Sans Parkeya : Chaos & Manœuvres Inutiles</h3>
               <ul className="space-y-4 text-sm text-slate-300">
                 <li className="flex items-start gap-3">
                   <span className="text-rose-400 font-bold text-lg leading-none">✕</span>
@@ -178,7 +178,7 @@ export default function LandingPage({ onNavigate }) {
               <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
                 <Zap size={24} />
               </div>
-              <h3 className="text-xl font-black text-cyan-200">Avec ParkFlow SaaS : Précision & Fluidité Totale</h3>
+              <h3 className="text-xl font-black text-cyan-200">Avec Parkeya SaaS : Précision & Fluidité Totale</h3>
               <ul className="space-y-4 text-sm text-slate-200">
                 <li className="flex items-start gap-3">
                   <CheckCircle2 size={18} className="text-emerald-400 shrink-0 mt-0.5" />
@@ -210,7 +210,7 @@ export default function LandingPage({ onNavigate }) {
               Processus Simple & Intuitif
             </h2>
             <p className="text-3xl sm:text-5xl font-black text-white">
-              Comment ParkFlow transforme votre gestion en 5 étapes
+              Comment Parkeya transforme votre gestion en 5 étapes
             </p>
           </div>
 
@@ -286,7 +286,7 @@ export default function LandingPage({ onNavigate }) {
               onClick={() => onNavigate("signup")}
               className="px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-white font-black text-base shadow-xl shadow-cyan-950/60 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
             >
-              <span>Créer mon entreprise sur ParkFlow</span>
+              <span>Créer mon entreprise sur Parkeya</span>
               <ArrowRight size={18} />
             </button>
             <button
@@ -307,7 +307,7 @@ export default function LandingPage({ onNavigate }) {
             <div className="flex items-center gap-2.5">
               <ParkflowLogo size={28} />
               <span className="text-lg font-black text-white">
-                Park<span className="text-cyan-400">Flow</span>
+                Park<span className="text-cyan-400">eya</span>
               </span>
             </div>
             <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
@@ -350,7 +350,7 @@ export default function LandingPage({ onNavigate }) {
                 <a href="#problem-solution" className="hover:text-cyan-400 transition-colors">À propos</a>
               </li>
               <li>
-                <a href="mailto:contact@parkflow.app" className="hover:text-cyan-400 transition-colors">Contact Support</a>
+                <a href="mailto:contact@parkeya.com" className="hover:text-cyan-400 transition-colors">Contact Support</a>
               </li>
               <li>
                 <button onClick={() => onNavigate("login")} className="hover:text-cyan-400 transition-colors cursor-pointer">
@@ -399,7 +399,7 @@ export default function LandingPage({ onNavigate }) {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
-          <div>© {new Date().getFullYear()} ParkFlow SaaS — Tous droits réservés.</div>
+          <div>© {new Date().getFullYear()} Parkeya SaaS — Tous droits réservés.</div>
           <div>Plateforme B2B éditée par Rayan BOUAKKAZ (EI).</div>
         </div>
       </footer>
