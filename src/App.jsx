@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import confetti from "canvas-confetti";
+import { Plus, KeyRound } from "lucide-react";
 
 // Services Auth & Cloud
 import { onAuthChange, logOut } from "./services/auth";
