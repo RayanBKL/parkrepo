@@ -258,6 +258,8 @@ export default function SettingsModal({
                   </button>
                 </div>
               </div>
+            )}
+
             {/* Suppression définitive du parking */}
             {onDeleteParking && (
               <div className="flex items-center justify-between p-3 bg-rose-950/30 border border-rose-600/40 rounded-2xl">
