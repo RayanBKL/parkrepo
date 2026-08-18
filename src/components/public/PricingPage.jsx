@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, ArrowRight, Sparkles, Building2, HelpCircle, ShieldCheck, Zap } from "lucide-react";
+import { Check, ArrowRight, Sparkles, Building2, HelpCircle, ShieldCheck, Zap, ArrowLeft, X } from "lucide-react";
 import ParkflowLogo from "../ParkflowLogo";
 import { PLANS_CONFIG } from "../../services/organization";
 
@@ -28,9 +28,10 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
           <div className="flex items-center gap-4">
             <button
               onClick={() => onNavigate("home")}
-              className="text-xs sm:text-sm font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
             >
-              Retour à l'accueil
+              <ArrowLeft size={15} />
+              <span>Retour à l'accueil</span>
             </button>
             <button
               onClick={() => onNavigate("login")}
@@ -43,22 +44,22 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
       </header>
 
       {/* Hero Pricing */}
-      <section className="pt-16 pb-20 text-center max-w-5xl mx-auto px-4 sm:px-6">
+      <section className="pt-16 pb-14 text-center max-w-5xl mx-auto px-4 sm:px-6">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900 border border-cyan-500/30 text-cyan-300 text-xs font-bold mb-4 shadow-inner">
           <Sparkles size={14} className="text-cyan-400" />
-          <span>Des tarifs clairs, adaptés à la taille de vos parcs</span>
+          <span>💰 Des tarifs transparents & rentabilisés dès le 1er mois</span>
         </div>
 
         <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-tight">
-          Investissez dans l'efficacité de vos voituriers.
+          Une offre adaptée à votre volume de véhicules.
         </h1>
         <p className="mt-4 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-          Rentabilisez votre abonnement dès le premier mois grâce aux heures de manœuvres économisées et au zéro sinistre.
+          Optimisez vos parcs, gagnez des heures de manœuvres chaque jour et éliminez les blocages de sorties.
         </p>
 
         {/* Toggle Facturation */}
-        <div className="mt-10 flex items-center justify-center gap-4">
-          <span className={`text-xs font-bold ${!isAnnual ? "text-white" : "text-slate-400"}`}>Mensuel</span>
+        <div className="mt-8 flex items-center justify-center gap-4">
+          <span className={`text-xs font-bold ${!isAnnual ? "text-white" : "text-slate-400"}`}>Facturation Mensuelle</span>
           <button
             type="button"
             onClick={() => setIsAnnual(!isAnnual)}
@@ -71,7 +72,7 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
             />
           </button>
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-bold ${isAnnual ? "text-white" : "text-slate-400"}`}>Annuel</span>
+            <span className={`text-xs font-bold ${isAnnual ? "text-white" : "text-slate-400"}`}>Facturation Annuelle</span>
             <span className="text-[10px] uppercase font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full">
               -15% de réduction
             </span>
@@ -79,31 +80,47 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
         </div>
       </section>
 
-      {/* Grille des Plans */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+      {/* Grille des 4 Plans */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
           {/* STARTER */}
-          <div className="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all">
+          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all shadow-xl">
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xl font-black text-white">Starter</h3>
-                <span className="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full font-bold">1 Parking</span>
+                <span className="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-bold">1 Parking</span>
               </div>
-              <p className="text-xs text-slate-400 mb-6">
-                Idéal pour les petits parkings d'appoint ou exploitants indépendants.
+              <p className="text-xs text-slate-400 mb-6 min-h-[32px]">
+                Pour les petits parcs indépendants jusqu'à 300 places.
               </p>
 
-              <div className="flex items-baseline gap-1 mb-8">
+              <div className="flex items-baseline gap-1 mb-6">
                 <span className="text-4xl font-black text-white">
                   {isAnnual ? PLANS_CONFIG.starter.priceAnnually : PLANS_CONFIG.starter.priceMonthly}€
                 </span>
                 <span className="text-xs text-slate-400 font-semibold">/ mois HT</span>
               </div>
 
-              <ul className="space-y-3.5 text-xs text-slate-300 border-t border-slate-800 pt-6">
+              {/* Specs clés */}
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-850 space-y-1.5 text-xs text-slate-300 mb-6">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Parkings :</span>
+                  <strong className="text-white">1</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Véhicules :</span>
+                  <strong className="text-cyan-300">300 max</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Utilisateurs :</span>
+                  <strong className="text-white">5 inclus</strong>
+                </div>
+              </div>
+
+              <ul className="space-y-2.5 text-xs text-slate-300 border-t border-slate-800 pt-4">
                 {PLANS_CONFIG.starter.features.map((f, i) => (
-                  <li key={i} className="flex items-center gap-2.5">
-                    <Check size={16} className="text-cyan-400 shrink-0" />
+                  <li key={i} className="flex items-center gap-2">
+                    <Check size={15} className="text-cyan-400 shrink-0" />
                     <span>{f}</span>
                   </li>
                 ))}
@@ -112,42 +129,51 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
 
             <button
               onClick={() => handleChoose("starter")}
-              className="mt-8 w-full py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-all cursor-pointer shadow-inner"
+              className="mt-6 w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-all cursor-pointer shadow-inner"
             >
-              Choisir le plan Starter
+              Choisir Starter
             </button>
           </div>
 
-          {/* BUSINESS (POPULAIRE) */}
-          <div className="p-8 rounded-3xl bg-gradient-to-b from-slate-900 to-cyan-950/40 border-2 border-cyan-500/80 flex flex-col justify-between relative shadow-2xl shadow-cyan-950/50 transform lg:-translate-y-2">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 text-white text-[11px] font-black tracking-wider uppercase shadow-md flex items-center gap-1.5">
-              <Zap size={12} />
-              <span>Le plus recommandé</span>
-            </div>
-
+          {/* BUSINESS */}
+          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all shadow-xl">
             <div>
-              <div className="flex items-center justify-between mb-4 mt-2">
-                <h3 className="text-2xl font-black text-white">Business</h3>
-                <span className="text-xs bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-3 py-1 rounded-full font-bold">
-                  3 Parkings
-                </span>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xl font-black text-white">Business</h3>
+                <span className="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-bold">1 Parking</span>
               </div>
-              <p className="text-xs text-slate-300 mb-6">
-                La solution complète pour les sociétés de voituriers aéroportuaires et multi-équipes.
+              <p className="text-xs text-slate-400 mb-6 min-h-[32px]">
+                Pour les parcs moyens à fort débit jusqu'à 600 places.
               </p>
 
-              <div className="flex items-baseline gap-1 mb-8">
-                <span className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-4xl font-black text-white">
                   {isAnnual ? PLANS_CONFIG.business.priceAnnually : PLANS_CONFIG.business.priceMonthly}€
                 </span>
                 <span className="text-xs text-slate-400 font-semibold">/ mois HT</span>
               </div>
 
-              <ul className="space-y-3.5 text-xs text-slate-200 border-t border-slate-800/80 pt-6">
+              {/* Specs clés */}
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-850 space-y-1.5 text-xs text-slate-300 mb-6">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Parkings :</span>
+                  <strong className="text-white">1</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Véhicules :</span>
+                  <strong className="text-cyan-300">600 max</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Utilisateurs :</span>
+                  <strong className="text-white">10 inclus</strong>
+                </div>
+              </div>
+
+              <ul className="space-y-2.5 text-xs text-slate-300 border-t border-slate-800 pt-4">
                 {PLANS_CONFIG.business.features.map((f, i) => (
-                  <li key={i} className="flex items-center gap-2.5">
-                    <Check size={16} className="text-emerald-400 shrink-0" />
-                    <span className="font-semibold">{f}</span>
+                  <li key={i} className="flex items-center gap-2">
+                    <Check size={15} className="text-cyan-400 shrink-0" />
+                    <span>{f}</span>
                   </li>
                 ))}
               </ul>
@@ -155,37 +181,109 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
 
             <button
               onClick={() => handleChoose("business")}
-              className="mt-8 w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-white font-black text-sm shadow-xl shadow-cyan-950/60 hover:scale-[1.02] transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="mt-6 w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-all cursor-pointer shadow-inner"
             >
-              <span>Commencer avec Business</span>
-              <ArrowRight size={16} />
+              Choisir Business
             </button>
           </div>
 
-          {/* ENTERPRISE */}
-          <div className="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all">
+          {/* PRO (LE PLUS POPULAIRE) */}
+          <div className="p-6 rounded-3xl bg-gradient-to-b from-slate-900 via-cyan-950/50 to-slate-900 border-2 border-cyan-500/80 flex flex-col justify-between relative shadow-2xl shadow-cyan-950/60 transform lg:-translate-y-2">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 text-white text-[10px] font-black tracking-wider uppercase shadow-md flex items-center gap-1">
+              <Zap size={11} />
+              <span>Le plus recommandé</span>
+            </div>
+
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-black text-white">Enterprise</h3>
-                <span className="text-xs bg-indigo-950 text-indigo-300 border border-indigo-500/40 px-3 py-1 rounded-full font-bold">
-                  Illimité
+              <div className="flex items-center justify-between mb-2 mt-1">
+                <h3 className="text-2xl font-black text-white">Pro</h3>
+                <span className="text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-2.5 py-1 rounded-full font-bold">
+                  3 Parkings
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mb-6">
-                Pour les grands groupes aéroportuaires et parcs de plusieurs milliers de places.
+              <p className="text-xs text-slate-300 mb-6 min-h-[32px]">
+                Pour les sociétés multi-parkings et services voituriers aéroportuaires.
               </p>
 
-              <div className="flex items-baseline gap-1 mb-8">
-                <span className="text-4xl font-black text-white">
-                  {isAnnual ? PLANS_CONFIG.enterprise.priceAnnually : PLANS_CONFIG.enterprise.priceMonthly}€
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">
+                  {isAnnual ? PLANS_CONFIG.pro.priceAnnually : PLANS_CONFIG.pro.priceMonthly}€
                 </span>
                 <span className="text-xs text-slate-400 font-semibold">/ mois HT</span>
               </div>
 
-              <ul className="space-y-3.5 text-xs text-slate-300 border-t border-slate-800 pt-6">
+              {/* Specs clés */}
+              <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-cyan-500/30 space-y-1.5 text-xs text-slate-200 mb-6">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Parkings :</span>
+                  <strong className="text-cyan-300">Jusqu'à 3</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Véhicules :</span>
+                  <strong className="text-emerald-300">1 000 / parking</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Utilisateurs :</span>
+                  <strong className="text-white">20 inclus</strong>
+                </div>
+              </div>
+
+              <ul className="space-y-2.5 text-xs text-slate-200 border-t border-slate-800/80 pt-4">
+                {PLANS_CONFIG.pro.features.map((f, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <Check size={15} className="text-emerald-400 shrink-0" />
+                    <span className="font-semibold">{f}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <button
+              onClick={() => handleChoose("pro")}
+              className="mt-6 w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-white font-black text-xs shadow-xl shadow-cyan-950/60 hover:scale-[1.02] transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span>Commencer avec Pro</span>
+              <ArrowRight size={15} />
+            </button>
+          </div>
+
+          {/* ENTERPRISE */}
+          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all shadow-xl">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xl font-black text-white">Enterprise</h3>
+                <span className="text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-500/40 px-2.5 py-1 rounded-full font-bold">
+                  4+ Parcs
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mb-6 min-h-[32px]">
+                Pour les grands groupes aéroportuaires et réseaux nationaux.
+              </p>
+
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-3xl font-black text-white">Sur devis</span>
+              </div>
+
+              {/* Specs clés */}
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-850 space-y-1.5 text-xs text-slate-300 mb-6">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Parkings :</span>
+                  <strong className="text-indigo-300">4+ (Sur mesure)</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Véhicules :</span>
+                  <strong className="text-white">Sur mesure</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Utilisateurs :</span>
+                  <strong className="text-white">Sur mesure</strong>
+                </div>
+              </div>
+
+              <ul className="space-y-2.5 text-xs text-slate-300 border-t border-slate-800 pt-4">
                 {PLANS_CONFIG.enterprise.features.map((f, i) => (
-                  <li key={i} className="flex items-center gap-2.5">
-                    <Check size={16} className="text-cyan-400 shrink-0" />
+                  <li key={i} className="flex items-center gap-2">
+                    <Check size={15} className="text-cyan-400 shrink-0" />
                     <span>{f}</span>
                   </li>
                 ))}
@@ -194,10 +292,92 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
 
             <button
               onClick={() => handleChoose("enterprise")}
-              className="mt-8 w-full py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-all cursor-pointer shadow-inner"
+              className="mt-6 w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-all cursor-pointer shadow-inner"
             >
-              Contacter pour Enterprise
+              Demander un devis
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* TABLEAU RÉCAPITULATIF COMPARATIF */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+        <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-2xl space-y-6">
+          <div className="text-center max-w-xl mx-auto">
+            <h3 className="text-xl sm:text-2xl font-black text-white">Tableau Comparatif Détaillé</h3>
+            <p className="text-xs text-slate-400 mt-1">Comparez les capacités et caractéristiques de chaque plan</p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-800 font-bold text-white bg-slate-950/70">
+                  <th className="py-4 px-4">Caractéristiques</th>
+                  <th className="py-4 px-4 text-center">Starter</th>
+                  <th className="py-4 px-4 text-center">Business</th>
+                  <th className="py-4 px-4 text-center text-cyan-300">Pro (Recommandé)</th>
+                  <th className="py-4 px-4 text-center">Enterprise</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800 text-slate-300">
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-white">Tarif mensuel HT</td>
+                  <td className="py-3.5 px-4 text-center font-bold">129 € / mois</td>
+                  <td className="py-3.5 px-4 text-center font-bold">199 € / mois</td>
+                  <td className="py-3.5 px-4 text-center font-bold text-cyan-300">299 € / mois</td>
+                  <td className="py-3.5 px-4 text-center font-bold text-white">Sur devis</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-white">Nombre de Parkings</td>
+                  <td className="py-3.5 px-4 text-center">1</td>
+                  <td className="py-3.5 px-4 text-center">1</td>
+                  <td className="py-3.5 px-4 text-center text-cyan-300 font-bold">Jusqu'à 3</td>
+                  <td className="py-3.5 px-4 text-center">4+</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-white">Nombre max de Véhicules</td>
+                  <td className="py-3.5 px-4 text-center">300</td>
+                  <td className="py-3.5 px-4 text-center">600</td>
+                  <td className="py-3.5 px-4 text-center text-emerald-300 font-bold">1 000 / parking</td>
+                  <td className="py-3.5 px-4 text-center">Sur mesure</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-white">Comptes Utilisateurs (Voituriers / Managers)</td>
+                  <td className="py-3.5 px-4 text-center">5</td>
+                  <td className="py-3.5 px-4 text-center">10</td>
+                  <td className="py-3.5 px-4 text-center text-cyan-300 font-bold">20</td>
+                  <td className="py-3.5 px-4 text-center">Sur mesure</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-white">Algorithme Tightest Fit (Rangement)</td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-white">Module Récupération Optimisée (Déblocage)</td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-white">Journal d'Audit & Traçabilité Complète</td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                  <td className="py-3.5 px-4 text-center"><Check size={16} className="text-emerald-400 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-semibold text-white">Support Technique</td>
+                  <td className="py-3.5 px-4 text-center">Standard Email</td>
+                  <td className="py-3.5 px-4 text-center">Prioritaire</td>
+                  <td className="py-3.5 px-4 text-center text-cyan-300 font-bold">Prioritaire 7j/7</td>
+                  <td className="py-3.5 px-4 text-center text-emerald-400 font-bold">Dédié 24/7 + SLA</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -213,16 +393,16 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
           <div className="space-y-4">
             {[
               {
-                q: "Puis-je changer d'offre ou annuler à tout moment ?",
-                a: "Oui, vous pouvez faire évoluer votre plan (upgrader pour ajouter des parkings ou des voituriers) à tout moment depuis les paramètres de votre organisation.",
+                q: "Puis-je changer d'offre ou faire évoluer mes quotas à tout moment ?",
+                a: "Oui, vous pouvez faire évoluer votre abonnement (passer de Starter à Business ou Pro pour ajouter des parkings et utilisateurs) en un clic depuis les paramètres de votre organisation.",
               },
               {
-                q: "Comment fonctionne l'accès pour mes voituriers sur le terrain ?",
-                a: "Vos voituriers reçoivent une invitation avec leurs accès. Ils peuvent se connecter depuis une tablette ou smartphone pour rechercher et sortir des véhicules en quelques secondes.",
+                q: "Comment fonctionne le quota de véhicules ?",
+                a: "Le quota correspond au nombre maximum de véhicules stationnés simultanément dans vos parcs. Les sorties libèrent instantanément de la place pour de nouveaux dépôts.",
               },
               {
-                q: "Mes données sont-elles isolées des autres entreprises ?",
-                a: "Absolument. Parkeya utilise une architecture multi-tenant stricte : aucune autre entreprise ne peut accéder à vos parcs, véhicules ou plannings.",
+                q: "Mes données et celles de mes clients sont-elles sécurisées ?",
+                a: "Absolument. Parkeya utilise une architecture multi-tenant étanche avec chiffrement des flux et hébergement certifié RGPD en Union Européenne.",
               },
             ].map((faq, i) => (
               <div key={i} className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800/80 space-y-2">

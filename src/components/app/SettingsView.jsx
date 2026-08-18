@@ -509,6 +509,76 @@ export default function SettingsView({
               </div>
             </div>
           </div>
+
+          {/* Grille de mise à niveau des offres */}
+          {isOwner && (
+            <div className="space-y-4 pt-4 border-t border-slate-800">
+              <h3 className="text-sm font-black text-white">Faire évoluer votre formule</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {Object.values(PLANS_CONFIG).map((p) => {
+                  const isCurrent = currentPlanId === p.id;
+                  return (
+                    <div
+                      key={p.id}
+                      className={`p-4 rounded-2xl border flex flex-col justify-between transition-all ${
+                        isCurrent
+                          ? "bg-cyan-950/60 border-cyan-400 ring-2 ring-cyan-500/40"
+                          : "bg-slate-950 border-slate-800 hover:border-slate-700"
+                      }`}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-black text-white text-xs">{p.name}</span>
+                          {isCurrent && (
+                            <span className="text-[9px] uppercase font-mono px-2 py-0.5 rounded-full bg-cyan-900 text-cyan-300 font-bold">
+                              Actif
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm font-black text-white">
+                          {p.priceMonthly ? `${p.priceMonthly}€/m` : "Sur devis"}
+                        </div>
+                        <div className="text-[11px] text-slate-400 space-y-1 pt-2 border-t border-slate-850">
+                          <div>🅿️ {p.maxParkings > 50 ? "Illimités" : `${p.maxParkings} parking${p.maxParkings > 1 ? "s" : ""}`}</div>
+                          <div>🚗 {p.maxVehicles > 5000 ? "Sur mesure" : `${p.maxVehicles} véh.`}</div>
+                          <div>👥 {p.maxUsers > 50 ? "Sur mesure" : `${p.maxUsers} users`}</div>
+                        </div>
+                      </div>
+
+                      {!isCurrent && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              setLoading(true);
+                              await updateOrganization(organization.id, {
+                                subscription: {
+                                  plan: p.id,
+                                  status: "active",
+                                  maxUsers: p.maxUsers,
+                                  maxParkings: p.maxParkings,
+                                  maxVehicles: p.maxVehicles,
+                                },
+                              });
+                              if (onRefreshOrg) onRefreshOrg();
+                              showSuccess(`Formule mise à jour vers le plan ${p.name} !`);
+                            } catch (err) {
+                              showError(err.message || "Erreur de changement d'offre.");
+                            } finally {
+                              setLoading(false);
+                            }
+                          }}
+                          className="mt-4 w-full py-2 rounded-xl bg-slate-800 hover:bg-cyan-600 text-white text-[11px] font-bold transition-all cursor-pointer shadow-inner"
+                        >
+                          Passer à {p.name}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

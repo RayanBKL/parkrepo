@@ -339,9 +339,10 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
                   onChange={(e) => setSelectedPlan(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500 cursor-pointer"
                 >
-                  <option value="starter">Plan Starter (1 parking / 5 utilisateurs)</option>
-                  <option value="business">Plan Business (3 parkings / 15 utilisateurs)</option>
-                  <option value="enterprise">Plan Enterprise (Illimité)</option>
+                  <option value="starter">Starter — 129€/m (1 parking / 300 véhicules / 5 users)</option>
+                  <option value="business">Business — 199€/m (1 parking / 600 véhicules / 10 users)</option>
+                  <option value="pro">Pro (Recommandé) — 299€/m (3 parkings / 1 000 véh./parc / 20 users)</option>
+                  <option value="enterprise">Enterprise — Sur devis (4+ parkings / Sur mesure)</option>
                 </select>
               </div>
             </div>
