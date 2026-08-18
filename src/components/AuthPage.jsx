@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Car, Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, CheckCircle2, KeyRound } from "lucide-react";
 import { signUp, signIn, resetPassword } from "../services/auth";
+import ParkflowLogo from "./ParkflowLogo";
 
 export default function AuthPage({ onAuthenticated }) {
   const [mode, setMode] = useState("login"); // 'login' | 'register' | 'reset'
