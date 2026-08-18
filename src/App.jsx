@@ -472,7 +472,7 @@ export default function App() {
             <ParkflowLogo size={72} />
           </div>
           <h2 className="text-2xl font-black text-white mb-2 tracking-wide flex items-center justify-center gap-1">
-            Bienvenue sur PARK<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">FLOW</span>
+            Bienvenue sur Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">Flow</span>
           </h2>
           <p className="text-xs text-slate-400 font-medium mb-8 leading-relaxed">
             Vous n'avez accès à aucun parking pour le moment. Créez votre premier parc automobile ou rejoignez-en un via un code secret.

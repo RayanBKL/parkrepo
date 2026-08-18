@@ -51,22 +51,12 @@ export default function Navbar({
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
         {/* Logo & Titre */}
         <div className="flex items-center gap-3">
-          <div className="hover:scale-105 transition-transform duration-300 drop-shadow-[0_0_12px_rgba(6,182,212,0.4)]">
-            <ParkflowLogo size={42} />
+          <div className="hover:scale-105 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+            <ParkflowLogo size={36} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-black text-white tracking-wide flex items-center">
-                PARK<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">FLOW</span>
-              </h1>
-              <span className="text-[10px] font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider shadow-[0_0_10px_rgba(16,185,129,0.15)]">
-                PRO V2
-              </span>
-            </div>
-            <p className="text-[10px] text-cyan-200/60 font-semibold tracking-wider uppercase">
-              Optimisation Intelligente
-            </p>
-          </div>
+          <span className="text-lg font-black text-white tracking-tight flex items-center">
+            Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">Flow</span>
+          </span>
         </div>
 
         {/* Onglets de Vue (Grille 2D vs Planning Départs) */}

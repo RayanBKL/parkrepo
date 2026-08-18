@@ -101,10 +101,9 @@ export default function AuthPage({ onAuthenticated }) {
             <ParkflowLogo size={80} />
           </div>
 
-          <h1 className="text-4xl font-black text-white text-center mb-2 tracking-tight">
-            PARK<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">FLOW</span>
+          <h1 className="text-3xl font-black text-white text-center mb-8 tracking-tight">
+            Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-extrabold ml-0.5">Flow</span>
           </h1>
-          <p className="text-slate-400 text-center mb-10 font-medium">Optimisation Intelligente</p>
         </div>
 
         {/* Carte du formulaire */}
