@@ -13,7 +13,11 @@ import {
   Users,
   Hash,
   Type,
+  KeyRound,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
+import { joinParkingWithCode } from "../services/cloudDb";
 
 export default function ParkingsModal({
   isOpen,
@@ -25,10 +29,17 @@ export default function ParkingsModal({
   onCreateParking,
   onDeleteParking,
   onLeaveParking,
+  onParkingJoined,
 }) {
   if (!isOpen) return null;
 
   const [isCreating, setIsCreating] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [joinError, setJoinError] = useState("");
+  const [joinSuccess, setJoinSuccess] = useState("");
+
   const [name, setName] = useState("");
   const [laneCount, setLaneCount] = useState(30);
   const [capacity, setCapacity] = useState(10);
@@ -43,6 +54,39 @@ export default function ParkingsModal({
       onLeaveParking(parkingId);
     }
     setConfirmAction(null);
+  };
+
+  const handleJoinSubmit = async (e) => {
+    e.preventDefault();
+    setJoinError("");
+    setJoinSuccess("");
+
+    if (!joinCode.trim() || joinCode.trim().length < 6) {
+      setJoinError("Veuillez saisir un code d'accès valide.");
+      return;
+    }
+
+    if (!currentUser) return;
+
+    setJoinLoading(true);
+    try {
+      const result = await joinParkingWithCode(currentUser.uid, joinCode.trim().toUpperCase());
+      setJoinSuccess(`Parking "${result.name || "rejoint"}" ajouté avec succès !`);
+      if (onParkingJoined) {
+        onParkingJoined(result.parkingId, result.alreadyJoined);
+      } else if (onSelectParking) {
+        onSelectParking(result.parkingId);
+      }
+      setTimeout(() => {
+        setIsJoining(false);
+        setJoinCode("");
+        setJoinSuccess("");
+      }, 1200);
+    } catch (err) {
+      setJoinError(err.message || "Code d'accès invalide ou introuvable.");
+    } finally {
+      setJoinLoading(false);
+    }
   };
 
   const handleCreate = (e) => {
@@ -95,17 +139,97 @@ export default function ParkingsModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto py-4 space-y-4">
-          {!isCreating ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-300">Vos parkings ({parkings.length}) :</span>
+          {/* Message de succès lors de la jointure */}
+          {joinSuccess && (
+            <div className="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+              <CheckCircle2 size={16} />
+              {joinSuccess}
+            </div>
+          )}
+
+          {isJoining ? (
+            /* Formulaire pour Rejoindre un parking existant */
+            <form onSubmit={handleJoinSubmit} className="space-y-4 animate-in fade-in">
+              <div className="p-4 bg-cyan-950/40 border border-cyan-500/30 rounded-2xl space-y-2">
+                <div className="flex items-center gap-2 text-cyan-300 font-bold text-xs">
+                  <KeyRound size={16} />
+                  <span>Rejoindre un parking partagé</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Saisissez le code d'accès à 10 ou 12 caractères que le responsable du parking vous a transmis.
+                </p>
+              </div>
+
+              {joinError && (
+                <div className="p-3 bg-rose-500/20 border border-rose-500/40 rounded-xl text-rose-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                  <AlertCircle size={15} className="shrink-0" />
+                  {joinError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Code d'accès du parking *
+                </label>
+                <input
+                  type="text"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  placeholder="Ex : PARK-A9T8-UW52"
+                  className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 text-amber-300 font-mono font-black text-center text-base tracking-widest uppercase focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsCreating(true)}
-                  className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-cyan-950/40 cursor-pointer"
+                  onClick={() => {
+                    setIsJoining(false);
+                    setJoinError("");
+                    setJoinCode("");
+                  }}
+                  className="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold cursor-pointer"
                 >
-                  <Plus size={14} /> Créer un nouveau parking
+                  Retour
                 </button>
+                <button
+                  type="submit"
+                  disabled={joinLoading || !joinCode.trim()}
+                  className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-bold shadow-lg shadow-cyan-950/40 flex items-center gap-1.5 cursor-pointer"
+                >
+                  {joinLoading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                  Rejoindre le Parking
+                </button>
+              </div>
+            </form>
+          ) : !isCreating ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-xs font-bold text-slate-300">Vos parkings ({parkings.length}) :</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsJoining(true);
+                      setIsCreating(false);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-inner"
+                  >
+                    <KeyRound size={14} className="text-cyan-400" /> Rejoindre avec un code
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreating(true);
+                      setIsJoining(false);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-cyan-950/40 cursor-pointer"
+                  >
+                    <Plus size={14} /> Créer un nouveau parking
+                  </button>
+                </div>
               </div>
 
               {parkings.map((p) => {
@@ -181,17 +305,17 @@ export default function ParkingsModal({
                             {copiedId === p.id ? (
                               <>
                                 <Check size={13} className="text-emerald-400" />
-                                <span className="text-emerald-400 font-bold">Copié !</span>
+                                <span className="text-emerald-400 font-sans">Copié</span>
                               </>
                             ) : (
                               <>
                                 <Copy size={13} className="text-slate-400" />
-                                <span>{p.accessCode || p.code || "PARK-01"}</span>
+                                <span>{p.accessCode || "CODE"}</span>
                               </>
                             )}
                           </button>
 
-                          {/* Bouton d'action selon le rôle */}
+                          {/* Bouton Supprimer (Propriétaire) ou Quitter (Invité) */}
                           {isOwner ? (
                             <button
                               type="button"
@@ -222,9 +346,9 @@ export default function ParkingsModal({
                                   ? "bg-amber-600 text-white border-amber-500"
                                   : "bg-amber-500/10 hover:bg-amber-600 text-amber-400 hover:text-white border-amber-500/30"
                               }`}
-                              title="Retirer de mon compte (Quitter le parking)"
+                              title="Supprimer de mon compte"
                             >
-                              <LogOut size={15} />
+                              <Trash2 size={15} />
                             </button>
                           )}
                         </div>
@@ -263,9 +387,9 @@ export default function ParkingsModal({
                             <button
                               type="button"
                               onClick={() => handleConfirmAction(p.id, "delete")}
-                              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-rose-900/50"
+                              className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-rose-900/50 flex items-center gap-1.5"
                             >
-                              Supprimer pour tous
+                              <Trash2 size={13} /> Confirmer suppression
                             </button>
                           </div>
                         </div>

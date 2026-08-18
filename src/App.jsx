@@ -725,6 +725,7 @@ export default function App() {
         onCreateParking={handleCreateParking}
         onDeleteParking={handleDeleteParking}
         onLeaveParking={handleLeaveParking}
+        onParkingJoined={handleJoinedParking}
       />
       <JoinParkingModal isOpen={isJoinModalOpen} onClose={() => setIsJoinModalOpen(false)} userId={currentUser?.uid} onParkingJoined={handleJoinedParking} />
       <AccessCodeModal
