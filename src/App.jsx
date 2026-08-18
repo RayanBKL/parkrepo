@@ -341,20 +341,10 @@ export default function App() {
     const targetParking = parkings.find((p) => p.id === pkgId);
     const pName = targetParking?.name || "ce parking";
 
-    const input = window.prompt(
-      `Pour confirmer la suppression définitive de "${pName}", tapez SUPPRIMER :`
-    );
-    if (input === null) return; // Annulé
-    if (input.trim().toUpperCase() !== "SUPPRIMER") {
-      showToast("Suppression annulée — vous devez taper SUPPRIMER.", "error");
-      return;
-    }
-
     try {
       await deleteParking(pkgId, currentUser.uid);
       showToast(`Parking "${pName}" supprimé avec succès.`);
 
-      // Mettre à jour le parking actif
       const remaining = parkings.filter((p) => p.id !== pkgId);
       if (remaining.length > 0) {
         setActiveParkingId(remaining[0].id);
@@ -367,6 +357,7 @@ export default function App() {
       showToast(err.message || "Erreur lors de la suppression du parking.", "error");
     }
   };
+
 
   const handleJoinedParking = (parkingId, alreadyJoined) => {
     setActiveParkingId(parkingId);

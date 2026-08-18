@@ -17,6 +17,12 @@ export default function ParkingsModal({
   const [laneCount, setLaneCount] = useState(30);
   const [capacity, setCapacity] = useState(10);
   const [copiedId, setCopiedId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  const handleConfirmDelete = (id) => {
+    onDeleteParking(id);
+    setConfirmDeleteId(null);
+  };
 
   const handleCreate = (e) => {
     e.preventDefault();
@@ -84,79 +90,115 @@ export default function ParkingsModal({
                 const maxCap = (p.laneCount || 30) * (p.capacity || 10);
 
                 return (
-                  <div
-                    key={p.id}
-                    onClick={() => {
-                      onSelectParking(p.id);
-                      onClose();
-                    }}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                      isActive
-                        ? "bg-cyan-950/40 border-cyan-500 ring-2 ring-cyan-500/40"
-                        : "bg-slate-950 border-slate-800 hover:border-slate-700"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
-                          isActive
-                            ? "bg-cyan-600 text-white shadow-lg shadow-cyan-900/50"
-                            : "bg-slate-800 text-slate-400"
-                        }`}
-                      >
-                        <Building2 size={20} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-white">{p.name}</h4>
-                          {isActive && (
-                            <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded-full font-bold">
-                              Actif
-                            </span>
-                          )}
+                  <div key={p.id} className="space-y-1">
+                    <div
+                      onClick={() => {
+                        if (confirmDeleteId === p.id) return; // Ne pas switcher si on confirme
+                        onSelectParking(p.id);
+                        onClose();
+                      }}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-2 ${
+                        isActive
+                          ? "bg-cyan-950/40 border-cyan-500 ring-2 ring-cyan-500/40"
+                          : "bg-slate-950 border-slate-800 hover:border-slate-700"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
+                              isActive
+                                ? "bg-cyan-600 text-white shadow-lg shadow-cyan-900/50"
+                                : "bg-slate-800 text-slate-400"
+                            }`}
+                          >
+                            <Building2 size={20} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-sm text-white">{p.name}</h4>
+                              {isActive && (
+                                <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded-full font-bold">
+                                  Actif
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-slate-400 mt-1 flex items-center gap-3">
+                              <span>
+                                {p.laneCount || 30} voies × {p.capacity || 10} places
+                              </span>
+                              <span>•</span>
+                              <span className="text-emerald-400 font-semibold">
+                                {totalCars} / {maxCap} véhicules
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-xs text-slate-400 mt-1 flex items-center gap-3">
-                          <span>
-                            {p.laneCount || 30} voies × {p.capacity || 10} places
-                          </span>
-                          <span>•</span>
-                          <span className="text-emerald-400 font-semibold">
-                            {totalCars} / {maxCap} véhicules
-                          </span>
+
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          {/* Code de partage */}
+                          <button
+                            type="button"
+                            onClick={() => handleCopyCode(p.accessCode || p.code || p.id, p.id)}
+                            className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700 text-amber-300 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-inner"
+                            title="Copier le code d'accès"
+                          >
+                            {copiedId === p.id ? (
+                              <>
+                                <Check size={13} className="text-emerald-400" />
+                                <span className="text-emerald-400 font-bold">Copié !</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={13} className="text-slate-400" />
+                                <span>{p.accessCode || p.code || "PARK-01"}</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Bouton suppression */}
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(confirmDeleteId === p.id ? null : p.id)}
+                            className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                              confirmDeleteId === p.id
+                                ? "bg-rose-600 text-white border-rose-500"
+                                : "bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border-rose-500/30"
+                            }`}
+                            title="Supprimer définitivement ce parking"
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      {/* Code de partage */}
-                      <button
-                        type="button"
-                        onClick={() => handleCopyCode(p.accessCode || p.code || p.id, p.id)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700 text-amber-300 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-inner"
-                        title="Copier le code d'accès"
-                      >
-                        {copiedId === p.id ? (
-                          <>
-                            <Check size={13} className="text-emerald-400" />
-                            <span className="text-emerald-400 font-bold">Copié !</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy size={13} className="text-slate-400" />
-                            <span>{p.accessCode || p.code || "PARK-01"}</span>
-                          </>
-                        )}
-                      </button>
-
-                      {/* Bouton de suppression disponible pour tout parking */}
-                      <button
-                        type="button"
-                        onClick={() => onDeleteParking(p.id)}
-                        className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/30 transition-all cursor-pointer hover:shadow-lg hover:shadow-rose-900/50"
-                        title="Supprimer définitivement ce parking"
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                      {/* Confirmation inline */}
+                      {confirmDeleteId === p.id && (
+                        <div
+                          className="p-3 bg-rose-950/60 border border-rose-500/50 rounded-xl flex items-center justify-between gap-3 animate-in fade-in duration-150"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span className="text-xs text-rose-200 font-semibold">
+                            ⚠️ Supprimer <span className="font-black text-white">{p.name}</span> définitivement ?
+                          </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold cursor-pointer"
+                            >
+                              Annuler
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleConfirmDelete(p.id)}
+                              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-rose-900/50"
+                            >
+                              Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
