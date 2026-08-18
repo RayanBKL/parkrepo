@@ -165,46 +165,6 @@ export default function App() {
   };
 
   // =========================================================================
-  // Initialisation du premier parking si nécessaire
-  // =========================================================================
-
-  useEffect(() => {
-    const initFirstParking = async () => {
-      if (!currentUser || parkingsLoading || parkings.length > 0) return;
-
-      // Aucun parking existant → créer le premier avec les données Alyse
-      try {
-        const samples = getAlyseSampleVehicles();
-        const { lanes, waiting } = redistributeAllVehicles(samples, 30, 10, "patience");
-        const newParking = await createParking(currentUser.uid, {
-          name: "Parc Principal",
-          code: generateAccessCode(),
-          laneCount: 30,
-          capacity: 10,
-        });
-
-        await saveParkingData(newParking.id, {
-          ...newParking,
-          lanes,
-          waiting,
-          rawAccessCode: newParking.rawAccessCode,
-        });
-        setActiveParkingId(newParking.id);
-        showToast("Bienvenue ! Votre premier parking a été créé.", "success");
-      } catch (err) {
-        console.error("Erreur création parking initial :", err);
-        setFirestoreError("Erreur lors de la création de votre premier parking : " + err.message);
-      }
-    };
-
-    if (currentUser && !parkingsLoading) {
-      // Attendre un court délai pour laisser le temps à l'abonnement d'initialiser
-      const timer = setTimeout(initFirstParking, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [currentUser, parkingsLoading, parkings.length]);
-
-  // =========================================================================
   // Actions Métier — Véhicules
   // =========================================================================
 
@@ -480,7 +440,48 @@ export default function App() {
     );
   }
 
-  if (parkingsLoading || parkings.length === 0) return <FullScreenLoader message="Chargement de vos parkings..." />;
+  if (parkingsLoading) return <FullScreenLoader message="Chargement de vos parkings..." />;
+
+  if (parkings.length === 0) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="max-w-md w-full bg-slate-900/80 border border-slate-700/80 rounded-[32px] p-8 shadow-2xl text-center backdrop-blur-xl animate-in fade-in slide-up">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 p-[1px] shadow-lg shadow-blue-500/20 mx-auto mb-6">
+            <div className="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-blue-400">
+              <Building2 size={32} />
+            </div>
+          </div>
+          <h2 className="text-2xl font-black text-white mb-3">Bienvenue sur ParkOptimizer</h2>
+          <p className="text-sm text-slate-400 font-medium mb-8">
+            Vous n'avez accès à aucun parking pour le moment. Créez-en un nouveau ou rejoignez un parc existant avec un code partagé.
+          </p>
+          
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setIsParkingsModalOpen(true)}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-blue-900/40 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+            >
+              <Plus size={18} /> Créer un Parking
+            </button>
+            <button
+              onClick={() => setIsJoinModalOpen(true)}
+              className="w-full py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 font-bold text-sm shadow-inner transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+            >
+              <KeyRound size={18} /> Rejoindre avec un Code
+            </button>
+          </div>
+
+          <button onClick={() => logOut()} className="mt-8 text-xs font-bold text-slate-500 hover:text-slate-300 transition-colors">
+            Se déconnecter
+          </button>
+        </div>
+
+        {/* Modales nécessaires pour l'état vide */}
+        <ParkingsModal isOpen={isParkingsModalOpen} onClose={() => setIsParkingsModalOpen(false)} parkings={parkings} activeParkingId={null} onSelectParking={setActiveParkingId} onCreateParking={handleCreateParking} onDeleteParking={handleDeleteParking} />
+        <JoinParkingModal isOpen={isJoinModalOpen} onClose={() => setIsJoinModalOpen(false)} userId={currentUser?.uid} onParкingJoined={handleJoinedParking} />
+      </div>
+    );
+  }
 
   const emptyParking = {
     id: null,
