@@ -117,8 +117,8 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                 <h3 className="text-xl font-black text-white">Starter</h3>
                 <span className="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-bold">1 Parking</span>
               </div>
-              <p className="text-xs text-slate-400 mb-5 min-h-[32px]">
-                Pour les petits parcs indépendants.
+              <p className="text-xs text-slate-300 mb-5 min-h-[32px]">
+                Pour les parkings indépendants jusqu'à 300 places.
               </p>
 
               <div className="flex items-baseline gap-1 mb-6">
@@ -156,9 +156,9 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
 
             <button
               onClick={() => handleChoose("starter")}
-              className="mt-6 w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-all cursor-pointer shadow-inner"
+              className="mt-6 w-full py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-lg shadow-cyan-950/40 transition-all cursor-pointer"
             >
-              Choisir Starter
+              Créer votre compte
             </button>
           </div>
 
@@ -169,8 +169,8 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                 <h3 className="text-xl font-black text-white">Business</h3>
                 <span className="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-bold">1 Parking</span>
               </div>
-              <p className="text-xs text-slate-400 mb-5 min-h-[32px]">
-                Pour les parcs moyens à fort trafic.
+              <p className="text-xs text-slate-300 mb-5 min-h-[32px]">
+                Pour les exploitants et services voituriers jusqu'à 600 places.
               </p>
 
               <div className="flex items-baseline gap-1 mb-6">
@@ -208,9 +208,9 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
 
             <button
               onClick={() => handleChoose("business")}
-              className="mt-6 w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-all cursor-pointer shadow-inner"
+              className="mt-6 w-full py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-lg shadow-cyan-950/40 transition-all cursor-pointer"
             >
-              Choisir Business
+              Créer votre compte
             </button>
           </div>
 
@@ -229,7 +229,7 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                 </span>
               </div>
               <p className="text-xs text-slate-300 mb-5 min-h-[32px]">
-                Pour les sociétés multi-parkings & voituriers aéroport.
+                Pour les exploitants multi-parkings jusqu'à 1 000 places par site.
               </p>
 
               <div className="flex items-baseline gap-1 mb-6">
@@ -269,7 +269,7 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
               onClick={() => handleChoose("pro")}
               className="mt-6 w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-white font-black text-xs shadow-xl shadow-cyan-950/60 hover:scale-[1.02] transition-all cursor-pointer flex items-center justify-center gap-1.5"
             >
-              <span>Commencer avec Pro</span>
+              <span>Créer votre compte</span>
               <ArrowRight size={15} />
             </button>
           </div>
@@ -283,8 +283,8 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
                   4+ Parcs
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mb-5 min-h-[32px]">
-                Pour les grands réseaux nationaux & aéroports.
+              <p className="text-xs text-slate-300 mb-5 min-h-[32px]">
+                Pour les réseaux aéroportuaires et parcs sur-mesure.
               </p>
 
               <div className="flex items-baseline gap-1 mb-6">

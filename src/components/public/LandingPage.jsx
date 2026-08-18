@@ -108,7 +108,7 @@ export default function LandingPage({ onNavigate }) {
               onClick={() => onNavigate("signup")}
               className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-white font-black text-base shadow-xl shadow-cyan-950/60 hover:shadow-cyan-700/50 hover:scale-105 transition-all flex items-center justify-center gap-3 cursor-pointer"
             >
-              <span>Créer un compte professionnel</span>
+              <span>Créer votre compte</span>
               <ArrowRight size={18} />
             </button>
             <button
