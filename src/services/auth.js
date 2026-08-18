@@ -23,16 +23,24 @@ export async function signUp(email, password, displayName) {
   const name = displayName?.trim() || email.split("@")[0];
 
   // Mettre à jour le profil avec le nom d'affichage
-  await updateProfile(user, { displayName: name });
+  try {
+    await updateProfile(user, { displayName: name });
+  } catch (e) {
+    console.warn("Could not update profile displayName:", e);
+  }
 
   // Créer le profil utilisateur dans Firestore
-  await setDoc(doc(db, "users", user.uid), {
-    uid: user.uid,
-    email: email.toLowerCase().trim(),
-    displayName: name,
-    createdAt: serverTimestamp(),
-    plan: "free",
-  });
+  try {
+    await setDoc(doc(db, "users", user.uid), {
+      uid: user.uid,
+      email: email.toLowerCase().trim(),
+      displayName: name,
+      createdAt: serverTimestamp(),
+      plan: "free",
+    });
+  } catch (e) {
+    console.warn("User doc in Firestore could not be written yet:", e);
+  }
 
   return user;
 }
