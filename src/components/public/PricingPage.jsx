@@ -243,7 +243,7 @@ export default function PricingPage({ onNavigate, onSelectPlan }) {
           <div className="flex items-center gap-2">
             <ParkflowLogo size={24} />
             <span className="font-bold text-white">Parkeya SaaS</span>
-            <span>— Tarifs transparents & conformité RGPD.</span>
+            <span>— Solution B2B éditée par <strong>BKL Vision</strong> (SIRET 107 483 794 00015).</span>
           </div>
           <div className="flex items-center gap-4 text-slate-400">
             <button onClick={() => onNavigate("legal-mentions")} className="hover:text-cyan-400 transition-colors cursor-pointer">

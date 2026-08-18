@@ -347,7 +347,10 @@ export default function LandingPage({ onNavigate }) {
                 <a href="#problem-solution" className="hover:text-cyan-400 transition-colors">À propos</a>
               </li>
               <li>
-                <a href="mailto:contact@parkeya.com" className="hover:text-cyan-400 transition-colors">Contact Support</a>
+                <a href="mailto:contact@bklvision.fr" className="hover:text-cyan-400 transition-colors">contact@bklvision.fr</a>
+              </li>
+              <li>
+                <a href="https://bklvision.fr" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-colors">Site Agence (bklvision.fr)</a>
               </li>
               <li>
                 <button onClick={() => onNavigate("login")} className="hover:text-cyan-400 transition-colors cursor-pointer">
@@ -396,8 +399,8 @@ export default function LandingPage({ onNavigate }) {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
-          <div>© {new Date().getFullYear()} Parkeya SaaS — Tous droits réservés.</div>
-          <div>Plateforme B2B éditée par Rayan BOUAKKAZ (EI).</div>
+          <div>© {new Date().getFullYear()} <strong>BKL Vision</strong> — Tous droits réservés.</div>
+          <div>Solution logicielle B2B éditée par Rayan BOUAKLI (EI) • SIRET 107 483 794 00015</div>
         </div>
       </footer>
     </div>
