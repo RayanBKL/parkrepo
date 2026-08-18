@@ -91,7 +91,7 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <div className="w-10 h-10 rounded-xl bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
               <Car size={20} />
             </div>
             <div>
@@ -131,7 +131,7 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
                 value={plate}
                 onChange={(e) => handlePlateChange(e.target.value)}
                 placeholder="ex: AA-123-BB"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-amber-300 font-mono font-bold text-sm tracking-wider focus:outline-none focus:border-blue-500 uppercase"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-amber-300 font-mono font-bold text-sm tracking-wider focus:outline-none focus:border-cyan-500 uppercase"
                 autoFocus
               />
             </div>
@@ -143,7 +143,7 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="ex: Peugeot 208, Clio..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500"
               />
             </div>
           </div>
@@ -154,7 +154,7 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
               <label className="block text-xs font-bold text-slate-300">
                 Date & Heure de Sortie / Départ *
               </label>
-              <div className="flex items-center gap-1 text-[10px] text-blue-400">
+              <div className="flex items-center gap-1 text-[10px] text-cyan-400">
                 <Sparkles size={11} />
                 <span>Raccourcis :</span>
                 <button
@@ -189,7 +189,7 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
                   type="date"
                   value={departureDate}
                   onChange={(e) => setDepartureDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500"
                 />
               </div>
               <div className="relative">
@@ -197,7 +197,7 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
                   type="time"
                   value={departureTime}
                   onChange={(e) => setDepartureTime(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500"
                 />
               </div>
             </div>
@@ -214,7 +214,7 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
                 value={flightNumber}
                 onChange={(e) => setFlightNumber(e.target.value)}
                 placeholder="ex: AF1234, TO456"
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500 uppercase font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500 uppercase font-mono"
               />
             </div>
 
@@ -227,7 +227,7 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="ex: 06 12 34 56 78"
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500"
               />
             </div>
           </div>
@@ -242,7 +242,7 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="ex: Nettoyage demandé, clé déposée casier 4..."
-              className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-slate-300 text-sm focus:outline-none focus:border-blue-500"
+              className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-slate-300 text-sm focus:outline-none focus:border-cyan-500"
             />
           </div>
 
@@ -257,7 +257,7 @@ export default function VehicleModal({ isOpen, onClose, onSave, editingVehicle, 
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold shadow-lg shadow-blue-900/40 transition-all flex items-center gap-2 cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white text-sm font-bold shadow-lg shadow-cyan-900/40 transition-all flex items-center gap-2 cursor-pointer"
             >
               <CheckCircle2 size={16} />
               {editingVehicle ? "Sauvegarder les modifications" : "Enregistrer et Placer"}

@@ -114,7 +114,7 @@ export default function SettingsModal({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500"
               />
             </div>
 
@@ -127,7 +127,7 @@ export default function SettingsModal({
                   max="100"
                   value={laneCount}
                   onChange={(e) => setLaneCount(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500"
                 />
               </div>
               <div>
@@ -138,14 +138,14 @@ export default function SettingsModal({
                   max="50"
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-colors cursor-pointer"
             >
               Enregistrer la configuration
             </button>
@@ -179,7 +179,7 @@ export default function SettingsModal({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="p-3 rounded-2xl bg-slate-950 hover:bg-slate-850 border border-slate-800 hover:border-blue-500/40 text-left transition-all group flex items-center gap-3 cursor-pointer"
+                className="p-3 rounded-2xl bg-slate-950 hover:bg-slate-850 border border-slate-800 hover:border-cyan-500/40 text-left transition-all group flex items-center gap-3 cursor-pointer"
               >
                 <input
                   ref={fileInputRef}
@@ -188,7 +188,7 @@ export default function SettingsModal({
                   onChange={handleUploadBackup}
                   className="hidden"
                 />
-                <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center">
                   <Upload size={20} />
                 </div>
                 <div>

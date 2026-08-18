@@ -132,9 +132,9 @@ export default function ImportModal({ isOpen, onClose, onImportVehicles }) {
               <button
                 type="button"
                 onClick={handleLoadAlyseSample}
-                className="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-blue-500/40 text-left transition-all group cursor-pointer"
+                className="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 text-left transition-all group cursor-pointer"
               >
-                <div className="text-xs font-bold text-blue-400 group-hover:text-blue-300">Données Réelles Alyse</div>
+                <div className="text-xs font-bold text-cyan-400 group-hover:text-cyan-300">Données Réelles Alyse</div>
                 <div className="text-[11px] text-slate-400 mt-0.5">38 véhicules du planning</div>
               </button>
 
@@ -212,7 +212,7 @@ export default function ImportModal({ isOpen, onClose, onImportVehicles }) {
                     onClick={() => setImportMode("replace")}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       importMode === "replace"
-                        ? "bg-blue-600/20 border-blue-500 text-blue-300 ring-1 ring-blue-500"
+                        ? "bg-cyan-600/20 border-cyan-500 text-cyan-300 ring-1 ring-cyan-500"
                         : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-300"
                     }`}
                   >

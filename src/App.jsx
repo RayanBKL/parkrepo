@@ -36,9 +36,9 @@ import ParkingsModal from "./components/ParkingsModal";
 function FullScreenLoader({ message }) {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4 font-sans">
-      <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 p-[2px] shadow-2xl shadow-blue-500/30 animate-pulse">
+      <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-cyan-600 via-emerald-500 to-sky-400 p-[2px] shadow-2xl shadow-cyan-500/30 animate-pulse">
         <div className="w-full h-full bg-slate-950 rounded-[22px] flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-cyan-400 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12a8 8 0 018-8v8H4z" />
           </svg>
         </div>
@@ -446,12 +446,12 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
         <div className="max-w-md w-full bg-slate-900/80 border border-slate-700/80 rounded-[32px] p-8 shadow-2xl text-center backdrop-blur-xl animate-in fade-in slide-up">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 p-[1px] shadow-lg shadow-blue-500/20 mx-auto mb-6">
-            <div className="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-blue-400">
-              <Building2 size={32} />
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-cyan-400 to-emerald-400 p-[2px] shadow-lg shadow-cyan-500/20 mx-auto mb-6">
+            <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center overflow-hidden">
+              <img src="/logo.jpg" alt="Parkflow Logo" className="w-full h-full object-cover mix-blend-multiply" />
             </div>
           </div>
-          <h2 className="text-2xl font-black text-white mb-3">Bienvenue sur ParkOptimizer</h2>
+          <h2 className="text-2xl font-black text-white mb-3">Bienvenue sur Parkflow</h2>
           <p className="text-sm text-slate-400 font-medium mb-8">
             Vous n'avez accès à aucun parking pour le moment. Créez-en un nouveau ou rejoignez un parc existant avec un code partagé.
           </p>
@@ -459,7 +459,7 @@ export default function App() {
           <div className="flex flex-col gap-3">
             <button
               onClick={() => setIsParkingsModalOpen(true)}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-blue-900/40 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-sm shadow-lg shadow-cyan-900/40 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
             >
               <Plus size={18} /> Créer un Parking
             </button>
@@ -499,14 +499,14 @@ export default function App() {
   // =========================================================================
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-600 selection:text-white font-sans">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-200">
           <div className={`px-4 py-3 rounded-2xl border shadow-2xl text-xs font-bold flex items-center gap-2.5 ${
             toastMessage.type === "error"
               ? "bg-rose-950/95 border-rose-500 text-rose-200 shadow-rose-950/50"
-              : "bg-slate-900/95 border-blue-500/80 text-white shadow-blue-950/60"
+              : "bg-slate-900/95 border-cyan-500/80 text-white shadow-cyan-950/60"
           }`}>
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
             {toastMessage.message}

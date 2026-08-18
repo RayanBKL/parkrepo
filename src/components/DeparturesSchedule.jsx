@@ -101,7 +101,7 @@ export default function DeparturesSchedule({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Filtrer plaque, vol..."
-              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-500"
             />
           </div>
 
@@ -131,7 +131,7 @@ export default function DeparturesSchedule({
             onClick={() => setScheduleFilter("tomorrow")}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
               scheduleFilter === "tomorrow"
-                ? "bg-blue-500/30 text-blue-200 border-blue-400 font-bold ring-2 ring-blue-500/30"
+                ? "bg-cyan-500/30 text-cyan-200 border-cyan-400 font-bold ring-2 ring-cyan-500/30"
                 : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-slate-200"
             }`}
           >
@@ -222,7 +222,7 @@ export default function DeparturesSchedule({
                       {/* Emplacement dans le parc */}
                       <td className="p-3.5 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-1 rounded-lg bg-blue-600/20 text-blue-300 border border-blue-500/30 font-bold text-xs">
+                          <span className="px-2 py-1 rounded-lg bg-cyan-600/20 text-cyan-300 border border-cyan-500/30 font-bold text-xs">
                             Voie {v.laneIndex + 1}
                           </span>
                           <span
@@ -272,7 +272,7 @@ export default function DeparturesSchedule({
                           <button
                             onClick={() => onMoveVehicle(v)}
                             title="Changer de voie"
-                            className="p-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white transition-colors cursor-pointer"
                           >
                             <ArrowRight size={14} />
                           </button>

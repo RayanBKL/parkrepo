@@ -49,22 +49,22 @@ export default function Navbar({
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
         {/* Logo & Titre */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 p-[1px] shadow-lg shadow-blue-500/20">
-            <div className="w-full h-full bg-slate-950 rounded-[15px] flex items-center justify-center text-blue-400">
-              <Car size={22} className="animate-pulse" />
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-400 to-emerald-400 p-[2px] shadow-lg shadow-cyan-500/20">
+            <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center overflow-hidden">
+              <img src="/logo.jpg" alt="Parkflow Logo" className="w-full h-full object-cover mix-blend-multiply" />
             </div>
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base font-black text-white tracking-wide">
-                PARK<span className="text-blue-400">OPTIMIZER</span>
+                PARK<span className="text-cyan-400">FLOW</span>
               </h1>
-              <span className="text-[10px] font-extrabold bg-blue-500/20 text-blue-300 border border-blue-500/40 px-2 py-0.2 rounded-full uppercase tracking-wider">
+              <span className="text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full uppercase tracking-wider">
                 PRO V2
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-medium">
-              Gestion de Parc & Attribution Intelligente
+              Optimisation Intelligente
             </p>
           </div>
         </div>
@@ -75,7 +75,7 @@ export default function Navbar({
             onClick={() => setActiveTab("grid")}
             className={`px-4 py-1.5 rounded-full text-[11px] font-black transition-all flex items-center gap-1.5 cursor-pointer uppercase tracking-wider ${
               activeTab === "grid"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
+                ? "bg-cyan-600 text-white shadow-lg shadow-cyan-900/50"
                 : "text-slate-400 hover:text-white hover:bg-slate-800/50"
             }`}
           >
@@ -87,7 +87,7 @@ export default function Navbar({
             onClick={() => setActiveTab("schedule")}
             className={`px-4 py-1.5 rounded-full text-[11px] font-black transition-all flex items-center gap-1.5 cursor-pointer uppercase tracking-wider ${
               activeTab === "schedule"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
+                ? "bg-cyan-600 text-white shadow-lg shadow-cyan-900/50"
                 : "text-slate-400 hover:text-white hover:bg-slate-800/50"
             }`}
           >
@@ -103,7 +103,7 @@ export default function Navbar({
               onClick={onOpenParkingsModal}
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-white text-[11px] font-black transition-all shadow-inner group cursor-pointer"
             >
-              <Building2 size={15} className="text-blue-400 group-hover:scale-110 transition-transform" />
+              <Building2 size={15} className="text-cyan-400 group-hover:scale-110 transition-transform" />
               <span className="max-w-[130px] sm:max-w-[160px] truncate">{activeParking?.name || "Parc Principal"}</span>
               <span className="text-[10px] font-mono text-amber-300 bg-slate-950/80 px-2 py-0.5 rounded-full border border-slate-800 shadow-inner">
                 {activeParking?.accessCode || "CODE"}
@@ -123,13 +123,13 @@ export default function Navbar({
 
         {/* Barre de Recherche Globale */}
         <div className="flex-1 max-w-sm min-w-[180px] relative group">
-          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Plaque, vol, voie..."
-            className="w-full pl-10 pr-4 py-2 rounded-full bg-slate-900/90 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
+            className="w-full pl-10 pr-4 py-2 rounded-full bg-slate-900/90 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all font-semibold"
           />
           {searchQuery && (
             <button
@@ -145,7 +145,7 @@ export default function Navbar({
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={onOpenAddModal}
-            className="group relative px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-500 hover:via-indigo-500 hover:to-blue-500 bg-[length:200%_auto] text-white text-xs font-black shadow-lg shadow-blue-900/40 hover:shadow-blue-700/60 transition-all flex items-center gap-1.5 cursor-pointer overflow-hidden hover:scale-105"
+            className="group relative px-4 py-2 rounded-full bg-gradient-to-r from-cyan-600 via-emerald-600 to-cyan-600 hover:from-cyan-500 hover:via-emerald-500 hover:to-cyan-500 bg-[length:200%_auto] text-white text-xs font-black shadow-lg shadow-cyan-900/40 hover:shadow-cyan-700/60 transition-all flex items-center gap-1.5 cursor-pointer overflow-hidden hover:scale-105"
           >
             <div className="absolute inset-0 w-full h-full bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out"></div>
             <Plus size={16} className="relative z-10" />
@@ -171,7 +171,7 @@ export default function Navbar({
           <button
             onClick={onOpenHistoryModal}
             title="Historique des mouvements"
-            className="p-2 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-blue-400 transition-colors cursor-pointer"
+            className="p-2 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-cyan-400 transition-colors cursor-pointer"
           >
             <History size={15} />
           </button>
@@ -188,7 +188,7 @@ export default function Navbar({
           <button
             onClick={onOpenJoinParking}
             title="Rejoindre un parking via un code d'accès"
-            className="p-2 rounded-full bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 text-blue-400 transition-colors cursor-pointer"
+            className="p-2 rounded-full bg-cyan-600/10 hover:bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 transition-colors cursor-pointer"
           >
             <KeyRound size={15} />
           </button>
@@ -205,7 +205,7 @@ export default function Navbar({
           {/* Compte Utilisateur & Déconnexion */}
           <div className="flex items-center gap-1.5 pl-3 border-l border-slate-800/80 ml-1">
             <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/60 border border-slate-800 text-[11px] text-slate-300 font-bold">
-              <User size={14} className="text-blue-400" />
+              <User size={14} className="text-cyan-400" />
               <span className="max-w-[100px] truncate">{currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Compte'}</span>
             </div>
             <button

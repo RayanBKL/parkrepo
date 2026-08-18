@@ -89,23 +89,24 @@ export default function AuthPage({ onAuthenticated }) {
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden font-sans">
       {/* Arrière-plan animé */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-blue-600/10 blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-indigo-600/10 blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-blue-500/3 blur-3xl"></div>
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-cyan-600/10 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-emerald-600/10 blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-cyan-500/3 blur-3xl"></div>
       </div>
 
       <div className="w-full max-w-sm relative z-10">
         {/* Logo et Titre */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 p-[2px] shadow-2xl shadow-blue-500/30 mb-4">
-            <div className="w-full h-full bg-slate-950 rounded-[22px] flex items-center justify-center">
-              <Car size={28} className="text-blue-400" />
+          <div className="w-24 h-24 rounded-[32px] bg-gradient-to-tr from-cyan-400 to-emerald-400 p-[2px] shadow-2xl shadow-cyan-500/20 mx-auto mb-8 animate-in fade-in slide-up">
+            <div className="w-full h-full bg-white rounded-[30px] flex items-center justify-center overflow-hidden">
+              <img src="/logo.jpg" alt="Parkflow Logo" className="w-full h-full object-cover mix-blend-multiply" />
             </div>
           </div>
-          <h1 className="text-2xl font-black text-white tracking-wide">
-            PARK<span className="text-blue-400">OPTIMIZER</span>
+
+          <h1 className="text-4xl font-black text-white text-center mb-2 tracking-tight">
+            PARK<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">FLOW</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1 font-medium">Gestion de Parc Auto Professionnelle</p>
+          <p className="text-slate-400 text-center mb-10 font-medium">Optimisation Intelligente</p>
         </div>
 
         {/* Carte du formulaire */}
@@ -150,9 +151,8 @@ export default function AuthPage({ onAuthenticated }) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="votre@email.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  autoFocus
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  placeholder="Email professionnel"
                   required
                 />
               </div>
@@ -170,8 +170,8 @@ export default function AuthPage({ onAuthenticated }) {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    placeholder="Mot de passe"
                     required
                   />
                   <button
@@ -198,12 +198,12 @@ export default function AuthPage({ onAuthenticated }) {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border text-white text-sm focus:outline-none focus:ring-2 ${
+                    className={`w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-900 border text-white text-sm focus:outline-none focus:ring-2 transition-all ${
                       confirmPassword && confirmPassword !== password
                         ? "border-rose-500/60 focus:border-rose-500 focus:ring-rose-500/20"
                         : confirmPassword && confirmPassword === password
                         ? "border-emerald-500/60 focus:border-emerald-500 focus:ring-emerald-500/20"
-                        : "border-slate-700 focus:border-blue-500 focus:ring-blue-500/20"
+                        : "border-slate-700 focus:border-cyan-500 focus:ring-cyan-500/20"
                     }`}
                     required
                   />
@@ -217,7 +217,7 @@ export default function AuthPage({ onAuthenticated }) {
                 <button
                   type="button"
                   onClick={() => { setMode("reset"); setError(""); }}
-                  className="text-xs text-blue-400 hover:text-blue-300 font-semibold"
+                  className="text-cyan-400 hover:text-cyan-300 font-bold ml-1"
                 >
                   Mot de passe oublié ?
                 </button>
@@ -228,7 +228,7 @@ export default function AuthPage({ onAuthenticated }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-black shadow-lg shadow-blue-900/40 hover:shadow-blue-700/50 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-lg shadow-lg shadow-cyan-900/40 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {loading ? (
                 <Loader2 size={18} className="animate-spin" />
@@ -249,7 +249,7 @@ export default function AuthPage({ onAuthenticated }) {
                 Pas encore de compte ?{" "}
                 <button
                   onClick={() => { setMode("register"); setError(""); setSuccessMessage(""); }}
-                  className="text-blue-400 hover:text-blue-300 font-bold cursor-pointer"
+                  className="text-cyan-400 hover:text-cyan-300 font-bold cursor-pointer"
                 >
                   Créer un compte gratuitement
                 </button>
@@ -259,7 +259,7 @@ export default function AuthPage({ onAuthenticated }) {
               <p className="text-xs text-slate-400">
                 <button
                   onClick={() => { setMode("login"); setError(""); setSuccessMessage(""); }}
-                  className="text-blue-400 hover:text-blue-300 font-bold cursor-pointer"
+                  className="text-cyan-400 hover:text-cyan-300 font-bold cursor-pointer"
                 >
                   ← Retour à la connexion
                 </button>

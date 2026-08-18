@@ -40,7 +40,7 @@ export function JoinParkingModal({ isOpen, onClose, userId, onParкingJoined }) 
       <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl">
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center">
               <KeyRound size={20} />
             </div>
             <div>
@@ -70,7 +70,7 @@ export function JoinParkingModal({ isOpen, onClose, userId, onParкingJoined }) 
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="Ex: PARK-A1B2-C3D4"
-              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-amber-300 font-mono font-bold text-sm tracking-widest focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 uppercase text-center"
+              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-amber-300 font-mono font-bold text-sm tracking-widest focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 uppercase text-center"
               autoFocus
             />
             <p className="text-[10px] text-slate-500 mt-1.5 text-center">
@@ -85,7 +85,7 @@ export function JoinParkingModal({ isOpen, onClose, userId, onParкingJoined }) 
             <button
               type="submit"
               disabled={loading || !code.trim()}
-              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold shadow-lg shadow-blue-900/40 flex items-center gap-2 cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold shadow-lg shadow-cyan-900/40 flex items-center gap-2 cursor-pointer"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
               Rejoindre
@@ -163,7 +163,7 @@ export function AccessCodeModal({ isOpen, onClose, parking, userId }) {
             </button>
           </div>
 
-          <div className="p-3 bg-blue-950/40 border border-blue-500/30 rounded-xl text-xs text-blue-200 space-y-1">
+          <div className="p-3 bg-cyan-950/40 border border-cyan-500/30 rounded-xl text-xs text-cyan-200 space-y-1">
             <div className="font-bold">ℹ Comment partager l'accès :</div>
             <div>1. Transmettez ce code à votre collaborateur (par message, email...)</div>
             <div>2. Il crée un compte sur ParkOptimizer et clique sur "Rejoindre un Parking"</div>

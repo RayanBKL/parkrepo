@@ -54,7 +54,7 @@ export default function StatsBar({
       <div className="flex flex-wrap items-center justify-between gap-4">
         {/* KPI 1 : Taux d'occupation */}
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+          <div className="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
             <Car size={22} />
           </div>
           <div>
@@ -151,7 +151,7 @@ export default function StatsBar({
               onClick={() => setActiveStrategy("patience")}
               className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
                 activeStrategy === "patience"
-                  ? "bg-blue-600 text-white"
+                  ? "bg-cyan-600 text-white"
                   : "text-slate-400 hover:text-slate-200"
               }`}
               title="Patience Sorting : compactage sans blocage"
@@ -162,7 +162,7 @@ export default function StatsBar({
               onClick={() => setActiveStrategy("zoning")}
               className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
                 activeStrategy === "zoning"
-                  ? "bg-indigo-600 text-white"
+                  ? "bg-emerald-600 text-white"
                   : "text-slate-400 hover:text-slate-200"
               }`}
               title="Zonage Aéroport : Voies dédiées court, moyen et long séjour"
@@ -184,7 +184,7 @@ export default function StatsBar({
 
           <button
             onClick={() => onAutoRedistribute(activeStrategy)}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-blue-900/30 hover:shadow-blue-700/50 transition-all flex items-center gap-2 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white text-xs font-bold shadow-lg shadow-cyan-900/30 hover:shadow-cyan-700/50 transition-all flex items-center gap-2 cursor-pointer"
           >
             <Sparkles size={14} className="text-yellow-300" />
             Réorganiser tout le parc

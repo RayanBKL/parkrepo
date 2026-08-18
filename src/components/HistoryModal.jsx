@@ -38,7 +38,7 @@ export default function HistoryModal({ isOpen, onClose, history, onClearHistory,
       case "EXIT":
         return <LogOut size={14} className="text-rose-400" />;
       case "MOVE":
-        return <ArrowRight size={14} className="text-blue-400" />;
+        return <ArrowRight size={14} className="text-cyan-400" />;
       case "REDISTRIBUTE":
       case "IMPORT":
         return <RefreshCw size={14} className="text-purple-400" />;
@@ -99,7 +99,7 @@ export default function HistoryModal({ isOpen, onClose, history, onClearHistory,
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher par plaque, action, voie..."
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-500"
             />
           </div>
 

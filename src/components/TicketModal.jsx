@@ -14,7 +14,7 @@ export default function TicketModal({ isOpen, onClose, vehicle, laneIndex, slotI
       <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl overflow-hidden relative">
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <h2 className="text-base font-black text-white flex items-center gap-2">
-            <FileText size={18} className="text-blue-400" />
+            <FileText size={18} className="text-cyan-400" />
             Fiche Véhicule & Porte-Clé
           </h2>
           <button
@@ -45,7 +45,7 @@ export default function TicketModal({ isOpen, onClose, vehicle, laneIndex, slotI
           <div className="space-y-2 text-xs divide-y divide-slate-100">
             <div className="flex items-center justify-between pt-1">
               <span className="text-slate-500 font-semibold">Emplacement :</span>
-              <span className="font-black text-sm bg-blue-100 text-blue-900 px-2 py-0.5 rounded">
+              <span className="font-black text-sm bg-cyan-100 text-cyan-900 px-2 py-0.5 rounded">
                 VOIE {laneIndex !== undefined ? laneIndex + 1 : "?"} (Pos {slotIndex !== undefined ? slotIndex + 1 : "?"})
               </span>
             </div>
@@ -108,7 +108,7 @@ export default function TicketModal({ isOpen, onClose, vehicle, laneIndex, slotI
           <button
             type="button"
             onClick={handlePrint}
-            className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-900/40 flex items-center gap-1.5 cursor-pointer"
+            className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-900/40 flex items-center gap-1.5 cursor-pointer"
           >
             <Printer size={14} /> Imprimer le Ticket
           </button>

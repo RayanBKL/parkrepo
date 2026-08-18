@@ -96,7 +96,7 @@ export default function ParkingGrid({
               onDrop={(e) => handleDrop(e, laneIdx)}
               className={`lane-column flex flex-col rounded-2xl border transition-all duration-200 ${
                 isDragTarget
-                  ? "border-blue-400 bg-blue-950/40 ring-2 ring-blue-500/50 scale-[1.01]"
+                  ? "border-cyan-400 bg-cyan-950/40 ring-2 ring-cyan-500/50 scale-[1.01]"
                   : hasConflicts
                   ? "border-amber-500/40 bg-slate-900/80 shadow-amber-900/10 shadow-lg"
                   : "border-slate-800/80 bg-slate-900/60 hover:border-slate-700"
@@ -111,7 +111,7 @@ export default function ParkingGrid({
                         ? "bg-slate-800 text-slate-400"
                         : isFull
                         ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
-                        : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                        : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
                     }`}
                   >
                     {laneIdx + 1}
@@ -145,7 +145,7 @@ export default function ParkingGrid({
                     <button
                       onClick={() => onAddVehicleToLane(laneIdx)}
                       title={`Ajouter un véhicule directement dans la Voie ${laneIdx + 1}`}
-                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-cyan-600 text-slate-300 hover:text-white transition-colors cursor-pointer"
                     >
                       <Plus size={13} />
                     </button>
@@ -166,11 +166,11 @@ export default function ParkingGrid({
                 {lane.length === 0 ? (
                   <div
                     onClick={() => onAddVehicleToLane(laneIdx)}
-                    className="flex-1 flex flex-col items-center justify-center p-4 border border-dashed border-slate-800 hover:border-blue-500/50 rounded-xl cursor-pointer group transition-all"
+                    className="flex-1 flex flex-col items-center justify-center p-4 border border-dashed border-slate-800 hover:border-cyan-500/50 rounded-xl cursor-pointer group transition-all"
                   >
-                    <Car size={20} className="text-slate-600 group-hover:text-blue-400 mb-1 transition-colors" />
+                    <Car size={20} className="text-slate-600 group-hover:text-cyan-400 mb-1 transition-colors" />
                     <span className="text-xs text-slate-500 group-hover:text-slate-300 font-medium">Voie libre</span>
-                    <span className="text-[10px] text-slate-600 group-hover:text-blue-400 flex items-center gap-0.5 mt-1">
+                    <span className="text-[10px] text-slate-600 group-hover:text-cyan-400 flex items-center gap-0.5 mt-1">
                       <Plus size={10} /> Déposer ici
                     </span>
                   </div>

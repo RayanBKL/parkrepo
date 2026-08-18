@@ -40,7 +40,7 @@ export default function MoveModal({
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div>
             <h2 className="text-lg font-black text-white flex items-center gap-2">
-              <ArrowRight size={20} className="text-blue-400" />
+              <ArrowRight size={20} className="text-cyan-400" />
               Déplacer le véhicule
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -62,7 +62,7 @@ export default function MoveModal({
             className={`my-4 p-3.5 border rounded-2xl flex items-center justify-between gap-3 ${
               suggestion.laneIndex === currentLaneIndex
                 ? "bg-emerald-950/40 border-emerald-500/40 text-emerald-200"
-                : "bg-gradient-to-r from-blue-950/70 to-indigo-950/70 border-blue-500/40 text-blue-200"
+                : "bg-gradient-to-r from-cyan-950/70 to-emerald-950/70 border-cyan-500/40 text-cyan-200"
             }`}
           >
             <div className="flex items-center gap-2.5">
@@ -70,7 +70,7 @@ export default function MoveModal({
                 className={`w-8 h-8 rounded-xl flex items-center justify-center ${
                   suggestion.laneIndex === currentLaneIndex
                     ? "bg-emerald-500/20 text-emerald-300"
-                    : "bg-blue-500/20 text-yellow-300"
+                    : "bg-cyan-500/20 text-yellow-300"
                 }`}
               >
                 {suggestion.laneIndex === currentLaneIndex ? (
@@ -96,7 +96,7 @@ export default function MoveModal({
               <button
                 type="button"
                 onClick={() => handleMove(suggestion.laneIndex)}
-                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors cursor-pointer shrink-0"
+                className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-colors cursor-pointer shrink-0"
               >
                 Placer en V{suggestion.laneIndex + 1}
               </button>
@@ -124,9 +124,9 @@ export default function MoveModal({
                   onClick={() => setSelectedLane(idx)}
                   className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                     selectedLane === idx
-                      ? "bg-blue-600 text-white border-blue-400 shadow-md ring-2 ring-blue-500/50"
+                      ? "bg-cyan-600 text-white border-cyan-400 shadow-md ring-2 ring-cyan-500/50"
                       : isRec
-                      ? "bg-blue-950/40 text-blue-300 border-blue-500/50"
+                      ? "bg-cyan-950/40 text-cyan-300 border-cyan-500/50"
                       : isCurrent
                       ? "bg-slate-800 text-amber-300 border-amber-500/40"
                       : isFull
@@ -158,7 +158,7 @@ export default function MoveModal({
           <button
             type="button"
             onClick={() => handleMove(selectedLane)}
-            className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-lg shadow-blue-900/40 transition-all flex items-center gap-2 cursor-pointer"
+            className="px-6 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold shadow-lg shadow-cyan-900/40 transition-all flex items-center gap-2 cursor-pointer"
           >
             <CheckCircle2 size={16} /> Déplacer vers Voie {selectedLane + 1}
           </button>

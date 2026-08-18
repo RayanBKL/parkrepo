@@ -91,7 +91,7 @@ export default function WaitingQueueModal({
                       <button
                         type="button"
                         onClick={() => onAssignWaitingVehicle(v)}
-                        className="px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/30 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                       >
                         <ArrowRight size={13} /> Placer
                       </button>

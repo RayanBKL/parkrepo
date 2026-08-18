@@ -37,7 +37,7 @@ export default function VehicleCard({
       onClick={onSelect}
       className={`vehicle-card relative p-2.5 rounded-xl border transition-all duration-200 cursor-grab active:cursor-grabbing select-none ${
         isSelected
-          ? "ring-2 ring-blue-500 bg-slate-800 shadow-lg scale-[1.02] border-blue-400"
+          ? "ring-2 ring-cyan-500 bg-slate-800 shadow-lg scale-[1.02] border-cyan-400"
           : "bg-slate-900/90 hover:bg-slate-800/90 border-slate-800 hover:border-slate-700 shadow-sm"
       } ${isBlocked ? "border-amber-500/60 ring-1 ring-amber-500/30" : ""}`}
     >
@@ -78,7 +78,7 @@ export default function VehicleCard({
       {/* Plaque d'immatriculation */}
       <div className="flex items-center justify-between gap-1 my-1">
         <div className="license-plate font-mono font-black text-xs tracking-wider px-2 py-0.5 rounded bg-slate-950 text-amber-300 border border-slate-700 shadow-inner flex items-center gap-1.5">
-          <span className="text-[9px] font-sans font-bold text-blue-400 bg-blue-950 px-1 py-0.2 rounded-xs">F</span>
+          <span className="text-[9px] font-sans font-bold text-cyan-400 bg-cyan-950 px-1 py-0.2 rounded-xs">F</span>
           <span>{vehicle.plate}</span>
         </div>
       </div>
@@ -120,7 +120,7 @@ export default function VehicleCard({
             onMove(vehicle);
           }}
           title="Changer de voie"
-          className="py-1 px-1.5 text-[10px] font-semibold bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white rounded border border-blue-500/30 transition-colors flex items-center justify-center gap-0.5 cursor-pointer"
+          className="py-1 px-1.5 text-[10px] font-semibold bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white rounded border border-cyan-500/30 transition-colors flex items-center justify-center gap-0.5 cursor-pointer"
         >
           <ArrowRight size={10} /> Voie
         </button>

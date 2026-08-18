@@ -47,7 +47,7 @@ export default function ParkingsModal({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <div className="w-10 h-10 rounded-xl bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
               <Building2 size={22} />
             </div>
             <div>
@@ -74,7 +74,7 @@ export default function ParkingsModal({
                 <button
                   type="button"
                   onClick={() => setIsCreating(true)}
-                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-blue-950/40 cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-cyan-950/40 cursor-pointer"
                 >
                   <Plus size={14} /> Créer un nouveau parking
                 </button>
@@ -94,7 +94,7 @@ export default function ParkingsModal({
                     }}
                     className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                       isActive
-                        ? "bg-blue-950/40 border-blue-500 ring-2 ring-blue-500/40"
+                        ? "bg-cyan-950/40 border-cyan-500 ring-2 ring-cyan-500/40"
                         : "bg-slate-950 border-slate-800 hover:border-slate-700"
                     }`}
                   >
@@ -102,7 +102,7 @@ export default function ParkingsModal({
                       <div
                         className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
                           isActive
-                            ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
+                            ? "bg-cyan-600 text-white shadow-lg shadow-cyan-900/50"
                             : "bg-slate-800 text-slate-400"
                         }`}
                       >
@@ -112,7 +112,7 @@ export default function ParkingsModal({
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-sm text-white">{p.name}</h4>
                           {isActive && (
-                            <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded-full font-bold">
+                            <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded-full font-bold">
                               Actif
                             </span>
                           )}
@@ -168,7 +168,7 @@ export default function ParkingsModal({
           ) : (
             /* Formulaire de création d'un nouveau parking */
             <form onSubmit={handleCreate} className="space-y-4 animate-in fade-in">
-              <div className="p-3 bg-blue-950/40 border border-blue-500/30 rounded-2xl text-xs text-blue-200">
+              <div className="p-3 bg-cyan-950/40 border border-cyan-500/30 rounded-2xl text-xs text-cyan-200">
                 Chaque parking possède sa propre base de voies, véhicules, historiques et réglages indépendants.
               </div>
 
@@ -179,7 +179,7 @@ export default function ParkingsModal({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="ex: Parking Orly Valet, Parc B..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500"
                   autoFocus
                   required
                 />
@@ -194,7 +194,7 @@ export default function ParkingsModal({
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                   placeholder="ex: PARK-ORLY-01"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-amber-300 font-mono text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-amber-300 font-mono text-sm focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
@@ -207,7 +207,7 @@ export default function ParkingsModal({
                     max="100"
                     value={laneCount}
                     onChange={(e) => setLaneCount(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500"
                   />
                 </div>
                 <div>
@@ -218,7 +218,7 @@ export default function ParkingsModal({
                     max="50"
                     value={capacity}
                     onChange={(e) => setCapacity(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
@@ -233,7 +233,7 @@ export default function ParkingsModal({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-900/40 flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-900/40 flex items-center gap-1.5"
                 >
                   <Plus size={14} /> Créer le Parking
                 </button>
