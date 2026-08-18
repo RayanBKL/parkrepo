@@ -115,15 +115,16 @@ export function AccessCodeModal({ isOpen, onClose, parking, userId }) {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleRegenerate = async () => {
-    if (!window.confirm("Révoquer l'ancien code et en générer un nouveau ? Les personnes qui ont l'ancien code ne pourront plus l'utiliser pour rejoindre.")) return;
+  const [showRegenConfirm, setShowRegenConfirm] = useState(false);
 
+  const handleRegenerate = async () => {
     setRegenerating(true);
     try {
       const newCode = await regenerateAccessCode(parking.id, userId);
       setCurrentCode(newCode);
+      setShowRegenConfirm(false);
     } catch (err) {
-      alert(err.message);
+      console.error(err);
     } finally {
       setRegenerating(false);
     }
@@ -166,19 +167,46 @@ export function AccessCodeModal({ isOpen, onClose, parking, userId }) {
           <div className="p-3 bg-cyan-950/40 border border-cyan-500/30 rounded-xl text-xs text-cyan-200 space-y-1">
             <div className="font-bold">ℹ Comment partager l'accès :</div>
             <div>1. Transmettez ce code à votre collaborateur (par message, email...)</div>
-            <div>2. Il crée un compte sur ParkOptimizer et clique sur "Rejoindre un Parking"</div>
+            <div>2. Il crée un compte sur ParkFlow et clique sur "Rejoindre un Parking"</div>
             <div>3. Il saisit ce code → il accède immédiatement en lecture et écriture</div>
           </div>
 
           {isOwner && (
-            <button
-              onClick={handleRegenerate}
-              disabled={regenerating}
-              className="w-full py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
-            >
-              {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-              Révoquer et Régénérer un Nouveau Code
-            </button>
+            <div>
+              {!showRegenConfirm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowRegenConfirm(true)}
+                  className="w-full py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <RefreshCw size={14} /> Révoquer et Régénérer un Nouveau Code
+                </button>
+              ) : (
+                <div className="p-3 bg-rose-950/60 border border-rose-500/50 rounded-xl space-y-2 animate-in fade-in">
+                  <div className="text-xs text-rose-200 font-semibold">
+                    ⚠️ Révoquer l'ancien code ? L'ancien code ne fonctionnera plus pour rejoindre.
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowRegenConfirm(false)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRegenerate}
+                      disabled={regenerating}
+                      className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-rose-900/50"
+                    >
+                      {regenerating ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                      Confirmer la régénération
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
