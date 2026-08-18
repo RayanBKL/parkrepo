@@ -8,16 +8,19 @@ import {
   Settings,
   Building2,
   Search,
-  CheckCircle2,
   ChevronDown,
   Clock,
   LayoutGrid,
   Calendar,
+  KeyRound,
+  LogOut,
+  User,
 } from "lucide-react";
 
 export default function Navbar({
   parkings,
   activeParking,
+  currentUser,
   onSelectParking,
   searchQuery,
   setSearchQuery,
@@ -29,6 +32,9 @@ export default function Navbar({
   onOpenHistoryModal,
   onOpenParkingsModal,
   onOpenSettingsModal,
+  onOpenJoinParking,
+  onOpenAccessCode,
+  onLogOut,
 }) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -175,6 +181,39 @@ export default function Navbar({
           >
             <Settings size={15} />
           </button>
+
+          {/* Rejoindre un Parking */}
+          <button
+            onClick={onOpenJoinParking}
+            title="Rejoindre un parking via un code d'accès"
+            className="p-2 rounded-2xl bg-blue-600/20 hover:bg-blue-600 border border-blue-500/40 text-blue-300 hover:text-white transition-colors cursor-pointer"
+          >
+            <KeyRound size={15} />
+          </button>
+
+          {/* Code d'Accès du Parking Actif */}
+          <button
+            onClick={onOpenAccessCode}
+            title="Voir et partager le code d'accès de ce parking"
+            className="px-2.5 py-1.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-200 transition-colors cursor-pointer text-[10px] font-bold flex items-center gap-1"
+          >
+            <KeyRound size={12} /> Code
+          </button>
+
+          {/* Compte Utilisateur & Déconnexion */}
+          <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800">
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 font-semibold">
+              <User size={13} className="text-blue-400" />
+              <span className="max-w-[100px] truncate">{currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Compte'}</span>
+            </div>
+            <button
+              onClick={onLogOut}
+              title="Se déconnecter"
+              className="p-2 rounded-2xl bg-slate-900 hover:bg-rose-600/20 border border-slate-700 hover:border-rose-500/40 text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
+            >
+              <LogOut size={15} />
+            </button>
+          </div>
         </div>
       </div>
     </header>
