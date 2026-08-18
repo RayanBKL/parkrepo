@@ -521,21 +521,21 @@ export default function ParkingsModal({
                       label: "Enfilade (LIFO)",
                       emoji: "🅿️",
                       desc: "Cul-de-sac — 1 seule ouverture. Entrée et sortie par le même côté.",
-                      detail: "Dernière voiture entrée = première à sortir.",
+                      detail: "Dernière voiture entrée = première à sortir. Manœuvres pour sortir le fond.",
                     },
                     {
                       id: "fifo",
                       label: "Drive-Through (FIFO)",
                       emoji: "↔️",
-                      desc: "Couloir traversant — 2 ouvertures. Entrée d'un côté, sortie de l'autre.",
-                      detail: "Première voiture entrée = première à sortir. Zéro blocage.",
+                      desc: "Couloir traversant — 2 ouvertures. Entrée d'un côté, sortie directe de l'autre.",
+                      detail: "Sortie directe en tête + manœuvres d'avancée de la file vers l'avant.",
                     },
                     {
                       id: "bidir",
                       label: "Bidirectionnel",
                       emoji: "⇄",
                       desc: "Double accès — 2 ouvertures sur la même voie (Porte A et Porte B).",
-                      detail: "L'algorithme choisit le côté optimal pour minimiser les blocages.",
+                      detail: "Sortie Porte A ou B avec manœuvres de dégagement ciblées et réduites.",
                     },
                   ].map((m) => (
                     <button

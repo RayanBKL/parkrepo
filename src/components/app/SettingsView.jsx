@@ -453,7 +453,7 @@ export default function SettingsView({
                   subtitle: "Couloir traversant / 2 ouvertures",
                   badge: null,
                   badgeColor: "",
-                  description: "Deux ouvertures opposées : les véhicules entrent par l'arrière et sortent par l'avant. Les véhicules avancent en file indienne sans aucun demi-tour.",
+                  description: "Deux ouvertures opposées : les véhicules entrent par l'arrière et sortent par l'avant. À chaque départ en tête, des manœuvres d'avancée de file sont effectuées pour rapprocher les véhicules suivants de la sortie et libérer la place d'entrée.",
                   renderDiagram: () => (
                     <div className="bg-slate-950/80 rounded-2xl p-4 mb-3 border border-slate-800 space-y-3">
                       {/* Flow Diagram */}
@@ -468,7 +468,7 @@ export default function SettingsView({
                         </div>
                         <div className="p-2.5 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-center text-xs text-cyan-300 font-bold">
                           <div className="text-[10px] text-cyan-400 font-semibold mb-0.5">Point d'accès 2</div>
-                          🏁 SORTIE
+                          🏁 SORTIE DIRECTE
                         </div>
                       </div>
 
@@ -478,58 +478,64 @@ export default function SettingsView({
                           <div className="font-bold text-slate-300">Voiture 3</div>
                           <div className="text-[9px] text-slate-400">Dernière entrée</div>
                         </div>
-                        <div className="text-slate-600 font-bold">➔</div>
+                        <div className="text-cyan-400 font-bold">➔</div>
                         <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 text-center shrink-0">
                           <div className="font-bold">Voiture 2</div>
-                          <div className="text-[9px] text-slate-400">En transit</div>
+                          <div className="text-[9px] text-slate-400">Avance d'un cran</div>
                         </div>
-                        <div className="text-slate-600 font-bold">➔</div>
+                        <div className="text-cyan-400 font-bold">➔</div>
                         <div className="p-2 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-center shrink-0">
                           <div className="font-bold">Voiture 1</div>
-                          <div className="text-[9px] text-cyan-400 font-bold">Prête à sortir (1ère)</div>
+                          <div className="text-[9px] text-cyan-400 font-bold">Sortie immédiate</div>
                         </div>
+                      </div>
+
+                      {/* Manœuvres d'avancée */}
+                      <div className="p-2.5 rounded-xl bg-cyan-950/30 border border-cyan-500/30 flex items-center gap-2 text-xs text-cyan-200">
+                        <span className="font-bold text-cyan-400">⚡ Manœuvre :</span>
+                        <span>Dès que la Voiture 1 sort, les voitures 2 et 3 avancent vers la sortie pour fluidifier les prochains départs.</span>
                       </div>
                     </div>
                   ),
-                  pros: ["Zéro blocage : la voiture en tête sort toujours immédiatement", "Idéal pour aéroports, ferries et drive-through"],
-                  cons: ["Nécessite deux voies d'accès physiques indépendantes"],
+                  pros: ["Sortie immédiate sans demi-tour pour le véhicule en tête", "Sens de circulation continu et clair"],
+                  cons: ["Nécessite de faire avancer la file de véhicules d'un cran vers l'avant à chaque rotation", "Nécessite deux voies d'accès physiques indépendantes"],
                 },
                 {
                   id: "bidir",
                   label: "Bidirectionnel",
-                  subtitle: "Double accès / Sortie A & B",
+                  subtitle: "Double accès / Sortie Porte A & B",
                   badge: null,
                   badgeColor: "",
-                  description: "Deux ouvertures sur la même voie : l'algorithme calcule quel côté (A ou B) a le moins d'obstacles pour évacuer la voiture au plus vite.",
+                  description: "Deux ouvertures sur la même voie (Porte A et Porte B). L'algorithme calcule quel côté nécessite le moins de manœuvres de dégagement pour extraire le véhicule demandé.",
                   renderDiagram: () => (
                     <div className="bg-slate-950/80 rounded-2xl p-4 mb-3 border border-slate-800 space-y-3">
                       {/* Porte A <-> Cars <-> Porte B */}
                       <div className="flex items-center justify-between gap-2 text-xs">
                         <div className="p-2 rounded-xl bg-indigo-950/60 border border-indigo-500/40 text-indigo-300 font-bold text-center flex-1">
                           🚪 PORTE A
-                          <div className="text-[9px] text-indigo-400 font-normal">Entrée / Sortie</div>
+                          <div className="text-[9px] text-indigo-400 font-normal">Issue Avant</div>
                         </div>
                         <div className="text-purple-400 font-bold">⇄</div>
                         <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 font-bold text-center flex-1">
-                          🚗 Voitures
-                          <div className="text-[9px] text-slate-400 font-normal">Voie centrale</div>
+                          🚗 Voie Centrale
+                          <div className="text-[9px] text-slate-400 font-normal">Véhicules stationnés</div>
                         </div>
                         <div className="text-purple-400 font-bold">⇄</div>
                         <div className="p-2 rounded-xl bg-purple-950/60 border border-purple-500/40 text-purple-300 font-bold text-center flex-1">
                           🚪 PORTE B
-                          <div className="text-[9px] text-purple-400 font-normal">Entrée / Sortie</div>
+                          <div className="text-[9px] text-purple-400 font-normal">Issue Arrière</div>
                         </div>
                       </div>
 
                       {/* Smart routing explanation */}
                       <div className="p-2.5 rounded-xl bg-indigo-950/30 border border-indigo-500/30 flex items-center gap-2 text-xs text-indigo-200">
                         <ArrowLeftRight size={16} className="text-indigo-400 shrink-0" />
-                        <span>L'algorithme analyse les deux issues et évacue par le côté nécessitant le moins de manœuvres.</span>
+                        <span>Manœuvres de dégagement ciblées : sortie par Porte A ou B selon le côté ayant le moins de véhicules à déplacer.</span>
                       </div>
                     </div>
                   ),
-                  pros: ["Flexibilité maximale : divise les manœuvres par 2", "Choix dynamique de l'issue la plus proche"],
-                  cons: ["Nécessite que les deux extrémités de la voie soient dégagées"],
+                  pros: ["Flexibilité maximale : divise par 2 les manœuvres par rapport au LIFO", "Choix dynamique de l'issue d'évacuation la plus rapide"],
+                  cons: ["Manœuvres de déplacement temporaire requises si le véhicule se trouve au milieu de la voie"],
                 },
               ].map((model) => {
                 const isSelected = (activeParking.model || "lifo") === model.id;
