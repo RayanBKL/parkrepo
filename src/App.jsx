@@ -193,6 +193,7 @@ export default function App() {
         showToast("Bienvenue ! Votre premier parking a été créé.", "success");
       } catch (err) {
         console.error("Erreur création parking initial :", err);
+        setFirestoreError("Erreur lors de la création de votre premier parking : " + err.message);
       }
     };
 
