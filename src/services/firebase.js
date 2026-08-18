@@ -17,12 +17,12 @@ import { getFirestore } from "firebase/firestore";
 
 // ⚠️ REMPLACEZ CES VALEURS PAR VOTRE CONFIG FIREBASE ⚠️
 const firebaseConfig = {
-  apiKey: "VOTRE_API_KEY",
-  authDomain: "VOTRE_PROJECT.firebaseapp.com",
-  projectId: "VOTRE_PROJECT_ID",
-  storageBucket: "VOTRE_PROJECT.appspot.com",
-  messagingSenderId: "VOTRE_SENDER_ID",
-  appId: "VOTRE_APP_ID",
+  apiKey: "AIzaSyCS2zuLBV4e5-sLnvB_o3SdktLEZrG3RDA",
+  authDomain: "parkoptimizer-6838a.firebaseapp.com",
+  projectId: "parkoptimizer-6838a",
+  storageBucket: "parkoptimizer-6838a.firebasestorage.app",
+  messagingSenderId: "1024606622666",
+  appId: "1:1024606622666:web:08604ed23985ffcd5cf533"
 };
 
 const app = initializeApp(firebaseConfig);

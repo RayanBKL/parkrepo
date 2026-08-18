@@ -163,10 +163,7 @@ export function subscribeToParking(parkingId, callback) {
   });
 }
 
-/**
- * Écoute en temps réel la liste de tous les parkings accessibles par l'utilisateur
- */
-export function subscribeToParkingList(userId, callback) {
+export function subscribeToParkingList(userId, callback, onError) {
   const q = query(
     collection(db, "parkings"),
     where("authorizedUsers", "array-contains", userId)
@@ -174,6 +171,9 @@ export function subscribeToParkingList(userId, callback) {
   return onSnapshot(q, (snap) => {
     const parkings = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     callback(parkings);
+  }, (err) => {
+    console.error("Erreur onSnapshot (accès refusé ou DB manquante):", err);
+    if (onError) onError(err);
   });
 }
 

@@ -57,6 +57,7 @@ export default function App() {
   const [parkings, setParkings] = useState([]);
   const [activeParkingId, setActiveParkingId] = useState(null);
   const [parkingsLoading, setParkingsLoading] = useState(false);
+  const [firestoreError, setFirestoreError] = useState(null);
 
   // --- Synchronisation Temps Réel (abonnements Firestore) ---
   const unsubParkingListRef = useRef(null);
@@ -110,19 +111,28 @@ export default function App() {
 
       if (user) {
         setParkingsLoading(true);
+        setFirestoreError(null);
         // Abonnement temps réel à la liste des parkings de l'utilisateur
         if (unsubParkingListRef.current) unsubParkingListRef.current();
-        unsubParkingListRef.current = subscribeToParkingList(user.uid, (updatedParkings) => {
-          setParkings(updatedParkings);
-          setParkingsLoading(false);
+        unsubParkingListRef.current = subscribeToParkingList(
+          user.uid, 
+          (updatedParkings) => {
+            setParkings(updatedParkings);
+            setParkingsLoading(false);
+            setFirestoreError(null);
 
-          if (updatedParkings.length > 0) {
-            setActiveParkingId((prev) => {
-              if (prev && updatedParkings.some((p) => p.id === prev)) return prev;
-              return updatedParkings[0].id;
-            });
+            if (updatedParkings.length > 0) {
+              setActiveParkingId((prev) => {
+                if (prev && updatedParkings.some((p) => p.id === prev)) return prev;
+                return updatedParkings[0].id;
+              });
+            }
+          },
+          (err) => {
+            setParkingsLoading(false);
+            setFirestoreError(err.message || "Accès refusé. Avez-vous créé la base de données Firestore et publié les règles de sécurité ?");
           }
-        });
+        );
       } else {
         // Déconnexion : nettoyer les abonnements
         if (unsubParkingListRef.current) unsubParkingListRef.current();
@@ -449,6 +459,25 @@ export default function App() {
   if (authLoading) return <FullScreenLoader message="Vérification de votre session..." />;
 
   if (!currentUser) return <AuthPage onAuthenticated={(user) => setCurrentUser(user)} />;
+
+  if (firestoreError) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="max-w-md w-full bg-slate-900 border border-slate-700 rounded-3xl p-6 shadow-2xl text-center">
+          <div className="w-16 h-16 rounded-3xl bg-rose-500/20 text-rose-500 border border-rose-500/30 flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-black text-white mb-2">Erreur de Connexion Firestore</h2>
+          <p className="text-sm text-slate-400 mb-6">{firestoreError}</p>
+          <button onClick={() => logOut()} className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-colors">
+            Se déconnecter
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (parkingsLoading || parkings.length === 0) return <FullScreenLoader message="Chargement de vos parkings..." />;
 
