@@ -84,55 +84,20 @@ export default function PlacementOptimizerView({
         </p>
       </div>
 
-      {/* Strategies Selector */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          {
-            id: "patience",
-            name: "Tightest Fit / Patience",
-            tag: "Recommandé",
-            desc: "Regroupe les véhicules par vagues de départs sans aucun blocage.",
-          },
-          {
-            id: "zoning",
-            name: "Zonage Aéroportuaire",
-            tag: "Court / Long",
-            desc: "Sépare physiquement les séjours courts (<24h), moyens (1-7j) et longs (>7j).",
-          },
-          {
-            id: "flight",
-            name: "Priorité N° de Vol",
-            tag: "Vols",
-            desc: "Aligne les voitures des passagers du même avion dans la même voie.",
-          },
-        ].map((s) => (
-          <button
-            key={s.id}
-            onClick={() => {
-              setStrategy(s.id);
-              if (setActiveStrategy) setActiveStrategy(s.id);
-            }}
-            className={`p-5 rounded-3xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-              strategy === s.id
-                ? "bg-cyan-950/70 border-cyan-400 ring-2 ring-cyan-500/40 text-white shadow-xl shadow-cyan-950/50"
-                : "bg-slate-900/80 border-slate-800 hover:border-slate-700 text-slate-300"
-            }`}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-black text-sm text-white">{s.name}</span>
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/40 font-bold">
-                  {s.tag}
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">{s.desc}</p>
-            </div>
-            <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-cyan-400">
-              <Check size={14} />
-              <span>{strategy === s.id ? "Stratégie active" : "Activer"}</span>
-            </div>
-          </button>
-        ))}
+      {/* Optimization Engine Info */}
+      <div className="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold shrink-0">
+            <Sparkles size={20} />
+          </div>
+          <div>
+            <h2 className="text-sm font-black text-white">Algorithme d'Optimisation Chronologique Pure</h2>
+            <p className="text-xs text-slate-400">Classe automatiquement chaque véhicule par date et heure de départ pour éliminer tous les blocages.</p>
+          </div>
+        </div>
+        <div className="px-3 py-1 bg-cyan-950 text-cyan-300 border border-cyan-500/40 rounded-full text-xs font-bold shrink-0">
+          Zéro Conflit
+        </div>
       </div>
 
       {/* Comparison Strip: Current State vs Optimized State */}

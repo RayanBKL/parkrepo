@@ -143,51 +143,14 @@ export default function StatsBar({
           )}
         </div>
 
-        {/* Stratégie & Bouton Répartition Optimale */}
+        {/* Bouton Répartition Optimale */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Sélecteur de Stratégie */}
-          <div className="flex items-center bg-slate-950 rounded-xl border border-slate-800 p-0.5 text-[11px]">
-            <button
-              onClick={() => setActiveStrategy("patience")}
-              className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
-                activeStrategy === "patience"
-                  ? "bg-cyan-600 text-white"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-              title="Patience Sorting : compactage sans blocage"
-            >
-              Patience
-            </button>
-            <button
-              onClick={() => setActiveStrategy("zoning")}
-              className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
-                activeStrategy === "zoning"
-                  ? "bg-emerald-600 text-white"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-              title="Zonage Aéroport : Voies dédiées court, moyen et long séjour"
-            >
-              Zonage
-            </button>
-            <button
-              onClick={() => setActiveStrategy("flight")}
-              className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
-                activeStrategy === "flight"
-                  ? "bg-sky-600 text-white"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-              title="Regroupement automatique par numéro de vol"
-            >
-              Par Vol
-            </button>
-          </div>
-
           <button
-            onClick={() => onAutoRedistribute(activeStrategy)}
+            onClick={() => onAutoRedistribute && onAutoRedistribute()}
             className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white text-xs font-bold shadow-lg shadow-cyan-900/30 hover:shadow-cyan-700/50 transition-all flex items-center gap-2 cursor-pointer"
           >
             <Sparkles size={14} className="text-yellow-300" />
-            Réorganiser tout le parc
+            <span>Réorganiser tout le parc</span>
           </button>
         </div>
       </div>

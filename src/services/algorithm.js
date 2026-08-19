@@ -120,11 +120,7 @@ export const getUrgencyStyle = (iso, now = new Date()) => {
 /**
  * Assigne automatiquement la voie optimale pour un véhicule.
  * Algorithme Expert : Tightest Fit Decreasing (Plus proche voisin chronologique) + Score Anti-Blocage
- *
- * Stratégies :
- * - 'patience' : Optimisation mathématique pure (Zéro blocage + écart temporel minimal)
- * - 'zoning' : Zonage aéroportuaire par durée de séjour (Court <24h / Moyen 1-7j / Long >7j)
- * - 'flight' : Priorité au regroupement par numéro de vol si renseigné
+ * Optimisation mathématique pure (Zéro blocage + écart temporel minimal)
  */
 export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
   const departureStr =
@@ -134,7 +130,6 @@ export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
       : vehicle.departureDate);
   const newTime = new Date(departureStr).getTime();
   const now = new Date();
-  const diffH = (newTime - now.getTime()) / 3_600_000;
   const laneCount = lanes.length;
 
   if (isNaN(newTime)) {
@@ -148,44 +143,6 @@ export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
     return new Date(str).getTime();
   };
 
-  // 1. Stratégie Optionnelle : Regroupement par Vol (si renseigné)
-  if (strategy === "flight" && vehicle.flightNumber) {
-    const flightNorm = vehicle.flightNumber.trim().toUpperCase();
-    let bestFlightLane = -1;
-    let maxFreeInFlight = -1;
-
-    lanes.forEach((lane, idx) => {
-      const free = capacity - lane.length;
-      if (free <= 0) return;
-      const hasSameFlight = lane.some((v) => v.flightNumber && v.flightNumber.trim().toUpperCase() === flightNorm);
-      if (hasSameFlight && free > maxFreeInFlight) {
-        maxFreeInFlight = free;
-        bestFlightLane = idx;
-      }
-    });
-
-    if (bestFlightLane !== -1) {
-      const lane = lanes[bestFlightLane];
-      let insertIndex = lane.findIndex((v) => getVehicleTime(v) > newTime);
-      if (insertIndex === -1) insertIndex = lane.length;
-      return { laneIndex: bestFlightLane, insertIndex, waiting: false, strategy: "flight_match" };
-    }
-  }
-
-  // 2. Définition de la plage de voies si Zonage activé
-  let allowedRange = [0, laneCount - 1];
-  if (strategy === "zoning") {
-    if (diffH <= 24) {
-      allowedRange = [0, Math.max(0, Math.floor(laneCount * 0.35) - 1)];
-    } else if (diffH <= 168) {
-      allowedRange = [Math.floor(laneCount * 0.35), Math.max(0, Math.floor(laneCount * 0.7) - 1)];
-    } else {
-      allowedRange = [Math.floor(laneCount * 0.7), laneCount - 1];
-    }
-  }
-
-  const isAllowed = (idx) => idx >= allowedRange[0] && idx <= allowedRange[1];
-
   // -------------------------------------------------------------------------
   // ÉTAPE A : Recherche du "Tightest Fit" (ZÉRO BLOCAGE + Écart temporel minimal)
   // -------------------------------------------------------------------------
@@ -195,7 +152,6 @@ export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
   let smallestGap = Infinity; // Écart en millisecondes le plus faible
 
   lanes.forEach((lane, idx) => {
-    if (strategy === "zoning" && !isAllowed(idx)) return;
     if (lane.length >= capacity || lane.length === 0) return;
 
     const backVehicle = lane[lane.length - 1];
@@ -227,7 +183,6 @@ export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
   // -------------------------------------------------------------------------
   let firstEmptyLane = -1;
   lanes.forEach((lane, idx) => {
-    if (strategy === "zoning" && !isAllowed(idx)) return;
     if (lane.length === 0 && firstEmptyLane === -1) {
       firstEmptyLane = idx;
     }
@@ -235,11 +190,6 @@ export function assignLane(lanes, capacity, vehicle, strategy = "patience") {
 
   if (firstEmptyLane !== -1) {
     return { laneIndex: firstEmptyLane, insertIndex: 0, waiting: false, strategy: "empty_lane" };
-  }
-
-  // Si zonage strict n'a rien trouvé, on réessaie sur l'ensemble du parc
-  if (strategy === "zoning") {
-    return assignLane(lanes, capacity, vehicle, "patience");
   }
 
   // -------------------------------------------------------------------------
