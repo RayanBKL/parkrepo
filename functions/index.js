@@ -78,6 +78,7 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       allow_promotion_codes: true, // Permet les codes promo commerciaux (bons d'achat, réductions partenaires)
+      automatic_tax: { enabled: false }, // TVA gérée manuellement, pas par Stripe Tax
       customer_email: context.auth.token.email,
       line_items: [
         {
@@ -107,8 +108,10 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
 
     return { url: session.url };
   } catch (error) {
-    console.error("Stripe error:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    console.error("Stripe error details:", JSON.stringify(error, null, 2));
+    // Renvoyer le vrai message Stripe au client pour faciliter le debug
+    const stripeMsg = error?.raw?.message || error?.message || "Erreur Stripe inconnue";
+    throw new functions.https.HttpsError("internal", stripeMsg);
   }
 });
 
