@@ -61,7 +61,8 @@ service cloud.firestore {
     
     // Codes d'accès & invitations
     match /accessCodes/{codeId} {
-      allow read: if request.auth != null;
+      allow get: if request.auth != null; // Autorise uniquement la lecture si on connaît le code exact
+      allow list: if false; // Interdit de télécharger la liste complète des codes
       allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if request.auth != null && (resource.data.ownerId == request.auth.uid || isSuperAdmin());
     }
