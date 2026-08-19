@@ -694,7 +694,9 @@ export default function App() {
                     });
                     if (data && data.url) window.location.href = data.url;
                   } catch (e) {
-                    showToast("Erreur lors de la redirection vers Stripe.", "error");
+                    console.error("Stripe checkout error:", e);
+                    const msg = e?.message || e?.details || "Erreur inconnue";
+                    showToast(`Stripe : ${msg}`, "error");
                   }
                 }}
                 className="px-6 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold shadow-lg shadow-cyan-900/40 transition-all"

@@ -86,7 +86,6 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
             product_data: {
               name: `Abonnement Parkeya — Plan ${selectedPlanConfig.name} (${isAnnual ? "Facturation Annuelle" : "Facturation Mensuelle"})`,
               description: `Accès complet au logiciel Parkeya (${isAnnual ? "Engagement 1 an - 2 mois offerts" : "Sans engagement"}).`,
-              tax_code: "txcd_10103000",
             },
             unit_amount: amount,
             recurring: {
