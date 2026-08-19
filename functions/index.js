@@ -353,7 +353,14 @@ exports.getPublicTicket = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("invalid-argument", "Format de ticket invalide.");
   }
 
-  const [pId, vId] = ticketId.split("_");
+  const lastUnderscore = ticketId.lastIndexOf("_");
+  if (lastUnderscore === -1) {
+    throw new functions.https.HttpsError("invalid-argument", "Format de ticket invalide.");
+  }
+
+  const pId = ticketId.substring(0, lastUnderscore);
+  const vId = ticketId.substring(lastUnderscore + 1);
+
   if (!pId || !vId) {
     throw new functions.https.HttpsError("invalid-argument", "Format de ticket invalide.");
   }

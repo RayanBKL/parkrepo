@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../../services/firebase";
 import { Car, Clock, Plane, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { fmtDateTime } from "../../services/algorithm";
 
@@ -18,7 +19,6 @@ export default function PublicTicketView({ ticketId }) {
 
     const fetchTicket = async () => {
       try {
-        const functions = getFunctions();
         const getPublicTicket = httpsCallable(functions, "getPublicTicket");
         const result = await getPublicTicket({ ticketId });
         
