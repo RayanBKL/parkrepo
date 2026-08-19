@@ -1,3 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --color-slate-850: #151e2e;
+  --color-slate-950: #070b14;
+}
+
 /* ---------------------------------------------------------------------------
    Styles Globaux & Design System ParkOptimizer Pro
    --------------------------------------------------------------------------- */
