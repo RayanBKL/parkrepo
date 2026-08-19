@@ -22,7 +22,7 @@ import {
 import { updateOrganization, getOrganizationUsers, checkUserQuota, PLANS_CONFIG } from "../../services/organization";
 import { inviteMemberToOrg, updateUserRoleAndStatus, updateUserAccountPassword, saveUserProfile } from "../../services/auth";
 import { getLaneName } from "../../services/cloudDb";
-import { Layers, Car, ArrowRight, ArrowLeft, ArrowLeftRight } from "lucide-react";
+import { Layers, Car, ArrowRight, ArrowLeft, ArrowLeftRight, Save } from "lucide-react";
 
 export default function SettingsView({
   organization,
@@ -32,6 +32,7 @@ export default function SettingsView({
   parkings = [],
   activeParking = null,
   onUpdateParkingModel = null,
+  onUpdateParkingPricing = null,
   onRefreshOrg,
 }) {
   const [activeTab, setActiveTab] = useState("team"); // "org" | "team" | "subscription" | "profile" | "parking"
@@ -61,6 +62,8 @@ export default function SettingsView({
   const [profileJobTitle, setProfileJobTitle] = useState(userProfile?.jobTitle || "");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [currentPlanOverride, setCurrentPlanOverride] = useState(null);
+
 
   const role = userProfile?.role || "OWNER";
   const isOwner = role === "OWNER";
@@ -71,6 +74,8 @@ export default function SettingsView({
       loadTeam();
     }
   }, [organization?.id]);
+
+
 
   const loadTeam = async () => {
     if (!organization?.id) return;
@@ -213,10 +218,10 @@ export default function SettingsView({
   };
 
   // Calcul du quota actuel
-  const currentPlanId = organization?.subscription?.plan || "business";
+  const currentPlanId = currentPlanOverride || organization?.subscription?.plan || organization?.plan || "business";
   const currentPlan = PLANS_CONFIG[currentPlanId] || PLANS_CONFIG.business;
-  const maxUsers = organization?.subscription?.maxUsers || currentPlan.maxUsers;
-  const maxParkings = organization?.subscription?.maxParkings || currentPlan.maxParkings;
+  const maxUsers = currentPlan.maxUsers;
+  const maxParkings = currentPlan.maxParkings;
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-150">
@@ -602,6 +607,7 @@ export default function SettingsView({
         </div>
       )}
 
+
       {/* TAB 2: ORGANISATION */}
       {activeTab === "org" && (
         <form onSubmit={handleSaveOrg} className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 max-w-2xl space-y-4 shadow-xl">
@@ -726,10 +732,24 @@ export default function SettingsView({
           {/* Grille de mise à niveau des offres */}
           {isOwner && (
             <div className="space-y-4 pt-4 border-t border-slate-800">
-              <h3 className="text-sm font-black text-white">Faire évoluer votre formule</h3>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-black text-white">Faire évoluer votre formule</h3>
+                  <p className="text-xs text-slate-400">Passez au niveau supérieur pour augmenter vos quotas de parkings et de véhicules.</p>
+                </div>
+                {(currentUser?.email === "bouaklirayan@gmail.com" || userProfile?.role === "SUPERADMIN") && (
+                  <div className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold flex items-center gap-1.5 shadow-lg shadow-amber-950/30">
+                    <Sparkles size={12} className="text-amber-400" />
+                    <span>Mode Fondateur (Bypass Test Actif)</span>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {Object.values(PLANS_CONFIG).map((p) => {
                   const isCurrent = currentPlanId === p.id;
+                  const isMasterAdmin = currentUser?.email === "bouaklirayan@gmail.com" || userProfile?.role === "SUPERADMIN";
+
                   return (
                     <div
                       key={p.id}
@@ -761,29 +781,73 @@ export default function SettingsView({
                       {!isCurrent && (
                         <button
                           type="button"
+                          disabled={loading}
                           onClick={async () => {
                             try {
                               setLoading(true);
-                              await updateOrganization(organization.id, {
-                                subscription: {
+                              let currentOrgId = organization?.id;
+
+                              if (!currentOrgId) {
+                                const { createOrganization } = await import("../../services/organization");
+                                const newOrg = await createOrganization({
+                                  name: userProfile?.displayName ? `Entreprise ${userProfile.displayName}` : "Mon Entreprise",
+                                  email: currentUser?.email || "contact@monparking.fr",
+                                  ownerId: currentUser?.uid,
+                                  plan: p.id,
+                                  status: isMasterAdmin ? "ACTIVE" : "PENDING_PAYMENT",
+                                });
+                                currentOrgId = newOrg.id;
+                                setOrganization(newOrg);
+                              }
+
+                              if (isMasterAdmin) {
+                                setCurrentPlanOverride(p.id);
+                                const updatedSubscription = {
                                   plan: p.id,
                                   status: "active",
                                   maxUsers: p.maxUsers,
                                   maxParkings: p.maxParkings,
                                   maxVehicles: p.maxVehicles,
-                                },
-                              });
-                              if (onRefreshOrg) onRefreshOrg();
-                              showSuccess(`Formule mise à jour vers le plan ${p.name} !`);
+                                };
+                                await updateOrganization(currentOrgId, {
+                                  plan: p.id,
+                                  subscription: updatedSubscription,
+                                });
+                                setOrganization(prev => ({
+                                  ...prev,
+                                  plan: p.id,
+                                  subscription: updatedSubscription,
+                                }));
+                                if (onRefreshOrg) onRefreshOrg();
+                                showSuccess(`[DEV] Formule basculée vers ${p.name} !`);
+                              } else {
+                                const { httpsCallable } = await import("firebase/functions");
+                                const { functions } = await import("../../services/firebase");
+                                const createCheckout = httpsCallable(functions, "createStripeCheckout");
+                                const { data } = await createCheckout({
+                                  planId: p.id,
+                                  orgId: currentOrgId,
+                                  billingCycle: "monthly"
+                                });
+                                if (data && data.url) {
+                                  window.location.href = data.url;
+                                } else {
+                                  showError("Impossible de créer la session Stripe.");
+                                }
+                              }
                             } catch (err) {
                               showError(err.message || "Erreur de changement d'offre.");
                             } finally {
                               setLoading(false);
                             }
                           }}
-                          className="mt-4 w-full py-2 rounded-xl bg-slate-800 hover:bg-cyan-600 text-white text-[11px] font-bold transition-all cursor-pointer shadow-inner"
+                          className={`mt-4 w-full py-2 rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-inner ${
+                            isMasterAdmin 
+                              ? "bg-amber-600/80 hover:bg-amber-500 text-white" 
+                              : "bg-slate-800 hover:bg-cyan-600 text-white"
+                          }`}
                         >
-                          Passer à {p.name}
+                          {isMasterAdmin ? `Basculer vers ${p.name} (Dev)` : `Mettre à niveau vers ${p.name}`}
                         </button>
                       )}
                     </div>

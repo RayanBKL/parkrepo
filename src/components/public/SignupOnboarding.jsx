@@ -20,6 +20,8 @@ import ParkflowLogo from "../ParkflowLogo";
 import { signUp } from "../../services/auth";
 import { createOrganization, PLANS_CONFIG } from "../../services/organization";
 import { createParking } from "../../services/cloudDb";
+import { functions } from "../../services/firebase";
+import { httpsCallable } from "firebase/functions";
 
 export default function SignupOnboarding({ onNavigate, onComplete, initialPlan = "business" }) {
   const [step, setStep] = useState(1);
@@ -34,6 +36,7 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
 
   // Étape 2 : Entreprise (Organisation)
   const [orgName, setOrgName] = useState("");
+  const [siret, setSiret] = useState("");
   const [orgPhone, setOrgPhone] = useState("");
   const [orgAddress, setOrgAddress] = useState("");
   const [selectedPlan, setSelectedPlan] = useState(initialPlan);
@@ -98,11 +101,13 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
       // 2. Créer l'Organisation
       const org = await createOrganization({
         name: orgName,
+        siret: siret,
         email: email,
         phone: orgPhone,
         address: orgAddress,
         ownerId: user.uid,
         plan: selectedPlan,
+        status: "PENDING_PAYMENT", // Bloqué jusqu'au paiement Stripe
       });
 
       // 3. Mettre à jour l'utilisateur avec son organizationId
@@ -127,6 +132,25 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
 
       if (onComplete) {
         onComplete({ user, organization: org, parking: newParking });
+      }
+
+      // 5. Créer la session Checkout Stripe
+      try {
+        const createCheckout = httpsCallable(functions, "createStripeCheckout");
+        const { data } = await createCheckout({
+          planId: selectedPlan,
+          orgId: org.id
+        });
+        
+        if (data && data.url) {
+          // Rediriger l'utilisateur vers la page de paiement Stripe
+          window.location.href = data.url;
+        } else {
+          setError("Impossible de générer le lien de paiement Stripe.");
+        }
+      } catch (stripeError) {
+        console.error("Stripe error:", stripeError);
+        setError("Erreur avec le paiement : " + stripeError.message);
       }
     } catch (err) {
       console.error("Signup error:", err);
@@ -314,6 +338,20 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
                   autoFocus
                   required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">N° SIRET (Facultatif mais recommandé)</label>
+              <div className="relative">
+                <Hash size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  value={siret}
+                  onChange={(e) => setSiret(e.target.value)}
+                  placeholder="ex: 123 456 789 00012"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500 font-mono"
                 />
               </div>
             </div>

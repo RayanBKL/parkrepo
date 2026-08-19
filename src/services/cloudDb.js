@@ -18,6 +18,7 @@ import {
   arrayRemove,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { getOrganizationByOwner, PLANS_CONFIG } from "./organization";
 
 // Suppression de hashAccessCode - le code brut sera utilisé comme identifiant simple.
 
@@ -172,7 +173,30 @@ export async function joinParkingWithCode(userId, rawCode) {
     throw new Error("Code d'accès invalide ou expiré.");
   }
 
-  const { parkingId, parkingName } = codeDoc.data();
+  const { parkingId, parkingName, ownerId } = codeDoc.data();
+
+  // Vérifier la limite d'utilisateurs de l'organisation
+  if (ownerId) {
+    const org = await getOrganizationByOwner(ownerId);
+    if (org) {
+      const maxUsers = org.subscription?.maxUsers || PLANS_CONFIG.starter.maxUsers;
+      
+      // Compter les utilisateurs uniques dans tous les parkings de ce propriétaire
+      const parkingsQuery = query(collection(db, "parkings"), where("ownerId", "==", ownerId));
+      const parkingsSnap = await getDocs(parkingsQuery);
+      
+      const uniqueUsers = new Set();
+      parkingsSnap.forEach(doc => {
+        const users = doc.data().authorizedUsers || [];
+        users.forEach(u => uniqueUsers.add(u));
+      });
+      
+      // Si l'utilisateur n'est pas encore dans le Set et que la limite est atteinte
+      if (!uniqueUsers.has(userId) && uniqueUsers.size >= maxUsers) {
+        throw new Error(`Le quota d'utilisateurs de cette organisation est atteint (${maxUsers} max).`);
+      }
+    }
+  }
 
   try {
     await updateDoc(doc(db, "parkings", parkingId), {

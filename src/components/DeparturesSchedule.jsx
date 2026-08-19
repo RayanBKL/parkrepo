@@ -18,7 +18,7 @@ export default function DeparturesSchedule({
   onPrintTicket,
   onEditVehicle,
 }) {
-  const [scheduleFilter, setScheduleFilter] = useState("today"); // '2h', 'today', 'tomorrow', 'week', 'all'
+  const [scheduleFilter, setScheduleFilter] = useState("all"); // '2h', 'today', 'tomorrow', 'week', 'all'
   const [query, setQuery] = useState("");
 
   const now = new Date();

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import { X, Car, Calendar, Clock, Plane, Phone, FileText, CheckCircle2, Sparkles, Navigation, Layers } from "lucide-react";
 import { generateVehicleId, assignLane } from "../services/algorithm";
 import { getLaneName } from "../services/cloudDb";
+import { uploadImage } from "../services/storage";
+import { PLANS_CONFIG } from "../services/organization";
 
 export default function VehicleModal({
   isOpen,
@@ -11,6 +13,7 @@ export default function VehicleModal({
   targetLaneIndex,
   parking,
   activeStrategy = "patience",
+  organization,
 }) {
   if (!isOpen) return null;
 
@@ -24,6 +27,9 @@ export default function VehicleModal({
   const [selectedLane, setSelectedLane] = useState(
     targetLaneIndex !== null && targetLaneIndex !== undefined ? targetLaneIndex : "auto"
   );
+  const [photos, setPhotos] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -33,6 +39,7 @@ export default function VehicleModal({
       setFlightNumber(editingVehicle.flightNumber || "");
       setPhone(editingVehicle.phone || "");
       setNotes(editingVehicle.notes || "");
+      setPhotos(editingVehicle.photos || []);
 
       if (editingVehicle.departure) {
         const d = new Date(editingVehicle.departure);
@@ -48,6 +55,7 @@ export default function VehicleModal({
       setFlightNumber("");
       setPhone("");
       setNotes("");
+      setPhotos([]);
       setError("");
 
       const tomorrow = new Date(Date.now() + 24 * 3600 * 1000);
@@ -104,12 +112,49 @@ export default function VehicleModal({
     };
   }, [parking, departureDate, departureTime, flightNumber, activeStrategy]);
 
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    setIsUploading(true);
+    setError("");
+
+    try {
+      const newPhotoUrls = [];
+      for (const file of files) {
+        // Use parking id if available, else "temp"
+        const pId = parking?.id || "temp";
+        const url = await uploadImage(file, pId, "proofs", (prog) => {
+          setUploadProgress(Math.round(prog));
+        });
+        newPhotoUrls.push(url);
+      }
+      setPhotos([...photos, ...newPhotoUrls]);
+    } catch (err) {
+      setError("Erreur lors de l'upload des photos.");
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
     if (!plate.trim()) {
       setError("Le numéro d'immatriculation est obligatoire.");
       return;
+    }
+    
+    // Si c'est une création, vérifier la limite de véhicules
+    if (!editingVehicle) {
+      const maxVehicles = organization?.subscription?.maxVehicles || PLANS_CONFIG.starter.maxVehicles;
+      const currentVehicles = (parking?.lanes || []).reduce((acc, lane) => acc + lane.length, 0);
+      if (currentVehicles >= maxVehicles) {
+        setError(`Limite de véhicules atteinte (${currentVehicles}/${maxVehicles}). Veuillez upgrader votre abonnement.`);
+        setIsUploading(false);
+        return;
+      }
     }
 
     if (!departureDate || !departureTime) {
@@ -132,6 +177,7 @@ export default function VehicleModal({
       flightNumber: flightNumber.trim().toUpperCase(),
       phone: phone.trim(),
       notes: notes.trim(),
+      photos: photos,
     };
 
     const finalLane = selectedLane === "auto" ? null : Number(selectedLane);
@@ -344,6 +390,45 @@ export default function VehicleModal({
             />
           </div>
 
+          {/* Photos de dommages */}
+          <div>
+            <label className="block text-xs font-bold text-slate-300 mb-2 flex items-center gap-1">
+              📸 Photos d'état / dommages (Illimité)
+            </label>
+            <div className="flex flex-wrap gap-3">
+              {photos.map((url, idx) => (
+                <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-700">
+                  <img src={url} alt="Preuve" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setPhotos(photos.filter((_, i) => i !== idx))}
+                    className="absolute top-0 right-0 bg-rose-500 text-white rounded-bl-lg p-0.5 cursor-pointer"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              <label className={`w-16 h-16 rounded-lg border-2 border-dashed border-slate-700 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-800 transition-colors ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                {isUploading ? (
+                  <span className="text-[10px] font-bold text-cyan-400">{uploadProgress}%</span>
+                ) : (
+                  <>
+                    <span className="text-xl text-slate-400">+</span>
+                    <span className="text-[9px] text-slate-500">Ajouter</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                />
+              </label>
+            </div>
+          </div>
+
           {/* Boutons Footer */}
           <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
             <button
@@ -355,7 +440,8 @@ export default function VehicleModal({
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white text-xs font-bold shadow-lg shadow-cyan-900/40 transition-all flex items-center gap-2 cursor-pointer"
+              disabled={isUploading}
+              className={`px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white text-xs font-bold shadow-lg shadow-cyan-900/40 transition-all flex items-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <CheckCircle2 size={16} />
               {editingVehicle ? "Sauvegarder les modifications" : "Enregistrer et Placer"}

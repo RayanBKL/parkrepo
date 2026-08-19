@@ -136,6 +136,23 @@ export async function getOrganization(orgId) {
 }
 
 /**
+ * Récupère l'Organisation d'un utilisateur par son ID de propriétaire
+ */
+export async function getOrganizationByOwner(ownerId) {
+  if (!ownerId) return null;
+  try {
+    const q = query(collection(db, "organizations"), where("ownerId", "==", ownerId));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      return snap.docs[0].data();
+    }
+  } catch (err) {
+    console.warn("Could not fetch organization by owner:", err);
+  }
+  return null;
+}
+
+/**
  * Met à jour les paramètres d'une organisation
  */
 export async function updateOrganization(orgId, updateData) {

@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   Menu,
   X,
+  CalendarDays,
 } from "lucide-react";
 import ParkflowLogo from "../ParkflowLogo";
 
@@ -42,6 +43,7 @@ export default function Sidebar({
     { id: "parkings", label: "Parkings", icon: Building2, roles: ["OWNER", "MANAGER", "VOITURIER", "VIEWER"] },
     { id: "vehicles", label: "Véhicules", icon: Car, roles: ["OWNER", "MANAGER", "VOITURIER", "VIEWER"] },
     { id: "schedule", label: "Arrivées / Départs", icon: Calendar, roles: ["OWNER", "MANAGER", "VOITURIER", "VIEWER"] },
+
     { id: "retrieval", label: "Récupération Optimisée", icon: Zap, roles: ["OWNER", "MANAGER", "VOITURIER", "VIEWER"], badge: "Smart" },
     { id: "history", label: "Journal d'Activité", icon: History, roles: ["OWNER", "MANAGER", "VIEWER"] },
     { id: "analytics", label: "Statistiques", icon: BarChart3, roles: ["OWNER", "MANAGER", "VIEWER"] },

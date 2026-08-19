@@ -18,6 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { joinParkingWithCode } from "../services/cloudDb";
+import { PLANS_CONFIG } from "../services/organization";
 
 export default function ParkingsModal({
   isOpen,
@@ -30,6 +31,7 @@ export default function ParkingsModal({
   onDeleteParking,
   onLeaveParking,
   onParkingJoined,
+  organization,
 }) {
   if (!isOpen) return null;
 
@@ -109,6 +111,10 @@ export default function ParkingsModal({
     setParkingModel("lifo");
     setIsCreating(false);
   };
+
+  const maxParkings = organization?.subscription?.maxParkings || PLANS_CONFIG.starter.maxParkings;
+  const ownedParkingsCount = parkings.filter(p => p.ownerId === currentUser?.uid).length;
+  const isQuotaReached = ownedParkingsCount >= maxParkings;
 
   const handleCopyCode = (pCode, id) => {
     navigator.clipboard.writeText(pCode);
@@ -225,15 +231,30 @@ export default function ParkingsModal({
                   <button
                     type="button"
                     onClick={() => {
+                      if (isQuotaReached) {
+                        setJoinError(`Limite atteinte : Vous avez ${ownedParkingsCount}/${maxParkings} parkings. Passez à l'offre supérieure.`);
+                        return;
+                      }
                       setIsCreating(true);
                       setIsJoining(false);
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-cyan-950/40 cursor-pointer"
+                    className={`px-3 py-1.5 rounded-xl text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-cyan-950/40 cursor-pointer ${
+                      isQuotaReached 
+                      ? "bg-slate-700 opacity-50 cursor-not-allowed hover:bg-slate-700" 
+                      : "bg-cyan-600 hover:bg-cyan-500"
+                    }`}
                   >
                     <Plus size={14} /> Créer un nouveau parking
                   </button>
                 </div>
               </div>
+
+              {joinError && !isJoining && (
+                <div className="p-3 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                  <AlertCircle size={15} className="shrink-0" />
+                  {joinError}
+                </div>
+              )}
 
               {parkings.map((p) => {
                 const isActive = p.id === activeParkingId;

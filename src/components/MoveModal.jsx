@@ -8,17 +8,19 @@ export default function MoveModal({
   onClose,
   vehicle,
   parking,
-  lanes,
-  capacity,
+  lanes = parking?.lanes || [],
+  capacity = parking?.capacity || 10,
   onConfirmMove,
 }) {
-  if (!isOpen || !vehicle) return null;
+  const safeLanes = lanes || parking?.lanes || [];
+  const safeCapacity = capacity || parking?.capacity || 10;
+  if (!isOpen || !vehicle || !parking) return null;
 
   // Trouver la voie actuelle du véhicule
   let currentLaneIndex = -1;
   let currentSlotIndex = -1;
-  lanes.forEach((lane, lIdx) => {
-    const sIdx = lane.findIndex((v) => v.id === vehicle.id);
+  safeLanes.forEach((lane, lIdx) => {
+    const sIdx = (lane || []).findIndex((v) => v.id === vehicle.id);
     if (sIdx !== -1) {
       currentLaneIndex = lIdx;
       currentSlotIndex = sIdx;
@@ -28,8 +30,8 @@ export default function MoveModal({
   const [selectedLane, setSelectedLane] = useState(currentLaneIndex >= 0 ? currentLaneIndex : 0);
 
   // Calcul de la recommandation de voie par l'algorithme
-  const lanesWithoutVehicle = lanes.map((lane) => lane.filter((v) => v.id !== vehicle.id));
-  const suggestion = assignLane(lanesWithoutVehicle, capacity, vehicle);
+  const lanesWithoutVehicle = safeLanes.map((lane) => (lane || []).filter((v) => v.id !== vehicle.id));
+  const suggestion = assignLane(lanesWithoutVehicle, safeCapacity, vehicle);
 
   const handleMove = (targetIdx) => {
     onConfirmMove(vehicle, targetIdx);
@@ -115,10 +117,10 @@ export default function MoveModal({
             Ou choisir manuellement une voie de destination :
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 max-h-56 overflow-y-auto pr-1">
-            {lanes.map((lane, idx) => {
-              const count = lane.length;
+            {safeLanes.map((lane, idx) => {
+              const count = (lane || []).length;
               const isCurrent = idx === currentLaneIndex;
-              const isFull = count >= capacity && !isCurrent;
+              const isFull = count >= safeCapacity && !isCurrent;
               const isRec = idx === suggestion.laneIndex;
               const laneName = getLaneName(idx, parking);
 

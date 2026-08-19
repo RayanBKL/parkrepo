@@ -1,14 +1,11 @@
 import React from "react";
-import { X, Printer, FileText } from "lucide-react";
+import { X, FileText } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { fmtDateTime } from "../services/algorithm";
 import { getLaneName } from "../services/cloudDb";
 
 export default function TicketModal({ isOpen, onClose, vehicle, laneIndex, slotIndex, parking, parkingName }) {
   if (!isOpen || !vehicle) return null;
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   const laneDisplayName =
     laneIndex !== undefined && laneIndex !== null
@@ -96,10 +93,16 @@ export default function TicketModal({ isOpen, onClose, vehicle, laneIndex, slotI
 
           {/* QR / Code barre factice */}
           <div className="mt-4 pt-3 border-t-2 border-dashed border-slate-300 text-center flex flex-col items-center">
-            <div className="font-mono text-[10px] text-slate-400 tracking-widest uppercase">
+            <QRCodeSVG 
+              value={`${window.location.origin}/?ticket=${parking?.id}_${vehicle.id}`} 
+              size={120} 
+              level={"H"} 
+              includeMargin={true}
+            />
+            <div className="font-mono text-[10px] text-slate-400 tracking-widest uppercase mt-2">
               ID: {vehicle.id}
             </div>
-            <div className="text-[9px] text-slate-400 mt-1">À fixer aux clés ou poser sur le tableau de bord</div>
+            <div className="text-[9px] text-slate-400 mt-1">Scanner pour suivre le véhicule</div>
           </div>
         </div>
 
@@ -108,16 +111,9 @@ export default function TicketModal({ isOpen, onClose, vehicle, laneIndex, slotI
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold"
+            className="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold w-full text-center"
           >
             Fermer
-          </button>
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-900/40 flex items-center gap-1.5 cursor-pointer"
-          >
-            <Printer size={14} /> Imprimer le Ticket
           </button>
         </div>
       </div>

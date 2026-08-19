@@ -14,7 +14,7 @@ import {
   generateAccessCode,
   updateParkingModel,
 } from "./services/cloudDb";
-import { getOrganization, createOrganization } from "./services/organization";
+import { getOrganization, getOrganizationByOwner, createOrganization } from "./services/organization";
 import { assignLane, assignVehicleToParking, PARKING_MODELS, redistributeAllVehicles, generateVehicleId } from "./services/algorithm";
 import { exportParkingToExcel } from "./services/excel";
 import { logMovement } from "./services/db";
@@ -25,6 +25,8 @@ import PricingPage from "./components/public/PricingPage";
 import SignupOnboarding from "./components/public/SignupOnboarding";
 import LoginPage from "./components/public/LoginPage";
 import LegalPages from "./components/public/LegalPages";
+import PublicTicketView from "./components/public/PublicTicketView";
+import SubscriptionExpiredView from "./components/app/SubscriptionExpiredView";
 
 // Composants SaaS App
 import Sidebar from "./components/app/Sidebar";
@@ -34,6 +36,7 @@ import RetrievalOptimizerView from "./components/app/RetrievalOptimizerView";
 import AuditLogView from "./components/app/AuditLogView";
 import AnalyticsView from "./components/app/AnalyticsView";
 import SettingsView from "./components/app/SettingsView";
+import ReservationsView from "./components/app/ReservationsView";
 
 // Composants Existants Réutilisés
 import StatsBar from "./components/StatsBar";
@@ -45,6 +48,7 @@ import MoveModal from "./components/MoveModal";
 import TicketModal from "./components/TicketModal";
 import ParkingsModal from "./components/ParkingsModal";
 import { JoinParkingModal } from "./components/AccessCodeModals";
+
 
 // Loader plein écran
 function FullScreenLoader({ message }) {
@@ -64,7 +68,15 @@ function FullScreenLoader({ message }) {
 
 export default function App() {
   // --- Navigation Publique (si non connecté) ---
-  const [publicPage, setPublicPage] = useState("home"); // "home" | "pricing" | "signup" | "login"
+  const [publicPage, setPublicPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("ticket")) return "ticket";
+    return "home";
+  }); // "home" | "pricing" | "signup" | "login" | "ticket"
+  const [ticketIdParam] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("ticket");
+  });
   const [selectedPlanForSignup, setSelectedPlanForSignup] = useState("business");
 
   // --- État d'Authentification & SaaS ---
@@ -127,6 +139,18 @@ export default function App() {
       }
     };
     window.addEventListener("popstate", handlePopState);
+
+    // Vérifier les redirections Stripe
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "success") {
+      showToast("Paiement validé avec succès ! Redirection en cours...", "success");
+      // On nettoie l'URL
+      window.history.replaceState({}, document.title, "/");
+    } else if (params.get("payment") === "cancel") {
+      showToast("Le paiement a été annulé.", "error");
+      window.history.replaceState({}, document.title, "/");
+    }
+
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
@@ -151,10 +175,23 @@ export default function App() {
       const profile = await getUserProfile(user.uid);
       setUserProfile(profile);
 
-      let orgId = profile?.organizationId;
-      if (orgId) {
-        const org = await getOrganization(orgId);
+      let org = null;
+      if (profile?.organizationId) {
+        org = await getOrganization(profile.organizationId);
+      }
+      if (!org) {
+        org = await getOrganizationByOwner(user.uid);
+      }
+
+      if (org) {
         setOrganization(org);
+        if (profile?.organizationId !== org.id) {
+          const { updateUserRoleAndStatus } = await import("./services/auth");
+          await updateUserRoleAndStatus(user.uid, {
+            organizationId: org.id,
+            role: profile?.role || "OWNER",
+          });
+        }
       } else {
         // Migration automatique pour les comptes existants : création d'une organisation par défaut
         const fallbackOrg = await createOrganization({
@@ -529,6 +566,10 @@ export default function App() {
       );
     }
 
+    if (publicPage === "ticket") {
+      return <PublicTicketView ticketId={ticketIdParam} />;
+    }
+
     // Par défaut : Landing Page
     return <LandingPage onNavigate={handleNavigatePublic} />;
   }
@@ -553,6 +594,16 @@ export default function App() {
           </button>
         </div>
       </div>
+    );
+  }
+
+  // Abonnement ANNULÉ
+  if (organization?.status === "CANCELED" && activeTab !== "settings") {
+    return (
+      <SubscriptionExpiredView
+        onManageBilling={() => handleNavigateView("settings")}
+        onLogout={() => logOut()}
+      />
     );
   }
 
@@ -608,8 +659,41 @@ export default function App() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
         <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-8 pt-6 pb-12">
-          {/* Barre de retour rapide & Fil d'Ariane pour les sous-vues */}
-          {activeView !== "dashboard" && (
+          
+          {/* VÉRIFICATION DE PAIEMENT */}
+          {organization?.status === "PENDING_PAYMENT" ? (
+            <div className="flex flex-col items-center justify-center h-[70vh] text-center max-w-lg mx-auto">
+              <div className="w-20 h-20 rounded-full bg-rose-500/20 flex items-center justify-center mb-6 border border-rose-500/30">
+                <AlertCircle size={40} className="text-rose-400" />
+              </div>
+              <h2 className="text-2xl font-black text-white mb-3">Abonnement Requis</h2>
+              <p className="text-sm text-slate-400 mb-8 leading-relaxed">
+                Votre compte est créé, mais l'abonnement <strong>{organization.plan?.toUpperCase()}</strong> n'a pas encore été réglé. Veuillez finaliser votre paiement pour débloquer l'accès complet à Parkeya.
+              </p>
+              <button
+                onClick={async () => {
+                  try {
+                    const { httpsCallable } = await import("firebase/functions");
+                    const { functions } = await import("./services/firebase");
+                    const createCheckout = httpsCallable(functions, "createStripeCheckout");
+                    const { data } = await createCheckout({
+                      planId: organization.plan,
+                      orgId: organization.id
+                    });
+                    if (data && data.url) window.location.href = data.url;
+                  } catch (e) {
+                    showToast("Erreur lors de la redirection vers Stripe.", "error");
+                  }
+                }}
+                className="px-6 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold shadow-lg shadow-cyan-900/40 transition-all"
+              >
+                Accéder au Paiement Stripe
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Barre de retour rapide & Fil d'Ariane pour les sous-vues */}
+              {activeView !== "dashboard" && (
             <div className="mb-4 flex items-center justify-between gap-3 text-xs">
               <button
                 onClick={() => handleNavigateView("dashboard")}
@@ -822,6 +906,7 @@ export default function App() {
             />
           )}
 
+
           {/* VUE 5 : RÉCUPÉRATION OPTIMISÉE (DÉBLOCAGE) */}
           {activeView === "retrieval" && activeParking && (
             <RetrievalOptimizerView
@@ -861,6 +946,8 @@ export default function App() {
               onRefreshOrg={() => refreshUserData(currentUser)}
             />
           )}
+            </>
+          )}
         </main>
       </div>
 
@@ -880,6 +967,7 @@ export default function App() {
         targetLaneIndex={targetLaneForAdd}
         parking={activeParking}
         activeStrategy={activeStrategy}
+        organization={organization}
       />
 
       <MoveModal
@@ -890,6 +978,8 @@ export default function App() {
         }}
         vehicle={movingVehicle}
         parking={activeParking}
+        lanes={activeParking?.lanes || []}
+        capacity={activeParking?.capacity || 10}
         onConfirmMove={handleConfirmMove}
       />
 
@@ -916,6 +1006,7 @@ export default function App() {
         parkings={parkings}
         activeParkingId={activeParking?.id}
         currentUser={currentUser}
+        organization={organization}
         onSelectParking={setActiveParkingId}
         onCreateParking={handleCreateParking}
         onDeleteParking={handleDeleteParking}
