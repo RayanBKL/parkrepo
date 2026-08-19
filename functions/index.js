@@ -148,3 +148,68 @@ exports.stripeWebhook = functions.https.onRequest((req, res) => {
     res.json({ received: true });
   });
 });
+
+// 3. Fonction sécurisée pour rejoindre un parking via code (Server-Side)
+exports.joinParking = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Vous devez être connecté.");
+  }
+
+  const { code } = data;
+  if (!code) {
+    throw new functions.https.HttpsError("invalid-argument", "Le code d'accès est requis.");
+  }
+  const normalizedCode = code.trim().toUpperCase();
+
+  // 1. Chercher le code dans Firestore (Admin SDK ignore les règles de sécurité)
+  const codeDoc = await db.collection("accessCodes").doc(normalizedCode).get();
+  
+  if (!codeDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Code d'accès invalide ou expiré.");
+  }
+
+  const { parkingId, ownerId, parkingName } = codeDoc.data();
+
+  // 2. Vérifier si l'utilisateur est déjà dans le parking (optionnel mais propre)
+  const parkingDoc = await db.collection("parkings").doc(parkingId).get();
+  if (!parkingDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Le parking associé n'existe plus.");
+  }
+
+  const authorizedUsers = parkingDoc.data().authorizedUsers || [];
+  if (authorizedUsers.includes(context.auth.uid)) {
+    return { alreadyJoined: true, parkingId, name: parkingName };
+  }
+
+  // 3. Vérifier les limites de l'organisation (maxUsers)
+  if (ownerId) {
+    const orgQuery = await db.collection("organizations").where("ownerId", "==", ownerId).limit(1).get();
+    if (!orgQuery.empty) {
+      const org = orgQuery.docs[0].data();
+      const maxUsers = org.subscription?.maxUsers || 5; // Limite starter par défaut si non trouvé
+      
+      // Compter les utilisateurs uniques dans tous les parkings de ce propriétaire
+      const parkingsQuery = await db.collection("parkings").where("ownerId", "==", ownerId).get();
+      const uniqueUsers = new Set();
+      parkingsQuery.forEach(doc => {
+        const users = doc.data().authorizedUsers || [];
+        users.forEach(u => uniqueUsers.add(u));
+      });
+      
+      if (!uniqueUsers.has(context.auth.uid) && uniqueUsers.size >= maxUsers) {
+        throw new functions.https.HttpsError("resource-exhausted", `Le quota d'utilisateurs de cette organisation est atteint (${maxUsers} max).`);
+      }
+    }
+  }
+
+  // 4. Ajouter l'utilisateur au parking
+  try {
+    await db.collection("parkings").doc(parkingId).update({
+      authorizedUsers: admin.firestore.FieldValue.arrayUnion(context.auth.uid),
+    });
+    return { alreadyJoined: false, parkingId, name: parkingName };
+  } catch (error) {
+    console.error("Erreur lors de l'ajout au parking:", error);
+    throw new functions.https.HttpsError("internal", "Erreur lors de la jonction au parking.");
+  }
+});

@@ -18,6 +18,7 @@ import {
   arrayRemove,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { getOrganizationByOwner, PLANS_CONFIG } from "./organization";
 
 // Suppression de hashAccessCode - le code brut sera utilisé comme identifiant simple.
@@ -165,49 +166,25 @@ export async function getUserParkings(userId) {
 /**
  * Rejoindre un parking via son Code d'Accès (lecture + écriture)
  */
+/**
+ * Rejoindre un parking via son Code d'Accès (sécurisé via Cloud Function)
+ */
 export async function joinParkingWithCode(userId, rawCode) {
-  const normalizedCode = rawCode.trim().toUpperCase();
-
-  const codeDoc = await getDoc(doc(db, "accessCodes", normalizedCode));
-  if (!codeDoc.exists()) {
-    throw new Error("Code d'accès invalide ou expiré.");
-  }
-
-  const { parkingId, parkingName, ownerId } = codeDoc.data();
-
-  // Vérifier la limite d'utilisateurs de l'organisation
-  if (ownerId) {
-    const org = await getOrganizationByOwner(ownerId);
-    if (org) {
-      const maxUsers = org.subscription?.maxUsers || PLANS_CONFIG.starter.maxUsers;
-      
-      // Compter les utilisateurs uniques dans tous les parkings de ce propriétaire
-      const parkingsQuery = query(collection(db, "parkings"), where("ownerId", "==", ownerId));
-      const parkingsSnap = await getDocs(parkingsQuery);
-      
-      const uniqueUsers = new Set();
-      parkingsSnap.forEach(doc => {
-        const users = doc.data().authorizedUsers || [];
-        users.forEach(u => uniqueUsers.add(u));
-      });
-      
-      // Si l'utilisateur n'est pas encore dans le Set et que la limite est atteinte
-      if (!uniqueUsers.has(userId) && uniqueUsers.size >= maxUsers) {
-        throw new Error(`Le quota d'utilisateurs de cette organisation est atteint (${maxUsers} max).`);
-      }
-    }
-  }
+  const functions = getFunctions();
+  const joinParkingFn = httpsCallable(functions, "joinParking");
 
   try {
-    await updateDoc(doc(db, "parkings", parkingId), {
-      authorizedUsers: arrayUnion(userId),
-    });
-    return { alreadyJoined: false, parkingId, name: parkingName };
+    const result = await joinParkingFn({ code: rawCode });
+    // La Cloud Function renvoie { alreadyJoined, parkingId, name }
+    return result.data;
   } catch (err) {
-    if (err.code === "permission-denied") {
-      return { alreadyJoined: true, parkingId, name: parkingName };
+    if (err.code === "functions/not-found") {
+      throw new Error("Code d'accès invalide ou expiré.");
+    } else if (err.code === "functions/resource-exhausted") {
+      throw new Error(err.message);
     }
-    throw err;
+    console.error("Erreur Cloud Function joinParking:", err);
+    throw new Error("Impossible de rejoindre le parking (Erreur serveur).");
   }
 }
 
