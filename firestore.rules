@@ -6,15 +6,18 @@ service cloud.firestore {
     function isSuperAdmin() {
       return request.auth != null && (
         request.auth.token.email == "bouaklirayan@gmail.com" ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "SUPERADMIN"
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "SUPERADMIN")
       );
     }
     
-    // Utilisateurs
+    // 1. Utilisateurs
     match /users/{userId} {
       allow read: if request.auth != null && (
         request.auth.uid == userId ||
-        (resource.data.organizationId != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == resource.data.organizationId) ||
+        (resource.data.organizationId != null && 
+         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == resource.data.organizationId) ||
         isSuperAdmin()
       );
       
@@ -30,7 +33,7 @@ service cloud.firestore {
              )
           && (
                request.resource.data.organizationId == resource.data.organizationId 
-               // Autoriser à rejoindre une org si on en est le propriétaire (nouveau compte / fallback)
+               // Autoriser à rejoindre une org si on en est le propriétaire
                || (request.resource.data.organizationId != null && get(/databases/$(database)/documents/organizations/$(request.resource.data.organizationId)).data.ownerId == request.auth.uid)
              )
         )
@@ -44,22 +47,42 @@ service cloud.firestore {
       );
     }
     
-    // Organisations / Entreprises & Abonnements
+    // 2. Organisations / Entreprises & Abonnements (BOUCLIER ANTI-BYPASS FACTURATION)
     match /organizations/{orgId} {
       allow read: if request.auth != null && (
         resource.data.ownerId == request.auth.uid ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == orgId ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == orgId) ||
         isSuperAdmin()
       );
-      allow create: if request.auth != null;
-      // Seul le propriétaire ou le Super Admin peut modifier ou supprimer l'organisation
-      allow update, delete: if request.auth != null && (
+      
+      // Lors de la création, le statut doit OBLIGATOIREMENT être en attente de paiement
+      allow create: if request.auth != null && (
+        isSuperAdmin() ||
+        (
+          request.resource.data.ownerId == request.auth.uid &&
+          (!('status' in request.resource.data) || request.resource.data.status in ['PENDING_PAYMENT', 'pending_payment', 'TRIAL', 'trialing'])
+        )
+      );
+      
+      // Seuls le SUPERADMIN ou les Cloud Functions (Admin SDK) peuvent modifier l'abonnement, le statut ou les clés Stripe
+      allow update: if request.auth != null && (
+        isSuperAdmin() ||
+        (
+          resource.data.ownerId == request.auth.uid &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'subscription', 'status', 'stripeCustomerId', 'stripeSubscriptionId', 'ownerId', 'id'
+          ])
+        )
+      );
+      
+      allow delete: if request.auth != null && (
         resource.data.ownerId == request.auth.uid ||
         isSuperAdmin()
       );
     }
     
-    // Codes d'accès & invitations
+    // 3. Codes d'accès & invitations (Lecture individuelle uniquement, listage interdit)
     match /accessCodes/{codeId} {
       allow get: if request.auth != null; // Autorise uniquement la lecture si on connaît le code exact
       allow list: if false; // Interdit de télécharger la liste complète des codes
@@ -67,13 +90,22 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && (resource.data.ownerId == request.auth.uid || isSuperAdmin());
     }
     
-    // Parkings & Véhicules
+    // 4. Parkings & Véhicules
     match /parkings/{parkingId} {
       allow read: if request.auth != null && (
         (request.auth.uid in resource.data.authorizedUsers) ||
         isSuperAdmin()
       );
-      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+      
+      // Création de parking : vérifier que l'utilisateur est bien le propriétaire de l'organisation
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid && (
+        isSuperAdmin() ||
+        (
+          request.resource.data.organizationId != null &&
+          get(/databases/$(database)/documents/organizations/$(request.resource.data.organizationId)).data.ownerId == request.auth.uid
+        )
+      );
+      
       allow update: if request.auth != null && (
         (request.auth.uid == resource.data.ownerId)
         ||
@@ -102,7 +134,51 @@ service cloud.firestore {
         ||
         isSuperAdmin()
       );
+      
       allow delete: if request.auth != null && (request.auth.uid == resource.data.ownerId || isSuperAdmin());
+    }
+
+    // 5. Réservations
+    match /reservations/{resId} {
+      allow read: if request.auth != null && (
+        isSuperAdmin() ||
+        (resource.data.parkingId != null && 
+         request.auth.uid in get(/databases/$(database)/documents/parkings/$(resource.data.parkingId)).data.authorizedUsers)
+      );
+      
+      allow create: if request.auth != null && (
+        isSuperAdmin() ||
+        (request.resource.data.parkingId != null &&
+         request.auth.uid in get(/databases/$(database)/documents/parkings/$(request.resource.data.parkingId)).data.authorizedUsers)
+      );
+      
+      allow update, delete: if request.auth != null && (
+        isSuperAdmin() ||
+        (resource.data.parkingId != null &&
+         request.auth.uid in get(/databases/$(database)/documents/parkings/$(resource.data.parkingId)).data.authorizedUsers)
+      );
+    }
+
+    // 6. Invitations d'employés
+    match /invitations/{inviteId} {
+      allow read: if request.auth != null && (
+        isSuperAdmin() ||
+        request.auth.token.email == resource.data.email ||
+        (resource.data.organizationId != null &&
+         get(/databases/$(database)/documents/organizations/$(resource.data.organizationId)).data.ownerId == request.auth.uid)
+      );
+      
+      allow create: if request.auth != null && (
+        isSuperAdmin() ||
+        (request.resource.data.organizationId != null &&
+         get(/databases/$(database)/documents/organizations/$(request.resource.data.organizationId)).data.ownerId == request.auth.uid)
+      );
+      
+      allow update, delete: if request.auth != null && (
+        isSuperAdmin() ||
+        (resource.data.organizationId != null &&
+         get(/databases/$(database)/documents/organizations/$(resource.data.organizationId)).data.ownerId == request.auth.uid)
+      );
     }
   }
 }

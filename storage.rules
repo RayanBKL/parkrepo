@@ -1,0 +1,19 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Protection des photos d'état des véhicules (proofs)
+    match /parkings/{parkingId}/{allPaths=**} {
+      // Lecture : Utilisateur authentifié ou via token de téléchargement public généré par Firebase
+      allow read: if request.auth != null;
+      
+      // Écriture : Uniquement des images valides de moins de 10 Mo par un utilisateur connecté
+      allow write: if request.auth != null
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+                   
+      // Suppression : Utilisateur connecté uniquement
+      allow delete: if request.auth != null;
+    }
+  }
+}

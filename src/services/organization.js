@@ -103,9 +103,10 @@ export async function createOrganization({
     phone: phone.trim(),
     address: address.trim(),
     ownerId,
+    status: "PENDING_PAYMENT",
     subscription: {
       plan: planConfig.id,
-      status: "active", // "trialing" | "active" | "past_due" | "canceled"
+      status: "pending_payment", // "pending_payment" | "trialing" | "active" | "past_due" | "canceled"
       maxParkings: planConfig.maxParkings,
       maxUsers: planConfig.maxUsers,
       maxVehicles: planConfig.maxVehicles,
