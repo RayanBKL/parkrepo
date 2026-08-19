@@ -276,6 +276,16 @@ export default function App() {
     const isEdit = !!editingVehicle;
     const authorName = userProfile?.displayName || currentUser?.email || "Voiturier";
 
+    // Vérification de quota du plan d'abonnement (uniquement à l'ajout d'un nouveau véhicule)
+    if (!isEdit && activeParking) {
+      const currentCarsCount = (activeParking.lanes || []).reduce((acc, l) => acc + l.length, 0) + (activeParking.waiting || []).length;
+      const maxVehicles = organization?.subscription?.maxVehicles || PLANS_CONFIG.starter.maxVehicles;
+      if (currentCarsCount >= maxVehicles) {
+        showToast(`Limite du plan atteinte (${currentCarsCount}/${maxVehicles} véhicules). Passez à l'offre supérieure.`, "error");
+        return;
+      }
+    }
+
     await updateActiveParking((p) => {
       let newLanes = p.lanes.map((l) => [...l]);
       let newWaiting = [...(p.waiting || [])];

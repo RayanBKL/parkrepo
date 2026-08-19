@@ -95,7 +95,7 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
   }
 });
 
-// 2. Webhook Stripe pour recevoir la confirmation de paiement
+// 2. Webhook Stripe pour recevoir les notifications et synchroniser les abonnements
 exports.stripeWebhook = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
     const sig = req.headers["stripe-signature"];
@@ -109,22 +109,39 @@ exports.stripeWebhook = functions.https.onRequest((req, res) => {
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+    // 1. Idempotence : Éviter de traiter deux fois le même événement
+    try {
+      const eventRef = db.collection("stripeEvents").doc(event.id);
+      const eventDoc = await eventRef.get();
+      if (eventDoc.exists) {
+        console.log(`Événement ${event.id} déjà traité (idempotence).`);
+        return res.json({ received: true, duplicate: true });
+      }
+      await eventRef.set({
+        type: event.type,
+        created: event.created,
+        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn("Could not check event idempotency:", err);
+    }
+
+    const plansConfig = {
+      starter: { maxParkings: 1, maxUsers: 5, maxVehicles: 300 },
+      business: { maxParkings: 1, maxUsers: 10, maxVehicles: 600 },
+      pro: { maxParkings: 3, maxUsers: 20, maxVehicles: 3000 },
+      enterprise: { maxParkings: 999, maxUsers: 999, maxVehicles: 99999 },
+    };
+
+    // Événement 1 : Session de paiement terminée (Premier abonnement ou upgrade)
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       const orgId = session.metadata?.orgId;
       const planId = session.metadata?.planId || "business";
-
-      const plansConfig = {
-        starter: { maxParkings: 1, maxUsers: 5, maxVehicles: 300 },
-        business: { maxParkings: 1, maxUsers: 10, maxVehicles: 600 },
-        pro: { maxParkings: 3, maxUsers: 20, maxVehicles: 3000 },
-        enterprise: { maxParkings: 999, maxUsers: 999, maxVehicles: 99999 },
-      };
       const planDetails = plansConfig[planId] || plansConfig["business"];
 
       if (orgId) {
         try {
-          // Activer l'organisation et mettre à jour les quotas du plan
           await db.collection("organizations").doc(orgId).update({
             status: "ACTIVE",
             plan: planId,
@@ -133,17 +150,75 @@ exports.stripeWebhook = functions.https.onRequest((req, res) => {
             "subscription.maxParkings": planDetails.maxParkings,
             "subscription.maxUsers": planDetails.maxUsers,
             "subscription.maxVehicles": planDetails.maxVehicles,
-            stripeSubscriptionId: session.subscription,
-            stripeCustomerId: session.customer,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            stripeSubscriptionId: session.subscription || null,
+            stripeCustomerId: session.customer || null,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
-          console.log(`Organisation ${orgId} activée avec succès avec le plan ${planId} !`);
+          console.log(`Organisation ${orgId} activée avec le plan ${planId} !`);
         } catch (error) {
           console.error(`Erreur d'activation de l'organisation ${orgId}:`, error);
         }
       }
     }
 
+    // Événement 2 : Paiement réussi d'une facture (Renouvellement mensuel/annuel automatique)
+    if (event.type === "invoice.payment_succeeded" || event.type === "invoice.paid") {
+      const invoice = event.data.object;
+      const subId = invoice.subscription;
+      const customerId = invoice.customer;
+
+      try {
+        let orgDoc = null;
+        if (subId) {
+          const snap = await db.collection("organizations").where("stripeSubscriptionId", "==", subId).limit(1).get();
+          if (!snap.empty) orgDoc = snap.docs[0];
+        }
+        if (!orgDoc && customerId) {
+          const snap = await db.collection("organizations").where("stripeCustomerId", "==", customerId).limit(1).get();
+          if (!snap.empty) orgDoc = snap.docs[0];
+        }
+
+        if (orgDoc) {
+          const renewsAt = invoice.lines?.data?.[0]?.period?.end
+            ? new Date(invoice.lines.data[0].period.end * 1000).toISOString()
+            : new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+
+          await orgDoc.ref.update({
+            status: "ACTIVE",
+            "subscription.status": "active",
+            "subscription.renewsAt": renewsAt,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          console.log(`Abonnement renouvelé pour l'organisation ${orgDoc.id} jusqu'au ${renewsAt}.`);
+        }
+      } catch (error) {
+        console.error("Erreur lors du traitement de invoice.payment_succeeded:", error);
+      }
+    }
+
+    // Événement 3 : Échec de paiement (Carte expirée, fonds insuffisants)
+    if (event.type === "invoice.payment_failed") {
+      const invoice = event.data.object;
+      const subId = invoice.subscription;
+      try {
+        if (subId) {
+          const snap = await db.collection("organizations").where("stripeSubscriptionId", "==", subId).limit(1).get();
+          if (!snap.empty) {
+            const orgDoc = snap.docs[0];
+            await orgDoc.ref.update({
+              status: "PAST_DUE",
+              "subscription.status": "past_due",
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            console.warn(`Paiement échoué pour l'organisation ${orgDoc.id}, statut passé à PAST_DUE.`);
+          }
+        }
+      } catch (error) {
+        console.error("Erreur lors du traitement de invoice.payment_failed:", error);
+      }
+    }
+
+    // Événement 4 : Abonnement supprimé / résilié
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object;
       try {
@@ -156,12 +231,31 @@ exports.stripeWebhook = functions.https.onRequest((req, res) => {
           await orgDoc.ref.update({
             status: "CANCELED",
             "subscription.status": "canceled",
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
-          console.log(`Organisation ${orgDoc.id} annulée suite à la suppression de l'abonnement.`);
+          console.log(`Organisation ${orgDoc.id} annulée suite à la résiliation de l'abonnement.`);
         }
       } catch (error) {
         console.error("Erreur lors de l'annulation de l'abonnement :", error);
+      }
+    }
+
+    // Événement 5 : Mise à jour de l'abonnement Stripe (changement de statut direct)
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object;
+      try {
+        const snap = await db.collection("organizations").where("stripeSubscriptionId", "==", subscription.id).limit(1).get();
+        if (!snap.empty) {
+          const orgDoc = snap.docs[0];
+          const newStatus = subscription.status === "active" ? "ACTIVE" : (subscription.status === "past_due" ? "PAST_DUE" : (subscription.status === "canceled" ? "CANCELED" : orgDoc.data().status));
+          await orgDoc.ref.update({
+            status: newStatus,
+            "subscription.status": subscription.status,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+      } catch (error) {
+        console.error("Erreur lors de customer.subscription.updated:", error);
       }
     }
 

@@ -97,6 +97,19 @@ function deserializeLanes(lanesObj, laneCount) {
  * Un code d'accès hashé est généré et stocké pour le partage sécurisé.
  */
 export async function createParking(userId, config) {
+  // Vérifier le quota de parkings autorisés pour l'organisation
+  if (config.organizationId) {
+    const { checkParkingQuota, getOrganization } = await import("./organization");
+    const org = await getOrganization(config.organizationId);
+    if (org) {
+      const parkingsSnap = await getDocs(query(collection(db, "parkings"), where("ownerId", "==", userId)));
+      const quota = await checkParkingQuota(config.organizationId, parkingsSnap.docs.length);
+      if (!quota.allowed) {
+        throw new Error(quota.reason);
+      }
+    }
+  }
+
   const parkingId = `pkg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const rawCode = config.code || generateAccessCode();
 
