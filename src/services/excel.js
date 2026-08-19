@@ -105,6 +105,20 @@ export function parseExcelFile(arrayBuffer) {
 }
 
 /**
+ * Neutralise les formules malveillantes (CSV/Formula Injection)
+ * Empêche l'exécution de code ou formules (=, +, -, @) à l'ouverture du fichier Excel
+ */
+function sanitizeForExcel(val) {
+  if (val === null || val === undefined) return "—";
+  const str = String(val).trim();
+  if (!str) return "—";
+  if (/^[=+\-@\t\r]/.test(str)) {
+    return `'${str}`;
+  }
+  return str;
+}
+
+/**
  * Exporte l'ensemble des véhicules actuels du parking vers un classeur Excel
  */
 export function exportParkingToExcel(parking) {
@@ -115,15 +129,15 @@ export function exportParkingToExcel(parking) {
     lane.forEach((v, pos) => {
       data.push({
         Statut: "En Parc",
-        Voie: getLaneName(laneIdx, parking),
+        Voie: sanitizeForExcel(getLaneName(laneIdx, parking)),
         Position: pos + 1 === 1 ? "1 (Sortie)" : `${pos + 1}`,
-        Immatriculation: v.plate,
-        Modèle: v.model || "—",
+        Immatriculation: sanitizeForExcel(v.plate),
+        Modèle: sanitizeForExcel(v.model),
         "Date Départ": fmtDateTime(v.departure),
         "Date Arrivée": fmtDateTime(v.arrivedAt),
-        "N° Vol": v.flightNumber || "—",
-        Téléphone: v.phone || "—",
-        Notes: v.notes || "",
+        "N° Vol": sanitizeForExcel(v.flightNumber),
+        Téléphone: sanitizeForExcel(v.phone),
+        Notes: sanitizeForExcel(v.notes),
       });
     });
   });
@@ -134,13 +148,13 @@ export function exportParkingToExcel(parking) {
       Statut: "File d'attente",
       Voie: "En Attente",
       Position: idx + 1,
-      Immatriculation: v.plate,
-      Modèle: v.model || "—",
+      Immatriculation: sanitizeForExcel(v.plate),
+      Modèle: sanitizeForExcel(v.model),
       "Date Départ": fmtDateTime(v.departure),
       "Date Arrivée": fmtDateTime(v.arrivedAt),
-      "N° Vol": v.flightNumber || "—",
-      Téléphone: v.phone || "—",
-      Notes: v.notes || "",
+      "N° Vol": sanitizeForExcel(v.flightNumber),
+      Téléphone: sanitizeForExcel(v.phone),
+      Notes: sanitizeForExcel(v.notes),
     });
   });
 
@@ -152,12 +166,13 @@ export function exportParkingToExcel(parking) {
   if (parking.history && parking.history.length > 0) {
     const histData = parking.history.map((h) => ({
       Date: fmtDateTime(h.timestamp),
-      Type: h.type,
-      Détails: JSON.stringify(h.details || {}),
+      Type: sanitizeForExcel(h.type),
+      Détails: sanitizeForExcel(JSON.stringify(h.details || {})),
     }));
     const wsHist = XLSX.utils.json_to_sheet(histData);
     XLSX.utils.book_append_sheet(wb, wsHist, "Historique");
   }
 
-  XLSX.writeFile(wb, `${parking.name.replace(/\s+/g, "_")}_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  const safeFileName = parking.name.replace(/[^a-zA-Z0-9_\-]/g, "_");
+  XLSX.writeFile(wb, `${safeFileName}_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
