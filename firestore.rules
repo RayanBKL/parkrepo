@@ -77,13 +77,30 @@ service cloud.firestore {
         (request.auth.uid == resource.data.ownerId)
         ||
         (
+          // Membre existant fait une modification
           request.auth.uid in resource.data.authorizedUsers &&
           request.resource.data.ownerId == resource.data.ownerId &&
           request.resource.data.organizationId == resource.data.organizationId &&
-          resource.data.ownerId in request.resource.data.authorizedUsers
+          resource.data.ownerId in request.resource.data.authorizedUsers &&
+          (
+            // S'il est OWNER ou MANAGER, il peut tout modifier (sauf ownerId/orgId bloqués au-dessus)
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "OWNER" ||
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "MANAGER"
+            ||
+            // S'il est seulement VOITURIER, il ne peut modifier QUE lanes, updatedAt, ou se retirer lui-même de authorizedUsers
+            (
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "VOITURIER" &&
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lanes', 'updatedAt', 'authorizedUsers']) &&
+              (
+                !('authorizedUsers' in request.resource.data.diff(resource.data).affectedKeys()) ||
+                !(request.auth.uid in request.resource.data.authorizedUsers)
+              )
+            )
+          )
         )
         ||
         (
+          // Nouvel utilisateur rejoint le parking via code
           !(request.auth.uid in resource.data.authorizedUsers) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['authorizedUsers']) &&
           request.auth.uid in request.resource.data.authorizedUsers
