@@ -10,6 +10,7 @@ import {
   updateProfile,
   updatePassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, getDocs, updateDoc, collection, query, where, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -20,6 +21,13 @@ import { auth, db } from "./firebase";
 export async function signUp(email, password, profileData = {}) {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
+
+  // Envoyer un email de vérification
+  try {
+    await sendEmailVerification(user);
+  } catch (e) {
+    console.warn("Could not send email verification:", e);
+  }
 
   const firstName = profileData.firstName?.trim() || "";
   const lastName = profileData.lastName?.trim() || "";

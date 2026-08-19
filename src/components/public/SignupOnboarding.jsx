@@ -40,6 +40,7 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
   const [orgPhone, setOrgPhone] = useState("");
   const [orgAddress, setOrgAddress] = useState("");
   const [selectedPlan, setSelectedPlan] = useState(initialPlan);
+  const [billingCycle, setBillingCycle] = useState("monthly"); // "monthly" | "annually"
 
   // Étape 3 : Premier Parking
   const [parkingName, setParkingName] = useState("");
@@ -140,6 +141,7 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
         const { data } = await createCheckout({
           planId: selectedPlan,
           orgId: org.id,
+          billingCycle,
           origin: window.location.origin,
         });
         
@@ -371,19 +373,86 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Plan choisi</label>
-                <select
-                  value={selectedPlan}
-                  onChange={(e) => setSelectedPlan(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500 cursor-pointer"
+            {/* Toggle Mensuel / Annuel */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-2">Facturation</label>
+              <div className="flex items-center gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800 w-fit">
+                <button
+                  type="button"
+                  onClick={() => setBillingCycle("monthly")}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    billingCycle === "monthly"
+                      ? "bg-cyan-600 text-white shadow"
+                      : "text-slate-400 hover:text-white"
+                  }`}
                 >
-                  <option value="starter">Starter — 129€/m (1 parking / 300 véhicules / 5 users)</option>
-                  <option value="business">Business — 199€/m (1 parking / 600 véhicules / 10 users)</option>
-                  <option value="pro">Pro (Recommandé) — 299€/m (3 parkings / 1 000 véh./parc / 20 users)</option>
-                  <option value="enterprise">Enterprise — Sur devis (4+ parkings / Sur mesure)</option>
-                </select>
+                  Mensuel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingCycle("annually")}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    billingCycle === "annually"
+                      ? "bg-cyan-600 text-white shadow"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Annuel
+                  <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-black rounded-md">-2 mois</span>
+                </button>
               </div>
+            </div>
+
+            {/* Cartes de plan */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-2">Plan choisi</label>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { id: "starter", label: "Starter", monthly: 129, annually: 109, features: "1 parking · 300 véh. · 5 users" },
+                  { id: "business", label: "Business", monthly: 199, annually: 169, features: "1 parking · 600 véh. · 10 users" },
+                  { id: "pro", label: "Pro", monthly: 299, annually: 249, features: "3 parkings · 1 000 véh./parc · 20 users", popular: true },
+                  { id: "enterprise", label: "Enterprise", monthly: null, annually: null, features: "4+ parkings · Illimité · Sur mesure" },
+                ].map((plan) => (
+                  <button
+                    key={plan.id}
+                    type="button"
+                    onClick={() => setSelectedPlan(plan.id)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      selectedPlan === plan.id
+                        ? "border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-900/30"
+                        : "border-slate-700 bg-slate-950 hover:border-slate-500"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        selectedPlan === plan.id ? "border-cyan-400 bg-cyan-400" : "border-slate-600"
+                      }`}>
+                        {selectedPlan === plan.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-white">{plan.label}</span>
+                          {plan.popular && <span className="px-1.5 py-0.5 bg-cyan-500/20 text-cyan-400 text-[9px] font-black rounded-md tracking-wider">RECOMMANDÉ</span>}
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-medium mt-0.5">{plan.features}</p>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-2">
+                      {plan.monthly !== null ? (
+                        <>
+                          <span className="text-sm font-black text-white">
+                            {billingCycle === "annually" ? plan.annually : plan.monthly}€
+                          </span>
+                          <span className="text-[10px] text-slate-500">/mois</span>
+                        </>
+                      ) : (
+                        <span className="text-xs font-bold text-slate-400">Sur devis</span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
             </div>
 
             <div>

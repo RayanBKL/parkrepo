@@ -128,7 +128,8 @@ export async function getOrganization(orgId) {
   try {
     const snap = await getDoc(doc(db, "organizations", orgId));
     if (snap.exists()) {
-      return snap.data();
+      // Toujours inclure l'ID du document Firestore comme fallback sur le champ id
+      return { id: snap.id, ...snap.data() };
     }
   } catch (err) {
     console.warn("Could not fetch organization:", err);
@@ -145,7 +146,8 @@ export async function getOrganizationByOwner(ownerId) {
     const q = query(collection(db, "organizations"), where("ownerId", "==", ownerId));
     const snap = await getDocs(q);
     if (!snap.empty) {
-      return snap.docs[0].data();
+      // Toujours inclure l'ID du document Firestore comme fallback sur le champ id
+      return { id: snap.docs[0].id, ...snap.docs[0].data() };
     }
   } catch (err) {
     console.warn("Could not fetch organization by owner:", err);
