@@ -213,3 +213,71 @@ exports.joinParking = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("internal", "Erreur lors de la jonction au parking.");
   }
 });
+
+// 4. Fonction pour récupérer les informations d'un ticket numérique (Publique, non authentifiée)
+exports.getPublicTicket = functions.https.onCall(async (data, context) => {
+  const { ticketId } = data;
+  if (!ticketId || typeof ticketId !== 'string') {
+    throw new functions.https.HttpsError("invalid-argument", "Format de ticket invalide.");
+  }
+
+  const [pId, vId] = ticketId.split("_");
+  if (!pId || !vId) {
+    throw new functions.https.HttpsError("invalid-argument", "Format de ticket invalide.");
+  }
+
+  // Requête avec les droits Admin pour lire le parking complet, même sans être connecté
+  const parkingDoc = await db.collection("parkings").doc(pId).get();
+  
+  if (!parkingDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Parking introuvable.");
+  }
+
+  const pData = parkingDoc.data();
+  let foundVehicle = null;
+
+  // Chercher dans les voies
+  let lanesObj = pData.lanes;
+  if (lanesObj) {
+    // Les lanes sont stockées sous forme d'objet { "0": [...], "1": [...] }
+    for (const key in lanesObj) {
+      if (Array.isArray(lanesObj[key])) {
+        const v = lanesObj[key].find(veh => veh.id === vId);
+        if (v) { foundVehicle = v; break; }
+      }
+    }
+  }
+
+  // Chercher dans l'attente
+  if (!foundVehicle && Array.isArray(pData.waiting)) {
+    foundVehicle = pData.waiting.find(v => v.id === vId);
+  }
+
+  // Chercher dans l'historique archivé
+  if (!foundVehicle && Array.isArray(pData.archivedVehicles)) {
+    foundVehicle = pData.archivedVehicles.find(v => v.id === vId);
+  }
+
+  if (!foundVehicle) {
+    throw new functions.https.HttpsError("not-found", "Véhicule introuvable.");
+  }
+
+  // On renvoie UNIQUEMENT les infos utiles au client, sans divulguer le reste des véhicules
+  // et sans exposer le 'id' du parking si possible, mais on peut le renvoyer pour affichage.
+  // En fait, on renvoie les données nécessaires au ticket:
+  return {
+    vehicle: {
+      id: foundVehicle.id,
+      plate: foundVehicle.plate,
+      model: foundVehicle.model,
+      arrivedAt: foundVehicle.arrivedAt,
+      departure: foundVehicle.departure,
+      flightNumber: foundVehicle.flightNumber,
+      photos: foundVehicle.photos || [],
+      exitedAt: foundVehicle.exitedAt,
+    },
+    parking: {
+      name: pData.name,
+    }
+  };
+});

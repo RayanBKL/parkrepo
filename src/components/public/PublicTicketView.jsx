@@ -1,16 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { Car, Clock, Plane, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { fmtDateTime } from "../../services/algorithm";
-
-// Note: To find a vehicle across all parkings without knowing the parkingId,
-// we'd need a collectionGroup query. Since vehicles are in the 'lanes' array of a parking doc,
-// or we need a global mapping.
-// For simplicity, let's assume we store the vehicle data as a subcollection or we find it.
-// Wait, in cloudDb.js, vehicles are stored inside parking doc `lanes` and `waiting` array.
-// To find a vehicle by ID without knowing parkingId, we must fetch all parkings and search, which is bad.
-// Or we can structure the ticket ID as `parkingId_vehicleId`. Let's use `parkingId_vehicleId` for the ticket.
 
 export default function PublicTicketView({ ticketId }) {
   const [vehicle, setVehicle] = useState(null);
@@ -27,44 +18,18 @@ export default function PublicTicketView({ ticketId }) {
 
     const fetchTicket = async () => {
       try {
-        const [pId, vId] = ticketId.split("_");
-        if (!pId || !vId) throw new Error("Format de ticket invalide");
-
-        const parkingRef = doc(db, "parkings", pId);
-        const parkingSnap = await getDoc(parkingRef);
+        const functions = getFunctions();
+        const getPublicTicket = httpsCallable(functions, "getPublicTicket");
+        const result = await getPublicTicket({ ticketId });
         
-        if (!parkingSnap.exists()) {
-          throw new Error("Parking introuvable");
-        }
-        
-        const pData = parkingSnap.data();
-        setParking(pData);
-
-        let foundVehicle = null;
-        
-        // Chercher dans les voies
-        for (const lane of pData.lanes || []) {
-          const v = lane.find(v => v.id === vId);
-          if (v) { foundVehicle = v; break; }
-        }
-
-        // Chercher dans l'attente
-        if (!foundVehicle) {
-          foundVehicle = (pData.waiting || []).find(v => v.id === vId);
-        }
-
-        // Chercher dans l'historique archivé (si déjà sorti)
-        if (!foundVehicle) {
-          foundVehicle = (pData.archivedVehicles || []).find(v => v.id === vId);
-        }
-
-        if (foundVehicle) {
-          setVehicle(foundVehicle);
-        } else {
-          setError("Véhicule introuvable.");
-        }
+        setVehicle(result.data.vehicle);
+        setParking(result.data.parking);
       } catch (err) {
-        setError(err.message);
+        if (err.code === "functions/not-found") {
+          setError(err.message);
+        } else {
+          setError("Impossible de charger le ticket. Lien invalide ou expiré.");
+        }
       } finally {
         setLoading(false);
       }
