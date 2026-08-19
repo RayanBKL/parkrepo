@@ -77,6 +77,7 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
+      allow_promotion_codes: true, // Permet les codes promo commerciaux (bons d'achat, réductions partenaires)
       customer_email: context.auth.token.email,
       line_items: [
         {
