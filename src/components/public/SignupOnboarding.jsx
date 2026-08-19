@@ -139,7 +139,8 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
         const createCheckout = httpsCallable(functions, "createStripeCheckout");
         const { data } = await createCheckout({
           planId: selectedPlan,
-          orgId: org.id
+          orgId: org.id,
+          origin: window.location.origin,
         });
         
         if (data && data.url) {

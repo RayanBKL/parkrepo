@@ -827,7 +827,8 @@ export default function SettingsView({
                                 const { data } = await createCheckout({
                                   planId: p.id,
                                   orgId: currentOrgId,
-                                  billingCycle: "monthly"
+                                  billingCycle: "monthly",
+                                  origin: window.location.origin,
                                 });
                                 if (data && data.url) {
                                   window.location.href = data.url;

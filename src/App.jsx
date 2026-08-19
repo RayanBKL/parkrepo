@@ -678,7 +678,8 @@ export default function App() {
                     const createCheckout = httpsCallable(functions, "createStripeCheckout");
                     const { data } = await createCheckout({
                       planId: organization.plan,
-                      orgId: organization.id
+                      orgId: organization.id,
+                      origin: window.location.origin,
                     });
                     if (data && data.url) window.location.href = data.url;
                   } catch (e) {

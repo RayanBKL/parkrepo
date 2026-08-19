@@ -52,6 +52,10 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
   const amount = isAnnual ? selectedPlanConfig.annualAmount : selectedPlanConfig.monthlyAmount;
   const interval = isAnnual ? "year" : "month";
 
+  const clientOrigin = (data.origin && typeof data.origin === "string" && data.origin.startsWith("http"))
+    ? data.origin.replace(/\/$/, "")
+    : "https://parkeya.web.app";
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -74,12 +78,13 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
           quantity: 1,
         },
       ],
-      success_url: `https://parkeya.web.app/?payment=success&orgId=${orgId}`,
-      cancel_url: `https://parkeya.web.app/?payment=cancel`,
+      success_url: `${clientOrigin}/?payment=success&orgId=${orgId}`,
+      cancel_url: `${clientOrigin}/?payment=cancel`,
       metadata: {
         orgId: orgId,
         userId: context.auth.uid,
         billingCycle: interval,
+        planId: planId || "business",
       },
     });
 
@@ -106,18 +111,33 @@ exports.stripeWebhook = functions.https.onRequest((req, res) => {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-      const orgId = session.metadata.orgId;
+      const orgId = session.metadata?.orgId;
+      const planId = session.metadata?.planId || "business";
+
+      const plansConfig = {
+        starter: { maxParkings: 1, maxUsers: 5, maxVehicles: 300 },
+        business: { maxParkings: 1, maxUsers: 10, maxVehicles: 600 },
+        pro: { maxParkings: 3, maxUsers: 20, maxVehicles: 3000 },
+        enterprise: { maxParkings: 999, maxUsers: 999, maxVehicles: 99999 },
+      };
+      const planDetails = plansConfig[planId] || plansConfig["business"];
 
       if (orgId) {
         try {
-          // Activer l'organisation
+          // Activer l'organisation et mettre à jour les quotas du plan
           await db.collection("organizations").doc(orgId).update({
             status: "ACTIVE",
+            plan: planId,
+            "subscription.plan": planId,
+            "subscription.status": "active",
+            "subscription.maxParkings": planDetails.maxParkings,
+            "subscription.maxUsers": planDetails.maxUsers,
+            "subscription.maxVehicles": planDetails.maxVehicles,
             stripeSubscriptionId: session.subscription,
             stripeCustomerId: session.customer,
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
           });
-          console.log(`Organisation ${orgId} activée avec succès !`);
+          console.log(`Organisation ${orgId} activée avec succès avec le plan ${planId} !`);
         } catch (error) {
           console.error(`Erreur d'activation de l'organisation ${orgId}:`, error);
         }
