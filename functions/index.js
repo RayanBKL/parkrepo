@@ -77,8 +77,8 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      allow_promotion_codes: true, // Permet les codes promo commerciaux (bons d'achat, réductions partenaires)
-      // Note: automatic_tax géré via les paramètres Stripe Dashboard (Managed Payments)
+      allow_promotion_codes: true,
+      managed_payments: { enabled: false }, // Désactive Managed Payments (évite la TVA automatique imposée par Stripe)
       customer_email: context.auth.token.email,
       line_items: [
         {
