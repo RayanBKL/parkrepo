@@ -678,7 +678,7 @@ export default function App() {
               </div>
               <h2 className="text-2xl font-black text-white mb-3">Abonnement Requis</h2>
               <p className="text-sm text-slate-400 mb-8 leading-relaxed">
-                Votre compte est créé, mais l'abonnement <strong>{organization.plan?.toUpperCase()}</strong> n'a pas encore été réglé. Veuillez finaliser votre paiement pour débloquer l'accès complet à Parkeya.
+                Votre compte est créé, mais l'abonnement <strong>{(organization.subscription?.plan || organization.plan || "business").toUpperCase()}</strong> n'a pas encore été réglé. Veuillez finaliser votre paiement pour débloquer l'accès complet à Parkeya.
               </p>
               <button
                 onClick={async () => {
@@ -686,8 +686,9 @@ export default function App() {
                     const { httpsCallable } = await import("firebase/functions");
                     const { functions } = await import("./services/firebase");
                     const createCheckout = httpsCallable(functions, "createStripeCheckout");
+                    const resolvedPlanId = organization.subscription?.plan || organization.plan || "business";
                     const { data } = await createCheckout({
-                      planId: organization.plan,
+                      planId: resolvedPlanId,
                       orgId: organization.id,
                       origin: window.location.origin,
                     });
