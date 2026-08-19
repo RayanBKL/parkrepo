@@ -11,6 +11,9 @@
     # Politique Referrer
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
+    # Protection XSS (Cross-Site Scripting)
+    Header always set X-XSS-Protection "1; mode=block"
+
     # Politique de permissions (Désactive l'accès aux APIs sensibles du navigateur si non nécessaires)
     Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
 
