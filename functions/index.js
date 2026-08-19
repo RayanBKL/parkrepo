@@ -52,7 +52,25 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
   const amount = isAnnual ? selectedPlanConfig.annualAmount : selectedPlanConfig.monthlyAmount;
   const interval = isAnnual ? "year" : "month";
 
-  const clientOrigin = (data.origin && typeof data.origin === "string" && data.origin.startsWith("http"))
+  // Validation stricte anti-Open Redirect
+  function isAllowedOrigin(origin) {
+    if (!origin || typeof origin !== "string") return false;
+    try {
+      const url = new URL(origin);
+      const hostname = url.hostname;
+      // Localhost pour le développement
+      if (hostname === "localhost" || hostname === "127.0.0.1") return true;
+      // Domaines Firebase Cloud
+      if (hostname.endsWith(".web.app") || hostname.endsWith(".firebaseapp.com")) return true;
+      // Domaines personnalisés du projet
+      if (hostname.endsWith("parkeya.fr") || hostname.endsWith("parkflow.fr") || hostname.includes("hostinger")) return true;
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  const clientOrigin = isAllowedOrigin(data.origin)
     ? data.origin.replace(/\/$/, "")
     : "https://parkeya.web.app";
 

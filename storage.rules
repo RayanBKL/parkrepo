@@ -2,18 +2,28 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Protection des photos d'état des véhicules (proofs)
+    // Protection des photos d'état des véhicules (proofs) cloisonnée par parking
     match /parkings/{parkingId}/{allPaths=**} {
-      // Lecture : Utilisateur authentifié ou via token de téléchargement public généré par Firebase
-      allow read: if request.auth != null;
+      // Lecture : Membre autorisé du parking ou SuperAdmin
+      allow read: if request.auth != null && (
+        request.auth.token.email == "bouaklirayan@gmail.com" ||
+        request.auth.uid in firestore.get(/databases/(default)/documents/parkings/$(parkingId)).data.authorizedUsers
+      );
       
-      // Écriture : Uniquement des images valides de moins de 10 Mo par un utilisateur connecté
+      // Écriture : Membre autorisé du parking ou SuperAdmin, images de moins de 10 Mo uniquement
       allow write: if request.auth != null
                    && request.resource.size < 10 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+                   && request.resource.contentType.matches('image/.*')
+                   && (
+                     request.auth.token.email == "bouaklirayan@gmail.com" ||
+                     request.auth.uid in firestore.get(/databases/(default)/documents/parkings/$(parkingId)).data.authorizedUsers
+                   );
                    
-      // Suppression : Utilisateur connecté uniquement
-      allow delete: if request.auth != null;
+      // Suppression : Membre autorisé du parking ou SuperAdmin
+      allow delete: if request.auth != null && (
+        request.auth.token.email == "bouaklirayan@gmail.com" ||
+        request.auth.uid in firestore.get(/databases/(default)/documents/parkings/$(parkingId)).data.authorizedUsers
+      );
     }
   }
 }
