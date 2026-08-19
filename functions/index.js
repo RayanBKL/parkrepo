@@ -63,7 +63,7 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
       // Domaines Firebase Cloud
       if (hostname.endsWith(".web.app") || hostname.endsWith(".firebaseapp.com")) return true;
       // Domaines personnalisés du projet
-      if (hostname.endsWith("parkeya.fr") || hostname.endsWith("parkflow.fr") || hostname.includes("hostinger")) return true;
+      if (hostname.endsWith("parkeya.fr") || hostname.endsWith("parkflow.fr") || hostname.includes("hostinger") || hostname.endsWith(".hostingersite.com")) return true;
       return false;
     } catch (e) {
       return false;
@@ -78,7 +78,7 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       allow_promotion_codes: true, // Permet les codes promo commerciaux (bons d'achat, réductions partenaires)
-      automatic_tax: { enabled: false }, // TVA gérée manuellement, pas par Stripe Tax
+      // Note: automatic_tax géré via les paramètres Stripe Dashboard (Managed Payments)
       customer_email: context.auth.token.email,
       line_items: [
         {
