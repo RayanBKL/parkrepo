@@ -188,6 +188,14 @@ export async function updateUserRoleAndStatus(userId, { role, status, assignedPa
  * Invite un nouvel employé dans une organisation
  */
 export async function inviteMemberToOrg({ orgId, email, role = "VOITURIER", assignedParkingIds = ["*"], inviterName = "L'administrateur" }) {
+  if (orgId) {
+    const { checkUserQuota } = await import("./organization");
+    const quota = await checkUserQuota(orgId);
+    if (!quota.allowed) {
+      throw new Error(quota.reason);
+    }
+  }
+
   const inviteId = `inv_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
   const inviteData = {
     id: inviteId,

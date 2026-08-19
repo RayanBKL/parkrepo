@@ -17,8 +17,8 @@ import {
   arrayUnion,
   arrayRemove,
 } from "firebase/firestore";
-import { db } from "./firebase";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { db, functions } from "./firebase";
+import { httpsCallable } from "firebase/functions";
 import { getOrganizationByOwner, PLANS_CONFIG } from "./organization";
 
 // Suppression de hashAccessCode - le code brut sera utilisé comme identifiant simple.
@@ -183,7 +183,6 @@ export async function getUserParkings(userId) {
  * Rejoindre un parking via son Code d'Accès (sécurisé via Cloud Function)
  */
 export async function joinParkingWithCode(userId, rawCode) {
-  const functions = getFunctions();
   const joinParkingFn = httpsCallable(functions, "joinParking");
 
   try {

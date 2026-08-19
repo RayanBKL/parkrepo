@@ -312,11 +312,15 @@ exports.joinParking = functions.https.onCall(async (data, context) => {
     return { alreadyJoined: true, parkingId, name: parkingName };
   }
 
-  // 3. Vérifier les limites de l'organisation (maxUsers)
+  // 3. Vérifier le statut et les limites de l'organisation (maxUsers)
   if (ownerId) {
     const orgQuery = await db.collection("organizations").where("ownerId", "==", ownerId).limit(1).get();
     if (!orgQuery.empty) {
       const org = orgQuery.docs[0].data();
+      if (org.status === "CANCELED") {
+        throw new functions.https.HttpsError("permission-denied", "L'abonnement de cette organisation est résilié ou inactif.");
+      }
+
       const maxUsers = org.subscription?.maxUsers || 5; // Limite starter par défaut si non trouvé
       
       // Compter les utilisateurs uniques dans tous les parkings de ce propriétaire
@@ -333,11 +337,24 @@ exports.joinParking = functions.https.onCall(async (data, context) => {
     }
   }
 
-  // 4. Ajouter l'utilisateur au parking
+  // 4. Ajouter l'utilisateur au parking & synchroniser son organisation
   try {
     await db.collection("parkings").doc(parkingId).update({
       authorizedUsers: admin.firestore.FieldValue.arrayUnion(context.auth.uid),
     });
+
+    // Synchroniser l'organisation dans le document utilisateur s'il n'en a pas encore
+    const userRef = db.collection("users").doc(context.auth.uid);
+    const userDoc = await userRef.get();
+    const parkingOrgId = parkingDoc.data().organizationId;
+    if (userDoc.exists && !userDoc.data().organizationId && parkingOrgId) {
+      await userRef.update({
+        organizationId: parkingOrgId,
+        role: userDoc.data().role || "VOITURIER",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
     return { alreadyJoined: false, parkingId, name: parkingName };
   } catch (error) {
     console.error("Erreur lors de l'ajout au parking:", error);
