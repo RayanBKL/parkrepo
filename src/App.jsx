@@ -975,7 +975,6 @@ export default function App() {
               onRefreshOrg={() => refreshUserData(currentUser)}
             />
           )}
-            </>
         </main>
       </div>
 
