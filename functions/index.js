@@ -90,6 +90,7 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
               description: trialPeriodDays
                 ? `${trialPeriodDays} jours d'essai gratuit, puis facturation automatique. Annulable à tout moment.`
                 : `Accès complet au logiciel Parkeya (${isAnnual ? "Engagement 1 an - 2 mois offerts" : "Sans engagement"}).`,
+              tax_code: "txcd_20030000",
             },
             unit_amount: amount,
             recurring: {
