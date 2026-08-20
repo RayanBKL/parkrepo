@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   CalendarDays,
+  Crown,
 } from "lucide-react";
 import ParkflowLogo from "../ParkflowLogo";
 
@@ -32,6 +33,7 @@ export default function Sidebar({
   onSelectParking,
   onOpenParkingsModal,
   onLogOut,
+  isSuperAdmin = false,
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -176,6 +178,24 @@ export default function Sidebar({
             </div>
           )}
         </div>
+
+        {isSuperAdmin && (
+          <button
+            onClick={() => {
+              setActiveView("superadmin");
+              setIsMobileOpen(false);
+            }}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+              activeView === "superadmin"
+                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                : "text-amber-500/60 hover:text-amber-300 hover:bg-amber-500/10"
+            } ${isCollapsed ? "justify-center px-2" : ""}`}
+            title="Vue Super Admin"
+          >
+            <Crown size={16} className="shrink-0" />
+            {!isCollapsed && <span>Super Admin</span>}
+          </button>
+        )}
 
         <button
           onClick={onLogOut}

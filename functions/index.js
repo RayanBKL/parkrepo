@@ -2,9 +2,69 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const stripe = require("stripe")(process.env.STRIPE_SECRET || "sk_test_temp_replace_me");
 const cors = require("cors")({ origin: true });
+const nodemailer = require("nodemailer");
 
 admin.initializeApp();
 const db = admin.firestore();
+
+// Helper : envoi d'email via SMTP (Brevo / Gmail / autre)
+// Configurez SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS dans functions/.env
+function createTransporter() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp-relay.brevo.com",
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER || "",
+      pass: process.env.SMTP_PASS || "",
+    },
+  });
+}
+
+async function sendWelcomeEmail(toEmail, orgName, planName, isTrialing) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn("SMTP non configuré — email de bienvenue non envoyé.");
+    return;
+  }
+  try {
+    const transporter = createTransporter();
+    const trialMsg = isTrialing
+      ? "<p>Votre période d'essai de 7 jours a commencé. Aucun prélèvement ne sera effectué avant la fin de cette période.</p>"
+      : "<p>Votre abonnement est actif. Vous avez désormais accès à toutes les fonctionnalités de votre plan.</p>";
+
+    await transporter.sendMail({
+      from: `"Parkeya" <${process.env.SMTP_USER}>`,
+      to: toEmail,
+      subject: `🎉 Bienvenue sur Parkeya — Plan ${planName} activé !`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #e2e8f0; border-radius: 16px; overflow: hidden;">
+          <div style="background: linear-gradient(135deg, #0891b2, #10b981); padding: 40px; text-align: center;">
+            <h1 style="color: white; font-size: 28px; margin: 0;">Bienvenue sur Parkeya ! 🅿️</h1>
+          </div>
+          <div style="padding: 32px;">
+            <p style="font-size: 16px;">Bonjour,</p>
+            <p>Votre organisation <strong>${orgName}</strong> est maintenant configurée sur Parkeya avec le plan <strong>${planName}</strong>.</p>
+            ${trialMsg}
+            <h3 style="color: #22d3ee;">Pour commencer :</h3>
+            <ul style="line-height: 2;">
+              <li>📍 Créez votre premier parking depuis le Dashboard</li>
+              <li>🚗 Ajoutez vos premiers véhicules</li>
+              <li>👥 Invitez votre équipe via les Paramètres</li>
+            </ul>
+            <div style="margin: 32px 0; text-align: center;">
+              <a href="https://parkeya.fr" style="background: #0891b2; color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 15px;">Accéder à mon espace →</a>
+            </div>
+            <p style="font-size: 12px; color: #64748b;">Une question ? Répondez à cet email ou contactez-nous à contact@parkeya.fr</p>
+          </div>
+        </div>
+      `,
+    });
+    console.log(`Email de bienvenue envoyé à ${toEmail}`);
+  } catch (err) {
+    // Ne pas faire échouer le webhook si l'email plante
+    console.error("Erreur envoi email de bienvenue:", err.message);
+  }
+}
 
 // 1. Fonction pour créer la session Checkout (Appelable depuis le frontend)
 exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
@@ -210,6 +270,20 @@ exports.stripeWebhook = functions.https.onRequest((req, res) => {
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
           console.log(`Organisation ${orgId} activée — plan ${planId}, statut Stripe: ${subStatus}`);
+
+          // Envoyer l'email de bienvenue
+          try {
+            const orgData = (await db.collection("organizations").doc(orgId).get()).data();
+            const planNames = { starter: "Starter", business: "Business", pro: "Pro", enterprise: "Enterprise" };
+            await sendWelcomeEmail(
+              session.customer_details?.email || context?.auth?.token?.email || "",
+              orgData?.name || "Votre organisation",
+              planNames[planId] || planId,
+              subStatus === "trialing"
+            );
+          } catch (emailErr) {
+            console.warn("Email de bienvenue non envoyé:", emailErr.message);
+          }
         } catch (error) {
           console.error(`Erreur d'activation de l'organisation ${orgId}:`, error);
         }
@@ -547,4 +621,128 @@ exports.cancelStripeSubscription = functions.https.onCall(async (data, context) 
     console.error("Erreur annulation Stripe:", error);
     throw new functions.https.HttpsError("internal", error.message || "Erreur d'annulation.");
   }
+});
+
+// 6. Initialiser le rôle Super Admin (Custom Claim Firebase)
+// Ne peut être exécuté que si l'email de l'appelant est dans la liste SUPERADMIN_EMAILS
+exports.initializeSuperAdmin = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Non connecté.");
+  }
+
+  // Liste des emails autorisés — jamais exposée au client
+  const allowedEmails = (process.env.SUPERADMIN_EMAILS || "bouaklirayan@gmail.com")
+    .split(",")
+    .map(e => e.trim().toLowerCase());
+
+  const callerEmail = (context.auth.token.email || "").toLowerCase();
+  if (!allowedEmails.includes(callerEmail)) {
+    throw new functions.https.HttpsError("permission-denied", "Accès refusé.");
+  }
+
+  // Poser le custom claim sur ce compte
+  await admin.auth().setCustomUserClaims(context.auth.uid, { superAdmin: true });
+  console.log(`Custom claim superAdmin posé sur ${callerEmail}`);
+  return { success: true };
+});
+
+// 7. Obtenir les statistiques Super Admin (liste des orgs, MRR, etc.)
+exports.getSuperAdminStats = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Non connecté.");
+  }
+
+  // Double vérification : Custom Claim ET email
+  const isSuperAdmin = context.auth.token.superAdmin === true;
+  const allowedEmails = (process.env.SUPERADMIN_EMAILS || "bouaklirayan@gmail.com")
+    .split(",")
+    .map(e => e.trim().toLowerCase());
+  const callerEmail = (context.auth.token.email || "").toLowerCase();
+
+  if (!isSuperAdmin && !allowedEmails.includes(callerEmail)) {
+    throw new functions.https.HttpsError("permission-denied", "Accès refusé.");
+  }
+
+  try {
+    // Récupérer toutes les organisations
+    const orgsSnap = await db.collection("organizations").get();
+    const orgs = orgsSnap.docs.map(doc => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        name: d.name || "—",
+        email: d.email || "—",
+        status: d.status || "UNKNOWN",
+        plan: d.plan || d.subscription?.plan || "—",
+        subscriptionStatus: d.subscription?.status || "—",
+        createdAt: d.createdAt?.toDate?.().toISOString() || null,
+        updatedAt: d.updatedAt?.toDate?.().toISOString() || null,
+        stripeCustomerId: d.stripeCustomerId || null,
+        stripeSubscriptionId: d.stripeSubscriptionId || null,
+        ownerId: d.ownerId || null,
+      };
+    });
+
+    // Calculer le MRR approximatif
+    const pricePerPlan = { starter: 129, business: 199, pro: 299, enterprise: 499 };
+    const activeOrgs = orgs.filter(o => o.status === "ACTIVE");
+    const mrr = activeOrgs.reduce((sum, o) => sum + (pricePerPlan[o.plan] || 0), 0);
+
+    return {
+      totalOrgs: orgs.length,
+      activeOrgs: activeOrgs.length,
+      trialingOrgs: orgs.filter(o => o.subscriptionStatus === "trialing").length,
+      canceledOrgs: orgs.filter(o => o.status === "CANCELED").length,
+      pastDueOrgs: orgs.filter(o => o.status === "PAST_DUE").length,
+      pendingOrgs: orgs.filter(o => o.status === "PENDING_PAYMENT").length,
+      mrr,
+      orgs,
+    };
+  } catch (error) {
+    console.error("Erreur getSuperAdminStats:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// 8. Action Super Admin : Modifier le statut d'une organisation
+exports.superAdminUpdateOrg = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Non connecté.");
+  }
+
+  const isSuperAdmin = context.auth.token.superAdmin === true;
+  const allowedEmails = (process.env.SUPERADMIN_EMAILS || "bouaklirayan@gmail.com")
+    .split(",")
+    .map(e => e.trim().toLowerCase());
+  const callerEmail = (context.auth.token.email || "").toLowerCase();
+
+  if (!isSuperAdmin && !allowedEmails.includes(callerEmail)) {
+    throw new functions.https.HttpsError("permission-denied", "Accès refusé.");
+  }
+
+  const { orgId, newStatus, newPlan } = data;
+  if (!orgId) {
+    throw new functions.https.HttpsError("invalid-argument", "orgId requis.");
+  }
+
+  const updatePayload = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+  if (newStatus) updatePayload.status = newStatus;
+  if (newPlan) {
+    const plansConfig = {
+      starter: { maxParkings: 1, maxUsers: 5, maxVehicles: 300 },
+      business: { maxParkings: 1, maxUsers: 10, maxVehicles: 600 },
+      pro: { maxParkings: 3, maxUsers: 20, maxVehicles: 3000 },
+      enterprise: { maxParkings: 999, maxUsers: 999, maxVehicles: 99999 },
+    };
+    const planDetails = plansConfig[newPlan] || plansConfig.business;
+    updatePayload.plan = newPlan;
+    updatePayload["subscription.plan"] = newPlan;
+    updatePayload["subscription.maxParkings"] = planDetails.maxParkings;
+    updatePayload["subscription.maxUsers"] = planDetails.maxUsers;
+    updatePayload["subscription.maxVehicles"] = planDetails.maxVehicles;
+  }
+
+  await db.collection("organizations").doc(orgId).update(updatePayload);
+  console.log(`[SuperAdmin] Organisation ${orgId} mise à jour:`, updatePayload);
+  return { success: true };
 });

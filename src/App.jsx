@@ -40,6 +40,7 @@ import AuditLogView from "./components/app/AuditLogView";
 import AnalyticsView from "./components/app/AnalyticsView";
 import SettingsView from "./components/app/SettingsView";
 import ReservationsView from "./components/app/ReservationsView";
+import SuperAdminView from "./components/app/SuperAdminView";
 
 // Composants Existants Réutilisés
 import StatsBar from "./components/StatsBar";
@@ -642,10 +643,16 @@ export default function App() {
     return <EmailVerificationBlock user={currentUser} />;
   }
 
-  // Blocage si l'abonnement est en attente de paiement ou résilié
-  if (organization?.status === "PENDING_PAYMENT" || organization?.status === "CANCELED") {
+  // Blocage si l'abonnement est en attente de paiement, résilié ou en impayé
+  if (
+    organization?.status === "PENDING_PAYMENT" ||
+    organization?.status === "CANCELED" ||
+    organization?.status === "PAST_DUE"
+  ) {
     return <AuroraPricing organization={organization} currentUser={currentUser} />;
   }
+
+  const isSuperAdmin = currentUser?.email === "bouaklirayan@gmail.com";
 
   const viewTitles = {
     parkings: "Gestion des Voies & Parkings",
@@ -655,6 +662,7 @@ export default function App() {
     history: "Journal d'Activité & Audit",
     analytics: "Statistiques & Performance",
     settings: "Paramètres de l'Organisation",
+    superadmin: "Vue Fondateur — Super Admin",
   };
 
   return (
@@ -686,6 +694,7 @@ export default function App() {
         activeParking={activeParking}
         onSelectParking={setActiveParkingId}
         onOpenParkingsModal={() => setIsParkingsModalOpen(true)}
+        isSuperAdmin={isSuperAdmin}
         onLogOut={async () => {
           await logOut();
           handleNavigatePublic("home");
@@ -972,6 +981,11 @@ export default function App() {
               }}
               onRefreshOrg={() => refreshUserData(currentUser)}
             />
+          )}
+
+          {/* VUE 10 : SUPER ADMIN (Fondateur uniquement) */}
+          {activeView === "superadmin" && isSuperAdmin && (
+            <SuperAdminView currentUser={currentUser} />
           )}
         </main>
       </div>
