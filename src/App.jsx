@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Plus, KeyRound, AlertCircle, LogOut, ArrowLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Plus, KeyRound, AlertCircle, LogOut, ArrowLeft, ChevronRight, Sparkles, Building2 } from "lucide-react";
 
 // Services Auth & Cloud
 import { onAuthChange, logOut, getUserProfile } from "./services/auth";
@@ -744,6 +744,26 @@ export default function App() {
                 <ChevronRight size={12} />
                 <span className="text-cyan-400 font-bold uppercase tracking-wider text-[11px]">{viewTitles[activeView] || activeView}</span>
               </div>
+            </div>
+          )}
+
+          {/* État vide si aucun parking créé/sélectionné */}
+          {!activeParking && ["parkings", "vehicles", "schedule", "retrieval", "history"].includes(activeView) && (
+            <div className="p-12 rounded-3xl bg-slate-900/80 border border-slate-800 text-center max-w-xl mx-auto space-y-4 shadow-2xl mt-12">
+              <div className="w-16 h-16 rounded-2xl bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center mx-auto">
+                <Building2 size={32} />
+              </div>
+              <h2 className="text-lg font-black text-white">Aucun parking actif</h2>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Veuillez créer ou sélectionner un parking pour afficher le planning des arrivées & départs, la grille et la flotte de véhicules.
+              </p>
+              <button
+                onClick={() => setIsParkingsModalOpen(true)}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white text-xs font-black shadow-lg shadow-cyan-950/50 cursor-pointer transition-all inline-flex items-center gap-2"
+              >
+                <Plus size={16} />
+                Créer / Gérer mes parkings
+              </button>
             </div>
           )}
 
