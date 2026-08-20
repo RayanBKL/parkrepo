@@ -18,6 +18,7 @@ import {
   CreditCard,
   BarChart3,
   Zap,
+  Trash2,
 } from "lucide-react";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../../services/firebase";
@@ -116,6 +117,24 @@ export default function SuperAdminView({ currentUser }) {
       await loadStats();
     } catch (err) {
       alert("Erreur : " + (err.message || "Action échouée"));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteOrg = async (orgId, orgName) => {
+    const confirmation = window.confirm(
+      `⚠️ ATTENTION : Supprimer définitivement l'organisation "${orgName}" ?\n\nCette action va :\n- Supprimer l'organisation de la base de données Firestore\n- Résilier l'abonnement Stripe si actif\n- Détacher les utilisateurs associés`
+    );
+    if (!confirmation) return;
+
+    setActionLoading(orgId + "delete");
+    try {
+      const fn = httpsCallable(functions, "superAdminDeleteOrg");
+      await fn({ orgId });
+      await loadStats();
+    } catch (err) {
+      alert("Erreur de suppression : " + (err.message || "Échec"));
     } finally {
       setActionLoading(null);
     }
@@ -372,6 +391,15 @@ export default function SuperAdminView({ currentUser }) {
                             Stripe
                           </a>
                         )}
+                        <button
+                          disabled={!!actionLoading}
+                          onClick={() => handleDeleteOrg(org.id, org.name)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-bold cursor-pointer disabled:opacity-50 transition-colors"
+                          title="Supprimer définitivement"
+                        >
+                          <Trash2 size={10} />
+                          Suppr.
+                        </button>
                       </div>
                     </div>
                   );

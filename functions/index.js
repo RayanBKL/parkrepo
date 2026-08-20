@@ -746,3 +746,68 @@ exports.superAdminUpdateOrg = functions.https.onCall(async (data, context) => {
   console.log(`[SuperAdmin] Organisation ${orgId} mise à jour:`, updatePayload);
   return { success: true };
 });
+
+// 9. Action Super Admin : Supprimer définitivement une organisation de la BDD
+exports.superAdminDeleteOrg = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Non connecté.");
+  }
+
+  const isSuperAdmin = context.auth.token.superAdmin === true;
+  const allowedEmails = (process.env.SUPERADMIN_EMAILS || "bouaklirayan@gmail.com")
+    .split(",")
+    .map(e => e.trim().toLowerCase());
+  const callerEmail = (context.auth.token.email || "").toLowerCase();
+
+  if (!isSuperAdmin && !allowedEmails.includes(callerEmail)) {
+    throw new functions.https.HttpsError("permission-denied", "Accès refusé.");
+  }
+
+  const { orgId } = data;
+  if (!orgId) {
+    throw new functions.https.HttpsError("invalid-argument", "orgId requis.");
+  }
+
+  try {
+    const orgRef = db.collection("organizations").doc(orgId);
+    const orgDoc = await orgRef.get();
+
+    if (!orgDoc.exists) {
+      throw new functions.https.HttpsError("not-found", "Organisation introuvable.");
+    }
+
+    const orgData = orgDoc.data();
+
+    // 1. Annuler l'abonnement Stripe si existant
+    if (orgData.stripeSubscriptionId) {
+      try {
+        await stripe.subscriptions.cancel(orgData.stripeSubscriptionId);
+        console.log(`[SuperAdmin] Abonnement Stripe ${orgData.stripeSubscriptionId} annulé pour org ${orgId}`);
+      } catch (stripeErr) {
+        console.warn(`[SuperAdmin] Erreur annulation Stripe pour org ${orgId}:`, stripeErr.message);
+      }
+    }
+
+    // 2. Dissocier les utilisateurs attachés à cette organisation
+    const usersSnap = await db.collection("users").where("organizationId", "==", orgId).get();
+    const batch = db.batch();
+    usersSnap.docs.forEach(userDoc => {
+      batch.update(userDoc.ref, {
+        organizationId: null,
+        role: "OWNER",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+
+    // 3. Supprimer le document organisation de Firestore
+    batch.delete(orgRef);
+
+    await batch.commit();
+    console.log(`[SuperAdmin] Organisation ${orgId} supprimée de la base de données par ${callerEmail}.`);
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur superAdminDeleteOrg:", error);
+    throw new functions.https.HttpsError("internal", error.message || "Erreur de suppression.");
+  }
+});
+
