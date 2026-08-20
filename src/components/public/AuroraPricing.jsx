@@ -45,8 +45,9 @@ export default function AuroraPricing({ organization, currentUser }) {
       const { data } = await createCheckout({
         orgId: organization.id,
         planId: planId,
-        interval: billingCycle,
-        trialPeriodDays: 7, // 7 days trial
+        billingCycle: billingCycle === 'yearly' ? 'annually' : 'monthly',
+        trialDays: 7, // 7 days trial
+        origin: window.location.origin,
       });
       if (data?.url) {
         window.location.href = data.url;
