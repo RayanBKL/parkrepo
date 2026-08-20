@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Zap, Loader2 } from 'lucide-react';
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../../services/firebase";
+import { logOut } from "../../services/auth";
+import { ArrowLeft } from "lucide-react";
 
 const cn = (...classes) => classes.filter(Boolean).join(' ');
 
@@ -107,6 +109,19 @@ export default function AuroraPricing({ organization, currentUser }) {
           100% { background-position: 0% 50%; }
         }
       `}</style>
+
+      <div className="absolute top-4 left-4 md:top-8 md:left-8 z-50">
+        <button
+          onClick={async () => {
+            await logOut();
+            window.location.href = "/";
+          }}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-all cursor-pointer backdrop-blur-md text-sm font-semibold"
+        >
+          <ArrowLeft size={16} />
+          <span>Se déconnecter et revenir</span>
+        </button>
+      </div>
 
       <div className="relative z-10 flex flex-col items-center text-center mt-12 mb-12">
         <motion.div

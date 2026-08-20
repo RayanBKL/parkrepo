@@ -195,6 +195,7 @@ export default function App() {
             role: profile?.role || "OWNER",
           });
         }
+        return org;
       } else {
         // Migration automatique pour les comptes existants : création d'une organisation par défaut
         const fallbackOrg = await createOrganization({
@@ -209,9 +210,11 @@ export default function App() {
           organizationId: fallbackOrg.id,
           role: profile?.role || "OWNER",
         });
+        return fallbackOrg;
       }
     } catch (err) {
       console.warn("Could not load user profile / organization:", err);
+      return null;
     }
   };
 
@@ -237,28 +240,32 @@ export default function App() {
         setCurrentUser(user);
         setAuthLoading(false);
         setParkingsLoading(true);
-        await refreshUserData(user);
+        const org = await refreshUserData(user);
 
-        // Abonnement temps réel à la liste des parkings
-        if (unsubParkingListRef.current) unsubParkingListRef.current();
-        unsubParkingListRef.current = subscribeToParkingList(
-          user.uid,
-          (updatedParkings) => {
-            setParkings(updatedParkings);
-            setParkingsLoading(false);
+        // Abonnement temps réel à la liste des parkings uniquement si l'organisation est active
+        if (org && org.status !== "PENDING_PAYMENT") {
+          if (unsubParkingListRef.current) unsubParkingListRef.current();
+          unsubParkingListRef.current = subscribeToParkingList(
+            user.uid,
+            (updatedParkings) => {
+              setParkings(updatedParkings);
+              setParkingsLoading(false);
 
-            if (updatedParkings.length > 0) {
-              setActiveParkingId((prev) => {
-                if (prev && updatedParkings.some((p) => p.id === prev)) return prev;
-                return updatedParkings[0].id;
-              });
+              if (updatedParkings.length > 0) {
+                setActiveParkingId((prev) => {
+                  if (prev && updatedParkings.some((p) => p.id === prev)) return prev;
+                  return updatedParkings[0].id;
+                });
+              }
+            },
+            (err) => {
+              console.error("Parkings subscribe error:", err);
+              setParkingsLoading(false);
             }
-          },
-          (err) => {
-            console.error("Parkings subscribe error:", err);
-            setParkingsLoading(false);
-          }
-        );
+          );
+        } else {
+          setParkingsLoading(false);
+        }
       } else {
         setCurrentUser(null);
         setAuthLoading(false);
