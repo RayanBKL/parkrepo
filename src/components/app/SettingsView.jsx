@@ -881,9 +881,8 @@ export default function SettingsView({
                       const { functions } = await import("../../services/firebase");
                       const cancelSub = httpsCallable(functions, "cancelStripeSubscription");
                       await cancelSub({ orgId: organization.id });
-                      
-                      // Forcer le rafraichissement local pour retomber sur le mur de paiement
-                      window.location.reload();
+                      // Mettre à jour l'état local pour retomber instantanément sur le mur de paiement sans recharger
+                      setOrganization(prev => ({ ...prev, status: "CANCELED" }));
                     } catch (err) {
                       showError(err.message || "Erreur lors de la résiliation.");
                     } finally {
