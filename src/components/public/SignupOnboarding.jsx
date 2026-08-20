@@ -3,9 +3,7 @@ import {
   User,
   Building2,
   Car,
-  ArrowRight,
   ArrowLeft,
-  CheckCircle2,
   Lock,
   Mail,
   Phone,
@@ -14,44 +12,38 @@ import {
   Type,
   Loader2,
   Sparkles,
-  ShieldCheck,
+  AlertCircle,
+  CheckCircle2
 } from "lucide-react";
 import ParkflowLogo from "../ParkflowLogo";
 import { signUp } from "../../services/auth";
-import { createOrganization, PLANS_CONFIG } from "../../services/organization";
+import { createOrganization } from "../../services/organization";
 import { createParking } from "../../services/cloudDb";
-import { functions } from "../../services/firebase";
-import { httpsCallable } from "firebase/functions";
+import { sendEmailVerification } from "firebase/auth";
 
 export default function SignupOnboarding({ onNavigate, onComplete, initialPlan = "business" }) {
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
 
-  // Étape 1 : Administrateur (Owner)
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Étape 2 : Entreprise (Organisation)
   const [orgName, setOrgName] = useState("");
   const [siret, setSiret] = useState("");
   const [orgPhone, setOrgPhone] = useState("");
   const [orgAddress, setOrgAddress] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState(initialPlan);
-  const [billingCycle, setBillingCycle] = useState("monthly"); // "monthly" | "annually"
-
-  // Étape 3 : Premier Parking
   const [parkingName, setParkingName] = useState("");
-  const [parkingAddress, setParkingAddress] = useState("");
   const [laneCount, setLaneCount] = useState(30);
   const [capacity, setCapacity] = useState(10);
-  const [laneNaming, setLaneNaming] = useState("numeric"); // "numeric" | "alphabetic"
+  const [laneNaming, setLaneNaming] = useState("numeric");
 
-  const handleStep1Submit = (e) => {
+  const handleAccountCreation = async (e) => {
     e.preventDefault();
     setError("");
+    setInfoMessage("");
+
     if (!firstName.trim() || !lastName.trim()) {
       setError("Veuillez renseigner votre prénom et votre nom.");
       return;
@@ -64,23 +56,10 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
       setError("Le mot de passe doit contenir au moins 6 caractères.");
       return;
     }
-    setStep(2);
-  };
-
-  const handleStep2Submit = (e) => {
-    e.preventDefault();
-    setError("");
     if (!orgName.trim()) {
       setError("Veuillez renseigner le nom de votre entreprise.");
       return;
     }
-    setStep(3);
-  };
-
-  const handleFinalSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-
     if (!parkingName.trim()) {
       setError("Veuillez donner un nom à votre premier parking.");
       return;
@@ -88,31 +67,28 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
 
     setLoading(true);
     try {
-      // 1. Créer le compte Firebase Auth + profil Owner
       const user = await signUp(email, password, {
-        firstName,
-        lastName,
-        displayName: `${firstName} ${lastName}`,
-        phone: orgPhone,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        displayName: `${firstName.trim()} ${lastName.trim()}`,
+        phone: orgPhone.trim(),
         jobTitle: "Gérant / Fondateur",
         role: "OWNER",
         status: "active",
       });
 
-      // 2. Créer l'Organisation
       const org = await createOrganization({
-        name: orgName,
-        siret: siret,
-        email: email,
-        phone: orgPhone,
-        address: orgAddress,
+        name: orgName.trim(),
+        siret: siret.trim(),
+        email: email.trim(),
+        phone: orgPhone.trim(),
+        address: orgAddress.trim(),
         ownerId: user.uid,
-        plan: selectedPlan,
-        status: "PENDING_PAYMENT", // Bloqué jusqu'au paiement Stripe
+        plan: initialPlan,
+        billingCycle: "monthly",
+        status: "PENDING_PAYMENT",
       });
 
-      // 3. Mettre à jour l'utilisateur avec son organizationId
-      // (signUp stocke ce qu'on lui donne, on met à jour)
       const { updateUserRoleAndStatus } = await import("../../services/auth");
       await updateUserRoleAndStatus(user.uid, {
         role: "OWNER",
@@ -120,40 +96,21 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
         assignedParkingIds: ["*"],
       });
 
-      // 4. Créer le 1er parking lié à cette organisation
-      const newParking = await createParking(user.uid, {
+      await createParking(user.uid, {
         name: parkingName.trim(),
-        address: parkingAddress.trim(),
+        address: orgAddress.trim(),
         organizationId: org.id,
         laneCount: Number(laneCount) || 30,
         capacity: Number(capacity) || 10,
         laneNaming,
-        userName: `${firstName} ${lastName}`,
+        userName: `${firstName.trim()} ${lastName.trim()}`,
       });
 
-      if (onComplete) {
-        onComplete({ user, organization: org, parking: newParking });
-      }
+      // Send Verification Email immediately
+      await sendEmailVerification(user);
 
-      // 5. Créer la session Checkout Stripe
-      try {
-        const createCheckout = httpsCallable(functions, "createStripeCheckout");
-        const { data } = await createCheckout({
-          planId: selectedPlan,
-          orgId: org.id,
-          billingCycle,
-          origin: window.location.origin,
-        });
-        
-        if (data && data.url) {
-          // Rediriger l'utilisateur vers la page de paiement Stripe
-          window.location.href = data.url;
-        } else {
-          setError("Impossible de générer le lien de paiement Stripe.");
-        }
-      } catch (stripeError) {
-        console.error("Stripe error:", stripeError);
-        setError("Erreur avec le paiement : " + stripeError.message);
+      if (onComplete) {
+        onComplete({ user, organization: org });
       }
     } catch (err) {
       console.error("Signup error:", err);
@@ -165,21 +122,20 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-cyan-500 selection:text-white font-sans antialiased p-4 sm:p-6">
-      {/* Header */}
-      <header className="max-w-5xl w-full mx-auto flex items-center justify-between py-4">
+      <header className="max-w-6xl w-full mx-auto flex items-center justify-between py-4">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate("home")}>
-          <ParkflowLogo size={32} />
-          <span className="text-lg font-black text-white">
-            Park<span className="text-cyan-400">eya</span>
+          <ParkflowLogo size={34} />
+          <span className="text-xl font-black text-white tracking-tight">
+            Park<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">eya</span>
           </span>
         </div>
         <div className="flex items-center gap-4">
           <button
             onClick={() => onNavigate("home")}
-            className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer"
           >
             <ArrowLeft size={14} />
-            <span>Retour au site</span>
+            <span>Retour à l'accueil</span>
           </button>
           <button
             onClick={() => onNavigate("login")}
@@ -190,418 +146,210 @@ export default function SignupOnboarding({ onNavigate, onComplete, initialPlan =
         </div>
       </header>
 
-      {/* Card Form */}
-      <main className="max-w-xl w-full mx-auto my-6 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative">
-        {/* Stepper Header */}
-        <div className="flex items-center justify-between mb-8 border-b border-slate-800 pb-5">
-          {[
-            { num: 1, label: "Administrateur", icon: User },
-            { num: 2, label: "Entreprise", icon: Building2 },
-            { num: 3, label: "Parking", icon: Car },
-          ].map((s) => {
-            const Icon = s.icon;
-            const isDone = step > s.num;
-            const isCurrent = step === s.num;
-            return (
-              <div key={s.num} className="flex items-center gap-2">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
-                    isDone
-                      ? "bg-emerald-500 text-white"
-                      : isCurrent
-                      ? "bg-cyan-500 text-white shadow-lg shadow-cyan-900/50 scale-105"
-                      : "bg-slate-800 text-slate-500"
-                  }`}
-                >
-                  {isDone ? <CheckCircle2 size={16} /> : s.num}
-                </div>
-                <span
-                  className={`hidden sm:inline text-xs font-bold ${
-                    isCurrent ? "text-white" : isDone ? "text-slate-300" : "text-slate-500"
-                  }`}
-                >
-                  {s.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
+      <main className="max-w-4xl w-full mx-auto my-6 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl relative">
         {error && (
-          <div className="mb-6 p-3.5 bg-rose-500/20 border border-rose-500/40 rounded-2xl text-rose-300 text-xs font-semibold animate-in fade-in">
-            {error}
+          <div className="mb-6 p-4 bg-rose-500/20 border border-rose-500/40 rounded-2xl text-rose-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+            <AlertCircle size={16} className="text-rose-400 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
-        {/* ÉTAPE 1 : Administrateur */}
-        {step === 1 && (
-          <form onSubmit={handleStep1Submit} className="space-y-4 animate-in fade-in">
-            <div>
-              <h2 className="text-xl font-black text-white">Créer votre compte Administrateur</h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Vous serez le propriétaire principal (Owner) de votre organisation.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Prénom *</label>
-                <input
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="ex: Rayan"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
-                  autoFocus
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Nom *</label>
-                <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="ex: Ben"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">Email Professionnel *</label>
-              <div className="relative">
-                <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="contact@monparking.fr"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">Mot de passe sécurisé *</label>
-              <div className="relative">
-                <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="6 caractères minimum"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => onNavigate("home")}
-                className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-bold cursor-pointer flex items-center gap-1.5"
-              >
-                <ArrowLeft size={14} />
-                <span>Retour</span>
-              </button>
-              <button
-                type="submit"
-                className="flex-1 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-900/40 transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Continuer vers l'entreprise</span>
-                <ArrowRight size={15} />
-              </button>
-            </div>
-          </form>
+        {infoMessage && (
+          <div className="mb-6 p-4 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+            <span>{infoMessage}</span>
+          </div>
         )}
 
-        {/* ÉTAPE 2 : Entreprise */}
-        {step === 2 && (
-          <form onSubmit={handleStep2Submit} className="space-y-4 animate-in fade-in">
-            <div>
-              <h2 className="text-xl font-black text-white">Votre Entreprise / Organisation</h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Configurez les informations officielles de votre société d'exploitation.
-              </p>
+        <form onSubmit={handleAccountCreation} className="space-y-6 animate-in fade-in max-w-2xl mx-auto">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[11px] font-bold mb-2">
+              <Sparkles size={13} />
+              <span>Inscription SaaS — Essai 7 jours sans engagement</span>
             </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Créez votre compte Administrateur
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Renseignez vos coordonnées et votre entreprise pour générer votre espace Parkeya sécurisé.
+            </p>
+          </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">Nom de l'entreprise *</label>
-              <div className="relative">
-                <Building2 size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="text"
-                  value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                  placeholder="ex: Valet Park Orly SAS, Parc Express..."
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
-                  autoFocus
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">N° SIRET (Facultatif mais recommandé)</label>
-              <div className="relative">
-                <Hash size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="text"
-                  value={siret}
-                  onChange={(e) => setSiret(e.target.value)}
-                  placeholder="ex: 123 456 789 00012"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500 font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-4">
+            <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest border-b border-slate-800 pb-2">
+              Vos informations
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Téléphone Pro</label>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1.5 ml-1">Prénom</label>
                 <div className="relative">
-                  <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                   <input
-                    type="tel"
-                    value={orgPhone}
-                    onChange={(e) => setOrgPhone(e.target.value)}
-                    placeholder="ex: 01 23 45 67 89"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
+                    type="text"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                    placeholder="ex: Jean"
                   />
                 </div>
               </div>
-            {/* Toggle Mensuel / Annuel */}
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-2">Facturation</label>
-              <div className="flex items-center gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800 w-fit">
-                <button
-                  type="button"
-                  onClick={() => setBillingCycle("monthly")}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    billingCycle === "monthly"
-                      ? "bg-cyan-600 text-white shadow"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  Mensuel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBillingCycle("annually")}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                    billingCycle === "annually"
-                      ? "bg-cyan-600 text-white shadow"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  Annuel
-                  <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-black rounded-md">-2 mois</span>
-                </button>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1.5 ml-1">Nom</label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                  <input
+                    type="text"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                    placeholder="ex: Dupont"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Cartes de plan */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-2">Plan choisi</label>
-              <div className="grid grid-cols-1 gap-2">
-                {[
-                  { id: "starter", label: "Starter", monthly: 129, annually: 109, features: "1 parking · 300 véh. · 5 users" },
-                  { id: "business", label: "Business", monthly: 199, annually: 169, features: "1 parking · 600 véh. · 10 users" },
-                  { id: "pro", label: "Pro", monthly: 299, annually: 249, features: "3 parkings · 1 000 véh./parc · 20 users", popular: true },
-                  { id: "enterprise", label: "Enterprise", monthly: null, annually: null, features: "4+ parkings · Illimité · Sur mesure" },
-                ].map((plan) => (
-                  <button
-                    key={plan.id}
-                    type="button"
-                    onClick={() => setSelectedPlan(plan.id)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-all cursor-pointer ${
-                      selectedPlan === plan.id
-                        ? "border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-900/30"
-                        : "border-slate-700 bg-slate-950 hover:border-slate-500"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        selectedPlan === plan.id ? "border-cyan-400 bg-cyan-400" : "border-slate-600"
-                      }`}>
-                        {selectedPlan === plan.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-black text-white">{plan.label}</span>
-                          {plan.popular && <span className="px-1.5 py-0.5 bg-cyan-500/20 text-cyan-400 text-[9px] font-black rounded-md tracking-wider">RECOMMANDÉ</span>}
-                        </div>
-                        <p className="text-[10px] text-slate-500 font-medium mt-0.5">{plan.features}</p>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0 ml-2">
-                      {plan.monthly !== null ? (
-                        <>
-                          <span className="text-sm font-black text-white">
-                            {billingCycle === "annually" ? plan.annually : plan.monthly}€
-                          </span>
-                          <span className="text-[10px] text-slate-500">/mois</span>
-                        </>
-                      ) : (
-                        <span className="text-xs font-bold text-slate-400">Sur devis</span>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">Adresse du siège social</label>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1.5 ml-1">E-mail Professionnel</label>
               <div className="relative">
-                <MapPin size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                 <input
-                  type="text"
-                  value={orgAddress}
-                  onChange={(e) => setOrgAddress(e.target.value)}
-                  placeholder="ex: 12 avenue de l'Aéroport, 94390 Orly"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                  placeholder="ex: contact@monentreprise.com"
                 />
               </div>
             </div>
 
-            <div className="pt-4 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-bold cursor-pointer"
-              >
-                Retour
-              </button>
-              <button
-                type="submit"
-                className="flex-1 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-900/40 transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Configurer mon premier parking</span>
-                <ArrowRight size={15} />
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* ÉTAPE 3 : Premier Parking */}
-        {step === 3 && (
-          <form onSubmit={handleFinalSubmit} className="space-y-4 animate-in fade-in">
             <div>
-              <h2 className="text-xl font-black text-white">Votre Premier Parking</h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Définissez la structure de votre premier parc automobile.
+              <label className="block text-[11px] font-bold text-slate-400 mb-1.5 ml-1">Mot de passe (Min. 6 caractères)</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest border-b border-slate-800 pb-2">
+              Votre Entreprise
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1.5 ml-1">Nom de l'entreprise</label>
+                <div className="relative">
+                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                  <input
+                    type="text"
+                    required
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                    placeholder="ex: Auto Services Paris"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1.5 ml-1">Numéro SIRET (Optionnel)</label>
+                <div className="relative">
+                  <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                  <input
+                    type="text"
+                    value={siret}
+                    onChange={(e) => setSiret(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                    placeholder="ex: 123 456 789 00012"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1.5 ml-1">Téléphone Pro</label>
+                <div className="relative">
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                  <input
+                    type="tel"
+                    required
+                    value={orgPhone}
+                    onChange={(e) => setOrgPhone(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                    placeholder="ex: 01 23 45 67 89"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1.5 ml-1">Ville ou Adresse du siège</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                  <input
+                    type="text"
+                    required
+                    value={orgAddress}
+                    onChange={(e) => setOrgAddress(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                    placeholder="ex: Paris, France"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest border-b border-slate-800 pb-2">
+              Votre Premier Parking
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-[11px] font-bold text-slate-400 mb-1.5 ml-1">Nom du parking</label>
+                <div className="relative">
+                  <Car className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                  <input
+                    type="text"
+                    required
+                    value={parkingName}
+                    onChange={(e) => setParkingName(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-xs font-medium text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                    placeholder="ex: Dépôt Orly Sud"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/20 flex gap-3 text-cyan-200">
+              <Car className="shrink-0 mt-0.5 text-cyan-400" size={16} />
+              <p className="text-[11px] leading-relaxed">
+                Ce premier parking sera généré avec des paramètres par défaut que vous pourrez modifier plus tard dans l'application (Nombre de voies, Capacité).
               </p>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">Nom du Parking *</label>
-              <div className="relative">
-                <Car size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="text"
-                  value={parkingName}
-                  onChange={(e) => setParkingName(e.target.value)}
-                  placeholder="ex: Parking Orly Valet P1"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
-                  autoFocus
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                Format de nommage des voies
-              </label>
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setLaneNaming("numeric")}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-2.5 ${
-                    laneNaming === "numeric"
-                      ? "bg-cyan-950/60 border-cyan-400 ring-2 ring-cyan-500/40 text-white"
-                      : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
-                  }`}
-                >
-                  <Hash size={16} className="text-cyan-400 mt-0.5" />
-                  <div>
-                    <div className="text-xs font-bold text-white">Numérique</div>
-                    <div className="text-[10px] text-slate-400">Voie 1, Voie 2...</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setLaneNaming("alphabetic")}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-2.5 ${
-                    laneNaming === "alphabetic"
-                      ? "bg-cyan-950/60 border-cyan-400 ring-2 ring-cyan-500/40 text-white"
-                      : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
-                  }`}
-                >
-                  <Type size={16} className="text-cyan-400 mt-0.5" />
-                  <div>
-                    <div className="text-xs font-bold text-white">Alphabétique</div>
-                    <div className="text-[10px] text-slate-400">Voie A, Voie B...</div>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Nombre de voies</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={laneCount}
-                  onChange={(e) => setLaneCount(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Places par voie</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="50"
-                  value={capacity}
-                  onChange={(e) => setCapacity(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-bold cursor-pointer"
-              >
-                Retour
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-white text-xs font-black shadow-xl shadow-cyan-950/60 transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                <span>Finaliser & Ouvrir Parkeya</span>
-              </button>
-            </div>
-          </form>
-        )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-8 w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-sm shadow-xl shadow-cyan-950/80 transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            {loading ? <Loader2 size={18} className="animate-spin text-slate-950" /> : <CheckCircle2 size={18} className="text-slate-950" />}
+            Créer mon compte et mon espace Parkeya
+          </button>
+        </form>
       </main>
 
-      {/* Footer */}
       <footer className="text-center text-xs text-slate-500 py-2">
-        <span>© {new Date().getFullYear()} Parkeya SaaS B2B — Données chiffrées & isolées.</span>
+        <span>© {new Date().getFullYear()} Parkeya SaaS B2B — Plateforme sécurisée d'optimisation logistique pour voituriers.</span>
       </footer>
     </div>
   );

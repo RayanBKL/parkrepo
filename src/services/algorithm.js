@@ -5,7 +5,11 @@
 let uidCounter = Date.now();
 
 export function generateVehicleId() {
-  return `V-${(uidCounter++).toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return `V-${crypto.randomUUID().toUpperCase()}`;
+  }
+  const randomPart = Math.random().toString(36).substring(2, 15).toUpperCase() + Math.random().toString(36).substring(2, 15).toUpperCase();
+  return `V-${Date.now().toString(36).toUpperCase()}-${randomPart}`;
 }
 
 export const fmtDateTime = (iso) => {

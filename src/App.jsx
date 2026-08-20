@@ -3,6 +3,7 @@ import { Plus, KeyRound, AlertCircle, LogOut, ArrowLeft, ChevronRight, Sparkles 
 
 // Services Auth & Cloud
 import { onAuthChange, logOut, getUserProfile } from "./services/auth";
+import { auth } from "./services/firebase";
 import {
   createParking,
   subscribeToParkingList,
@@ -27,6 +28,8 @@ import LoginPage from "./components/public/LoginPage";
 import LegalPages from "./components/public/LegalPages";
 import PublicTicketView from "./components/public/PublicTicketView";
 import SubscriptionExpiredView from "./components/app/SubscriptionExpiredView";
+import EmailVerificationBlock from "./components/public/EmailVerificationBlock";
+import AuroraPricing from "./components/public/AuroraPricing";
 
 // Composants SaaS App
 import Sidebar from "./components/app/Sidebar";
@@ -214,10 +217,25 @@ export default function App() {
 
   useEffect(() => {
     const unsub = onAuthChange(async (user) => {
-      setCurrentUser(user);
-      setAuthLoading(false);
-
       if (user) {
+        // ---------------------------------------------------------------
+        // Vérification critique : forcer le refresh du token Firebase.
+        // Si le compte a été supprimé depuis la console Firebase,
+        // getIdToken(true) lève une exception (auth/user-token-expired
+        // ou auth/user-not-found) et on force la déconnexion.
+        // ---------------------------------------------------------------
+        try {
+          await user.getIdToken(true);
+        } catch (tokenErr) {
+          console.warn("Token invalide ou compte supprimé, déconnexion forcée:", tokenErr.code);
+          // Nettoyer la session locale Firebase
+          try { await auth.signOut(); } catch (_) {}
+          // onAuthStateChanged sera rappelé avec user=null → redirect automatique
+          return;
+        }
+
+        setCurrentUser(user);
+        setAuthLoading(false);
         setParkingsLoading(true);
         await refreshUserData(user);
 
@@ -242,6 +260,8 @@ export default function App() {
           }
         );
       } else {
+        setCurrentUser(null);
+        setAuthLoading(false);
         setParkings([]);
         setActiveParkingId(null);
         if (unsubParkingListRef.current) {
@@ -621,6 +641,14 @@ export default function App() {
   // APPLICATION SAAS B2B (Connecté)
   // =========================================================================
 
+  if (!currentUser.emailVerified) {
+    return <EmailVerificationBlock user={currentUser} />;
+  }
+
+  if (organization?.status === "PENDING_PAYMENT") {
+    return <AuroraPricing organization={organization} currentUser={currentUser} />;
+  }
+
   const viewTitles = {
     parkings: "Gestion des Voies & Parkings",
     vehicles: "Gestionnaire de Flotte & Véhicules",
@@ -669,43 +697,30 @@ export default function App() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
         <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-8 pt-6 pb-12">
-          
-          {/* VÉRIFICATION DE PAIEMENT */}
-          {organization?.status === "PENDING_PAYMENT" ? (
-            <div className="flex flex-col items-center justify-center h-[70vh] text-center max-w-lg mx-auto">
-              <div className="w-20 h-20 rounded-full bg-rose-500/20 flex items-center justify-center mb-6 border border-rose-500/30">
-                <AlertCircle size={40} className="text-rose-400" />
-              </div>
-              <h2 className="text-2xl font-black text-white mb-3">Abonnement Requis</h2>
-              <p className="text-sm text-slate-400 mb-8 leading-relaxed">
-                Votre compte est créé, mais l'abonnement <strong>{(organization.subscription?.plan || organization.plan || "business").toUpperCase()}</strong> n'a pas encore été réglé. Veuillez finaliser votre paiement pour débloquer l'accès complet à Parkeya.
-              </p>
-              <button
-                onClick={async () => {
-                  try {
-                    const { httpsCallable } = await import("firebase/functions");
-                    const { functions } = await import("./services/firebase");
-                    const createCheckout = httpsCallable(functions, "createStripeCheckout");
-                    const resolvedPlanId = organization.subscription?.plan || organization.plan || "business";
-                    const { data } = await createCheckout({
-                      planId: resolvedPlanId,
-                      orgId: organization.id,
-                      origin: window.location.origin,
-                    });
-                    if (data && data.url) window.location.href = data.url;
-                  } catch (e) {
-                    console.error("Stripe checkout error:", e);
-                    const msg = e?.message || e?.details || "Erreur inconnue";
-                    showToast(`Stripe : ${msg}`, "error");
-                  }
-                }}
-                className="px-6 py-3.5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold shadow-lg shadow-cyan-900/40 transition-all"
-              >
-                Accéder au Paiement Stripe
-              </button>
-            </div>
-          ) : (
-            <>
+
+          {/* ============================================================= */}
+              {/* BANDEAU D'ESSAI 7 JOURS (accès débloqué, carte enregistrée)   */}
+              {/* ============================================================= */}
+              {(organization?.subscription?.status === "trialing" || organization?.subscription?.trialEndsAt) && (
+                <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-slate-900 to-cyan-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-semibold shadow-lg">
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles size={16} className="text-emerald-400 shrink-0" />
+                    <span>
+                      ✨ <strong>Version d&apos;essai 7 jours</strong> — Validez votre abonnement ou résiliez-le à tout moment
+                      {organization.subscription.trialEndsAt && (
+                        <> (Premier débit automatique le <strong className="text-white">{new Date(organization.subscription.trialEndsAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</strong>)</>
+                      )}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleNavigateView("settings")}
+                    className="shrink-0 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-200 text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
+                  >
+                    Gérer mon abonnement →
+                  </button>
+                </div>
+              )}
+
               {/* Barre de retour rapide & Fil d'Ariane pour les sous-vues */}
               {activeView !== "dashboard" && (
             <div className="mb-4 flex items-center justify-between gap-3 text-xs">
@@ -961,7 +976,6 @@ export default function App() {
             />
           )}
             </>
-          )}
         </main>
       </div>
 

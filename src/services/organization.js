@@ -90,8 +90,11 @@ export async function createOrganization({
   email,
   phone = "",
   address = "",
+  siret = "",
   ownerId,
   plan = "business",
+  billingCycle = "monthly",
+  status = "PENDING_PAYMENT",
 }) {
   const orgId = `org_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
   const planConfig = PLANS_CONFIG[plan] || PLANS_CONFIG.business;
@@ -100,17 +103,20 @@ export async function createOrganization({
     id: orgId,
     name: name.trim(),
     email: email.toLowerCase().trim(),
-    phone: phone.trim(),
-    address: address.trim(),
+    phone: (phone || "").trim(),
+    address: (address || "").trim(),
+    siret: (siret || "").trim(),
     ownerId,
-    status: "PENDING_PAYMENT",
+    status, // PENDING_PAYMENT par défaut — ACTIVE après confirmation Stripe
     subscription: {
       plan: planConfig.id,
-      status: "pending_payment", // "pending_payment" | "trialing" | "active" | "past_due" | "canceled"
+      billingCycle,
+      status: "pending_payment", // Mis à jour par le webhook Stripe
       maxParkings: planConfig.maxParkings,
       maxUsers: planConfig.maxUsers,
       maxVehicles: planConfig.maxVehicles,
-      renewsAt: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+      renewsAt: null,
+      trialEndsAt: null,
     },
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -119,6 +125,7 @@ export async function createOrganization({
   await setDoc(doc(db, "organizations", orgId), orgData);
   return orgData;
 }
+
 
 /**
  * Récupère les informations d'une Organisation

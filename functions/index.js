@@ -12,7 +12,7 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Vous devez être connecté.");
   }
 
-  const { planId, orgId, billingCycle = "monthly" } = data;
+  const { planId, orgId, billingCycle = "monthly", trialDays = 7 } = data;
   if (!planId || !orgId) {
     throw new functions.https.HttpsError("invalid-argument", "planId et orgId requis.");
   }
@@ -51,6 +51,7 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
   const isAnnual = billingCycle === "annually" || billingCycle === "annual";
   const amount = isAnnual ? selectedPlanConfig.annualAmount : selectedPlanConfig.monthlyAmount;
   const interval = isAnnual ? "year" : "month";
+  const trialPeriodDays = Number(trialDays) > 0 ? Number(trialDays) : undefined;
 
   // Validation stricte anti-Open Redirect
   function isAllowedOrigin(origin) {
@@ -60,10 +61,11 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
       const hostname = url.hostname;
       // Localhost pour le développement
       if (hostname === "localhost" || hostname === "127.0.0.1") return true;
-      // Domaines Firebase Cloud
-      if (hostname.endsWith(".web.app") || hostname.endsWith(".firebaseapp.com")) return true;
+      // Domaines Firebase Cloud du projet (strict)
+      if (hostname === "parkeya.web.app" || hostname === "parkeya.firebaseapp.com") return true;
       // Domaines personnalisés du projet
-      if (hostname.endsWith("parkeya.fr") || hostname.endsWith("parkflow.fr") || hostname.includes("hostinger") || hostname.endsWith(".hostingersite.com")) return true;
+      if (hostname === "parkeya.fr" || hostname === "www.parkeya.fr" || hostname === "parkflow.fr" || hostname === "www.parkflow.fr") return true;
+      if (hostname.includes("hostinger") || hostname.endsWith(".hostingersite.com")) return true;
       return false;
     } catch (e) {
       return false;
@@ -75,10 +77,9 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
     : "https://parkeya.web.app";
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams = {
       mode: "subscription",
       allow_promotion_codes: true,
-      managed_payments: { enabled: false }, // Désactive Managed Payments (évite la TVA automatique imposée par Stripe)
       customer_email: context.auth.token.email,
       line_items: [
         {
@@ -86,7 +87,9 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
             currency: "eur",
             product_data: {
               name: `Abonnement Parkeya — Plan ${selectedPlanConfig.name} (${isAnnual ? "Facturation Annuelle" : "Facturation Mensuelle"})`,
-              description: `Accès complet au logiciel Parkeya (${isAnnual ? "Engagement 1 an - 2 mois offerts" : "Sans engagement"}).`,
+              description: trialPeriodDays
+                ? `${trialPeriodDays} jours d'essai gratuit, puis facturation automatique. Annulable à tout moment.`
+                : `Accès complet au logiciel Parkeya (${isAnnual ? "Engagement 1 an - 2 mois offerts" : "Sans engagement"}).`,
             },
             unit_amount: amount,
             recurring: {
@@ -104,7 +107,17 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
         billingCycle: interval,
         planId: planId || "business",
       },
-    });
+    };
+
+    // Ajouter la période d'essai si demandée
+    // L'utilisateur entre sa carte maintenant, le débit a lieu après trialPeriodDays jours
+    if (trialPeriodDays) {
+      sessionParams.subscription_data = {
+        trial_period_days: trialPeriodDays,
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return { url: session.url };
   } catch (error) {
@@ -153,7 +166,8 @@ exports.stripeWebhook = functions.https.onRequest((req, res) => {
       enterprise: { maxParkings: 999, maxUsers: 999, maxVehicles: 99999 },
     };
 
-    // Événement 1 : Session de paiement terminée (Premier abonnement ou upgrade)
+    // Événement 1 : Checkout completé (cart enregistrée — accès immédiat même en trial)
+    // La carte est validée, l'abonnement créé. Si trial : statut trialing, sinon active.
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       const orgId = session.metadata?.orgId;
@@ -162,19 +176,33 @@ exports.stripeWebhook = functions.https.onRequest((req, res) => {
 
       if (orgId) {
         try {
+          // Récupérer le statut réel de l'abonnement Stripe pour savoir si c'est un trial
+          let subStatus = "active";
+          let trialEnd = null;
+          if (session.subscription) {
+            const stripeSub = await stripe.subscriptions.retrieve(session.subscription);
+            subStatus = stripeSub.status; // "trialing" ou "active"
+            trialEnd = stripeSub.trial_end
+              ? new Date(stripeSub.trial_end * 1000).toISOString()
+              : null;
+          }
+
+          const orgStatus = subStatus === "trialing" ? "ACTIVE" : "ACTIVE"; // Accès accordé dans tous les cas
+
           await db.collection("organizations").doc(orgId).update({
-            status: "ACTIVE",
+            status: orgStatus,
             plan: planId,
             "subscription.plan": planId,
-            "subscription.status": "active",
+            "subscription.status": subStatus,       // "trialing" ou "active"
             "subscription.maxParkings": planDetails.maxParkings,
             "subscription.maxUsers": planDetails.maxUsers,
             "subscription.maxVehicles": planDetails.maxVehicles,
+            ...(trialEnd ? { "subscription.trialEndsAt": trialEnd } : {}),
             stripeSubscriptionId: session.subscription || null,
             stripeCustomerId: session.customer || null,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
-          console.log(`Organisation ${orgId} activée avec le plan ${planId} !`);
+          console.log(`Organisation ${orgId} activée — plan ${planId}, statut Stripe: ${subStatus}`);
         } catch (error) {
           console.error(`Erreur d'activation de l'organisation ${orgId}:`, error);
         }
@@ -295,11 +323,39 @@ exports.joinParking = functions.https.onCall(async (data, context) => {
   }
   const normalizedCode = code.trim().toUpperCase();
 
+  // 0. Anti-Brute Force (Rate Limiting par UID)
+  const rateLimitRef = db.collection("rateLimits").doc(context.auth.uid);
+  const rateLimitDoc = await rateLimitRef.get();
+  
+  const now = admin.firestore.Timestamp.now();
+  let attempts = 0;
+  
+  if (rateLimitDoc.exists) {
+    const data = rateLimitDoc.data();
+    // Si la dernière tentative date de moins de 15 minutes
+    if (now.toMillis() - data.lastAttempt.toMillis() < 15 * 60 * 1000) {
+      attempts = data.attempts || 0;
+      if (attempts >= 5) {
+        throw new functions.https.HttpsError("resource-exhausted", "Trop de tentatives échouées. Réessayez dans 15 minutes.");
+      }
+    }
+  }
+
   // 1. Chercher le code dans Firestore (Admin SDK ignore les règles de sécurité)
   const codeDoc = await db.collection("accessCodes").doc(normalizedCode).get();
   
   if (!codeDoc.exists) {
+    // Enregistrer la tentative échouée
+    await rateLimitRef.set({
+      attempts: attempts + 1,
+      lastAttempt: now
+    });
     throw new functions.https.HttpsError("not-found", "Code d'accès invalide ou expiré.");
+  }
+  
+  // Si le code est valide, on réinitialise les tentatives
+  if (attempts > 0) {
+    await rateLimitRef.delete();
   }
 
   const { parkingId, ownerId, parkingName } = codeDoc.data();
@@ -308,6 +364,10 @@ exports.joinParking = functions.https.onCall(async (data, context) => {
   const parkingDoc = await db.collection("parkings").doc(parkingId).get();
   if (!parkingDoc.exists) {
     throw new functions.https.HttpsError("not-found", "Le parking associé n'existe plus.");
+  }
+  
+  if (parkingDoc.data().ownerId !== ownerId) {
+    throw new functions.https.HttpsError("failed-precondition", "Code d'accès invalide.");
   }
 
   const authorizedUsers = parkingDoc.data().authorizedUsers || [];
