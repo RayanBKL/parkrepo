@@ -106,6 +106,20 @@ export default function SuperAdminView({ currentUser }) {
   };
 
   const handleOrgAction = async (orgId, action) => {
+    // Optimistic UI Update (0ms)
+    const previousStats = stats;
+    setStats(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        orgs: prev.orgs.map(o => {
+          if (o.id !== orgId) return o;
+          const updatedStatus = action === "activate" ? "ACTIVE" : action === "cancel" ? "CANCELED" : "PENDING_PAYMENT";
+          return { ...o, status: updatedStatus };
+        }),
+      };
+    });
+
     setActionLoading(orgId + action);
     try {
       const fn = httpsCallable(functions, "superAdminUpdateOrg");
@@ -114,8 +128,8 @@ export default function SuperAdminView({ currentUser }) {
       if (action === "cancel")    payload.newStatus = "CANCELED";
       if (action === "pending")   payload.newStatus = "PENDING_PAYMENT";
       await fn(payload);
-      await loadStats();
     } catch (err) {
+      setStats(previousStats);
       alert("Erreur : " + (err.message || "Action échouée"));
     } finally {
       setActionLoading(null);
@@ -128,12 +142,28 @@ export default function SuperAdminView({ currentUser }) {
     );
     if (!confirmation) return;
 
+    // Optimistic UI Update (Disparaît instantanément en 0ms de l'écran !)
+    const previousStats = stats;
+    setStats(prev => {
+      if (!prev) return prev;
+      const target = prev.orgs.find(o => o.id === orgId);
+      const isAct = target?.status === "ACTIVE";
+      const isTrial = target?.subscriptionStatus === "trialing";
+      return {
+        ...prev,
+        totalOrgs: Math.max(0, prev.totalOrgs - 1),
+        activeOrgs: isAct ? Math.max(0, prev.activeOrgs - 1) : prev.activeOrgs,
+        trialingOrgs: isTrial ? Math.max(0, prev.trialingOrgs - 1) : prev.trialingOrgs,
+        orgs: prev.orgs.filter(o => o.id !== orgId),
+      };
+    });
+
     setActionLoading(orgId + "delete");
     try {
       const fn = httpsCallable(functions, "superAdminDeleteOrg");
       await fn({ orgId });
-      await loadStats();
     } catch (err) {
+      setStats(previousStats);
       alert("Erreur de suppression : " + (err.message || "Échec"));
     } finally {
       setActionLoading(null);
