@@ -857,6 +857,46 @@ export default function SettingsView({
               </div>
             </div>
           )}
+
+          {/* Zone de Danger (Résiliation) */}
+          {isOwner && (
+            <div className="mt-8 p-6 rounded-3xl border border-rose-500/30 bg-rose-950/10 space-y-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-black text-rose-400 flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  Zone de Danger
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  La résiliation entraîne la perte immédiate de l'accès à ParkOptimizer pour vous et votre équipe.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={async () => {
+                  if (window.confirm("Êtes-vous sûr de vouloir résilier votre abonnement ? Cette action coupe l'accès immédiatement.")) {
+                    try {
+                      setLoading(true);
+                      const { httpsCallable } = await import("firebase/functions");
+                      const { functions } = await import("../../services/firebase");
+                      const cancelSub = httpsCallable(functions, "cancelStripeSubscription");
+                      await cancelSub({ orgId: organization.id });
+                      
+                      // Forcer le rafraichissement local pour retomber sur le mur de paiement
+                      window.location.reload();
+                    } catch (err) {
+                      showError(err.message || "Erreur lors de la résiliation.");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }
+                }}
+                className="shrink-0 px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+              >
+                Résilier l'abonnement
+              </button>
+            </div>
+          )}
         </div>
       )}
 

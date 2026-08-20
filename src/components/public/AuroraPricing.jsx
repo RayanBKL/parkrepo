@@ -150,7 +150,9 @@ export default function AuroraPricing({ organization, currentUser }) {
           transition={{ delay: 0.3, duration: 0.8, ease: "easeInOut" }}
           className="text-slate-400 max-w-lg mb-8"
         >
-          Votre compte est créé ! Choisissez un plan pour activer ParkOptimizer et profiter de 7 jours d'essai gratuits.
+          {organization?.hasHadTrial
+            ? "Choisissez un plan pour réactiver votre accès à ParkOptimizer."
+            : "Votre compte est créé ! Choisissez un plan pour activer ParkOptimizer et profiter de 7 jours d'essai gratuits."}
         </motion.p>
 
         {/* Billing Cycle Toggle */}
@@ -252,7 +254,7 @@ export default function AuroraPricing({ organization, currentUser }) {
                     Redirection...
                   </>
                 ) : (
-                  "Essai Gratuit 7 Jours"
+                  organization?.hasHadTrial ? "S'abonner" : "Essai Gratuit 7 Jours"
                 )}
               </button>
             </div>

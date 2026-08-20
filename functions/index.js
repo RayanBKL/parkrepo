@@ -51,7 +51,10 @@ exports.createStripeCheckout = functions.https.onCall(async (data, context) => {
   const isAnnual = billingCycle === "annually" || billingCycle === "annual";
   const amount = isAnnual ? selectedPlanConfig.annualAmount : selectedPlanConfig.monthlyAmount;
   const interval = isAnnual ? "year" : "month";
-  const trialPeriodDays = Number(trialDays) > 0 ? Number(trialDays) : undefined;
+  
+  // Si l'organisation a déjà eu une période d'essai, on la supprime
+  const hasHadTrial = orgDoc.data().hasHadTrial === true;
+  const trialPeriodDays = (Number(trialDays) > 0 && !hasHadTrial) ? Number(trialDays) : undefined;
 
   // Validation stricte anti-Open Redirect
   function isAllowedOrigin(origin) {
@@ -203,6 +206,7 @@ exports.stripeWebhook = functions.https.onRequest((req, res) => {
             ...(trialEnd ? { "subscription.trialEndsAt": trialEnd } : {}),
             stripeSubscriptionId: session.subscription || null,
             stripeCustomerId: session.customer || null,
+            hasHadTrial: true, // On scelle le fait qu'ils ont eu (ou refusé) leur essai
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
           console.log(`Organisation ${orgId} activée — plan ${planId}, statut Stripe: ${subStatus}`);
@@ -501,4 +505,46 @@ exports.getPublicTicket = functions.https.onCall(async (data, context) => {
       name: pData.name,
     }
   };
+});
+
+// 5. Fonction pour résilier un abonnement (Appelable depuis le frontend)
+exports.cancelStripeSubscription = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Vous devez être connecté.");
+  }
+
+  const { orgId } = data;
+  if (!orgId) {
+    throw new functions.https.HttpsError("invalid-argument", "orgId est requis.");
+  }
+
+  // Vérifier la permission
+  const orgRef = db.collection("organizations").doc(orgId);
+  const orgDoc = await orgRef.get();
+  
+  if (!orgDoc.exists || orgDoc.data().ownerId !== context.auth.uid) {
+    throw new functions.https.HttpsError("permission-denied", "Accès non autorisé.");
+  }
+
+  const stripeSubscriptionId = orgDoc.data().stripeSubscriptionId;
+  if (!stripeSubscriptionId) {
+    throw new functions.https.HttpsError("not-found", "Aucun abonnement Stripe actif trouvé.");
+  }
+
+  try {
+    // Annulation immédiate sur Stripe
+    await stripe.subscriptions.cancel(stripeSubscriptionId);
+
+    // Mise à jour de la BDD pour couper l'accès tout de suite (sans attendre le webhook)
+    await orgRef.update({
+      status: "CANCELED",
+      "subscription.status": "canceled",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur annulation Stripe:", error);
+    throw new functions.https.HttpsError("internal", error.message || "Erreur d'annulation.");
+  }
 });

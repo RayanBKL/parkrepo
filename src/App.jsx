@@ -634,16 +634,6 @@ export default function App() {
     );
   }
 
-  // Abonnement ANNULÉ
-  if (organization?.status === "CANCELED" && activeTab !== "settings") {
-    return (
-      <SubscriptionExpiredView
-        onManageBilling={() => handleNavigateView("settings")}
-        onLogout={() => logOut()}
-      />
-    );
-  }
-
   // =========================================================================
   // APPLICATION SAAS B2B (Connecté)
   // =========================================================================
@@ -652,7 +642,8 @@ export default function App() {
     return <EmailVerificationBlock user={currentUser} />;
   }
 
-  if (organization?.status === "PENDING_PAYMENT") {
+  // Blocage si l'abonnement est en attente de paiement ou résilié
+  if (organization?.status === "PENDING_PAYMENT" || organization?.status === "CANCELED") {
     return <AuroraPricing organization={organization} currentUser={currentUser} />;
   }
 
